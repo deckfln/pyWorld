@@ -2,7 +2,6 @@ import json
 import pickle
 
 import THREE
-
 from Config import *
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
@@ -96,9 +95,6 @@ class Quadtree:
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = True
 
-        if Config['terrain']['debug']['normals']:
-            self.normals.visible = True
-
     def remove4scene(self, scene):
         """
         @param {type} scene
@@ -108,9 +104,6 @@ class Quadtree:
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
-
-        if Config['terrain']['debug']['normals']:
-            self.normals.visible = False
 
     def _loadMesh(self, scene):
         """
@@ -125,8 +118,13 @@ class Quadtree:
         geometry = THREE.PlaneBufferGeometry(param['height'], param['width'], param['heightSegments'], param['widthSegments'])
 
         geometry.attributes = mesh.geometry.attributes
+
         self.merged_mesh = THREE.Mesh(geometry, self.material)
         self.merged_mesh.position = mesh.position
+
+        # print("TODO: quadtree._loadMesh > why build a new mesh and not use the loaded one ?")
+        # mesh.material = self.material
+        # self.merged_mesh = mesh
 
         # self.merged_mesh.material = Materials['terrain']
         scene.add(self.merged_mesh)
@@ -139,6 +137,10 @@ class Quadtree:
             self.boundingsphere.position.copy(center)
             self.boundingsphere.visible = True
             scene.add(self.boundingsphere)
+
+        if self.level > 4 and Config['terrain']['debug']['normals']:
+            self.normals = THREE.VertexNormalsHelper(mesh, 1, 0xff0000, 1)
+            self.merged_mesh.add(self.normals)
 
         return self
 

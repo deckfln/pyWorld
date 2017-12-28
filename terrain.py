@@ -71,6 +71,7 @@ class Terrain:
         self.scene = None
         self.material = None
         self.textures = []
+        self.light = None
 
         """
         compute the radius at each level
@@ -160,6 +161,13 @@ class Terrain:
             })
 
     def load(self, sun):
+        """
+        Load the quad tile pickles and initialize the shaders
+        :param sun:
+        :return:
+        """
+        self.light = sun
+
         self.shaders(sun)
         with open("bin/heightmap.pkl", "rb") as f:
             self.heightmap = pickle.load(f)
@@ -498,6 +506,12 @@ class Terrain:
         cb = THREE.Vector3()
         ab = THREE.Vector3()
 
+        # reset the normal map
+        def _zeros(v3):
+            v3.x = v3.y = v3.z = 0
+
+        normalMap.forEach( _zeros )
+
         current = 0
         total = heightmap.size * heightmap.size
 
@@ -568,6 +582,13 @@ class Terrain:
 
         screen = THREE.Vector2()
         uv_index = 0
+        normal_index = 0
+
+        def _bilinear(v1, v2, v3, v4, offsetx, offsety):
+            # https://forum.unity.com/threads/vector-bilinear-interpolation-of-a-square-grid.205644/
+            abu = v1.clone().lerp(v2, offsetx)
+            dcu = v3.clone().lerp(v4, offsetx)
+            return abu.lerp(dcu, offsety)
 
         for p in range(0, len(positions), 3):
             screen.x = positions[p] + x
@@ -579,8 +600,13 @@ class Terrain:
 
             uvs[uv_index] = hm.x / (self.size - 1)
             uvs[uv_index + 1] = hm.y / (self.size - 1)
-
             uv_index += 2
+
+            normal = self.normalMap.bilinear(hm.x, hm.y, _bilinear)
+            normals[p] = normal.x
+            normals[p+1] = normal.y
+            normals[p+2] = normal.z
+            normal_index += 1
 
         plane = THREE.Mesh(geometry, material)
         plane.castShadow = False
@@ -1082,6 +1108,25 @@ class Terrain:
             if not found:
                 self.tiles_onscreen.append(quad)
                 quad.add2scene(self.scene)
+
+    def update(self, time):
+        """
+        @description: update the terrain
+        @param {time} time current time
+        """
+
+        """
+        # shift the water texture
+        self.water_shift += 0.01
+        if self.water_shift >= 1:
+            self.water_shift = 0
+        self.material1.uniforms.water_shift.value = this.water_shift
+        """
+
+        # update light position
+        self.material.uniforms.light.value.x = self.light.position.x
+        self.material.uniforms.light.value.y = self.light.position.y
+        self.material.uniforms.light.value.z = self.light.position.z
 
     def colisionObjects(self, footprint):
         """

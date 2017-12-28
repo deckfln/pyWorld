@@ -12,8 +12,8 @@ from terrain import *
 
 def build():
     terrain = Terrain(512, 25, 512)
-    terrain.build_normalmap()
     terrain.perl_generate()
+    terrain.build_normalmap()
     terrain.buildIndexMap()
     terrain.build_roads()
     terrain.build_city()

@@ -79,9 +79,11 @@ def init(p):
         'color': 0xffffff
     })
     p.sun = THREE.DirectionalLight(0xffffff, 1)
+
+    # sun imposter
     g_sun = THREE.SphereBufferGeometry(2, 8, 8)
     m_sun = THREE.Mesh(g_sun, _material)
-    m_sun.position.set(100, 100, 100)
+    # m_sun.position.set(100, 100, 100)
     p.sun.add(m_sun)
 
     # init the shadowmap
@@ -145,6 +147,7 @@ def animate(p):
     p.controls.update()
 
     # Check player direction
+    # and move the terrain if needed
     p.player.update(delta, p.terrain, p.camera)
 
     # Check player direction
@@ -178,7 +181,7 @@ def animate(p):
     if p.hour > math.pi:
         p.hour = 0
 
-    # p.terrain.update()
+    p.terrain.update(p.hour)
 
     render(p)
 
