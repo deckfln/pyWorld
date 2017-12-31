@@ -25,6 +25,7 @@ class Params:
         self.terrain = None
         self.quads = None
         self.player = None
+        self.actors = []
         self.sun = None
         self.clock = None
         self.hour = 0
@@ -119,6 +120,7 @@ def init(p):
     p.terrain.scene = p.scene
 
     p.player = Player(THREE.Vector3(3,3,0), p.scene, p.terrain)
+    p.actors.append(p.player)
 
     p.terrain.draw(THREE.Vector2(3, 3))
     p.player.draw()
@@ -148,7 +150,11 @@ def animate(p):
 
     # Check player direction
     # and move the terrain if needed
-    p.player.update(delta, p.terrain, p.camera)
+    p.player.move(delta, p.terrain, p.camera)
+
+    # update the animation loops
+    for actor in p.actors:
+        actor.update(delta/30)
 
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
@@ -197,8 +203,8 @@ def keyboard(event, p):
     if keyCode in p.keymap:
         p.keymap[keyCode] = down
 
-        p.player.move.x = p.keymap[273] or -p.keymap[274]  # up / down
-        p.player.move.y = p.keymap[275] or -p.keymap[276]  # left / right
+        p.player.action.x = p.keymap[273] or -p.keymap[274]  # up / down
+        p.player.action.y = p.keymap[275] or -p.keymap[276]  # left / right
 
 
 def main(argv=None):

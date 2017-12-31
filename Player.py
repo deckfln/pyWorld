@@ -7,26 +7,26 @@
 """
 import math
 import THREE
-from Character import *
+from Actor import *
 from Config import *
 from Footprint import *
 
 
-class Player(Character):
+class Player(Actor):
     def __init__(self, position, scene, heightmap):
-        super().__init__()
+        super().__init__("models/marie-jane.dae")
 
         # @property { string } status display the object status
         self.status = "drop"
-
-        # * @property {number} radius face the player is moving to
-        self.radius = 1
 
         # * @property {THREE.Vector2} position position of the player
         self.position = position
 
         # * @property {THREE.Vector3} direction face the player is moving to
         self.direction = THREE.Vector3(0.6, 0, 0)
+
+        # action the controler is given (forward, left, right, backward)
+        self.action = THREE.Vector2()
 
         # * @property {THREE.Vector3} rotation_speed direction face the player is moving to
         self.rotation_speed = math.pi/128
@@ -109,7 +109,7 @@ class Player(Character):
 
         # force the player to stick to the surface
         p = self.heightmap.screen2map(position)
-        return self.heightmap.get(p.x, p.y) + self.radius
+        return self.heightmap.get(p.x, p.y)
     
     def setZ(self):
         """
@@ -117,10 +117,10 @@ class Player(Character):
         """
         # force the player to stick to the surface
         p = self.heightmap.screen2map(self.position)
-        self.position.z = self.heightmap.get(p.x, p.y) + self.radius
+        self.position.z = self.heightmap.get(p.x, p.y)
         super().setZ(self.position.z)
   
-    def update(self, delta, terrain, camera):
+    def move(self, delta, terrain, camera):
         """
          * @param {time} delta ms since last frame
          * @param {THREE.Vector2} direction
@@ -128,11 +128,13 @@ class Player(Character):
          * @returns {undefined}
         """
         run = self.run
-        direction = self.move
+        direction = self.action
         if direction.x == 0 and direction.y == 0:
             self.stop()
             return
-        
+
+        self.start()
+
         if direction.y == 1:
             self.turn_right(delta, run)
         elif direction.y == -1:
@@ -148,8 +150,10 @@ class Player(Character):
             self.set(self.position)
             self.heightmap.draw(self.position)
             self.setZ()
-        
-        super().update(delta)
+
+        # this only update the player position
+        # the actor movement is managed by from the main loop
+        # super().update(delta)
         # TODO: get the players camera from smehwere
         camera.move(self, terrain)
  
@@ -283,18 +287,17 @@ class Player(Character):
     def get_position(self):
         return self.position
 
+    """
     def start(self):
         if self.animation != "walk":
             self.animation = "walk"
             super().start()
 
     def stop(self):
-        """
-        * @returns {undefined}
-        """
         if self.animation != "stop":
             self.animation="stop"
             super().stop()
+    """
 
     def colision(self,direction):
         """

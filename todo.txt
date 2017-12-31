@@ -1,0 +1,5 @@
+DONE: use collada model as actor.
+DONE: use idle and walking animation for the actor
+TODO: use running animation for the actor
+TODO: use smooth transition from one animation to the next one
+TODO: actor should slide down a slope if it is steep
