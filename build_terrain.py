@@ -17,10 +17,10 @@ def build():
     terrain.buildIndexMap()
     terrain.build_roads()
     terrain.build_city()
-    terrain.build_mesh_scenery()
     #    terrain.buildHeightmapsLOD()
     terrain.build_normalmap()
     terrain.buildTerrainMesh()
+    terrain.build_mesh_scenery()
 
     terrain.dump()
 

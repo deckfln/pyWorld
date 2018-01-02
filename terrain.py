@@ -1025,7 +1025,10 @@ class Terrain:
 
                 box = House(8, 8, 8, r, position)
 
+                # flatten the terrain around the object
                 City_flatten_terrain(self, box, hm, screen2hm)
+
+                # add to the terrain
                 objects.append(box)
 
     def dump(self):
@@ -1157,3 +1160,5 @@ class Terrain:
 
         for object in self.scenery:
             root.insert_object(object, 0)
+
+        root.optimize_meshes(0)

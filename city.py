@@ -157,9 +157,14 @@ def city_paint_indexmap(terrain, center):
                 terrain.setIndexMap(center, [terr.TILE_stone_path_png, 255, 255, 255])
 
 
-class House(Scenery):
-    house_texture = None
+house_texture = THREE.MeshLambertMaterial({
+    'color': 0xeeeeee,
+    'wireframe': False,
+    'name': "house_texture"
+})
 
+
+class House(Scenery):
     def __init__(self, width, len, height, alpha, position):
         radius = math.sqrt(width*width + len*len)/2
         super().__init__(position, radius)
@@ -180,20 +185,12 @@ class House(Scenery):
         footprint.rotate(alpha)
         self.footprints.append(footprint)
 
-        if self.house_texture is None:
-            self.house_texture = THREE.MeshLambertMaterial({
-                'color': 0xeeeeee,
-                'wireframe': False,
-                'name': "house_texture"
-            })
-
     def build_mesh(self, level):
-        geometry = THREE.BoxBufferGeometry(self.width,self.len,self.height)
-        geometry.setDrawRange( 0, 32 )         # do not draw the bottom of the box
-        geometry.translate(0,0, self.height/2)
+        geometry = THREE.BoxBufferGeometry(self.width, self.len, self.height)
+        geometry.setDrawRange(0, 32)         # do not draw the bottom of the box
+        geometry.translate(0, 0, self.height/2)
         geometry.rotateZ(self.rotation)
 
-        mesh = THREE.Mesh( geometry, self.house_texture )
-        mesh.position.copy(self.position)
+        mesh = THREE.Mesh(geometry, house_texture)
 
         return mesh

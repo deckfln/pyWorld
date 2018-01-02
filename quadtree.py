@@ -2,6 +2,7 @@ import json
 import pickle
 
 import THREE
+import Utils as THREE_utils
 from Config import *
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
@@ -56,7 +57,7 @@ class Quadtree:
     def dump(self, t):
         # j = self.toJSON()
         # t.append(j)
-        self.mesh = None
+        self.mesh = self.scenary_meshes = self.merged_mesh = None
         t.append(self)
 
         if not self.sub[0] is None:
@@ -73,8 +74,11 @@ class Quadtree:
         # with open("../public_html/json/" + self.name + ".json", "w") as f:
         #    f.write(j)
 
-        with open("bin/" + self.name + ".pkl", "wb") as f:
+        with open("bin/" + self.name + ".terrain.pkl", "wb") as f:
             pickle.dump(self.mesh, f)
+
+        with open("bin/" + self.name + ".scenary.pkl", "wb") as f:
+            pickle.dump(self.merged_mesh, f)
 
         if not self.sub[0] is None:
             for q in self.sub:
@@ -86,11 +90,11 @@ class Quadtree:
         @returns {undefined}
         """
         # Add to scene if not yet there
-        if not self.merged_mesh:
+        if not self.mesh:
             self._loadMesh(scene)
             return
 
-        self.merged_mesh.visible = True
+        self.mesh.visible = True
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = True
@@ -100,7 +104,7 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
-        self.merged_mesh.visible = False
+        self.mesh.visible = False
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
@@ -111,32 +115,45 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
-        with open("bin/" + self.name + ".pkl", "rb") as f:
+
+        # load the terrain mesh and display
+        with open("bin/" + self.name + ".terrain.pkl", "rb") as f:
             mesh = pickle.load(f)
+
+        # load the merged mesh
+        with open("bin/" + self.name + ".scenary.pkl", "rb") as f:
+            merged_mesh = pickle.load(f)
 
         param = mesh.geometry.parameters
         geometry = THREE.PlaneBufferGeometry(param['height'], param['width'], param['heightSegments'], param['widthSegments'])
 
         geometry.attributes = mesh.geometry.attributes
 
-        self.merged_mesh = THREE.Mesh(geometry, self.material)
-        self.merged_mesh.position = mesh.position
+        self.mesh = THREE.Mesh(geometry, self.material)
+        self.mesh.position = mesh.position
 
         # print("TODO: quadtree._loadMesh > why build a new mesh and not use the loaded one ?")
         # mesh.material = self.material
         # self.merged_mesh = mesh
 
         # self.merged_mesh.material = Materials['terrain']
-        scene.add(self.merged_mesh)
+
+        # load the scenary mesh and display
+        if merged_mesh is not None:
+            mesh1 = THREE.Mesh(merged_mesh.geometry, merged_mesh.material)
+            # mesh1.position.copy(mesh.position)
+            self.mesh.add(mesh1)
+
+        scene.add(self.mesh)
 
         if Config['terrain']['debug']['boundingsphere']:
             radius = self.merged_mesh.geometry.boundingSphere.radius
             bs = THREE.SphereBufferGeometry(radius, 32, 32)
-            center = THREE.Vector3().addVectors(self.merged_mesh.geometry.boundingSphere.center, self.merged_mesh.position)
+            # center = THREE.Vector3().addVectors(self.merged_mesh.geometry.boundingSphere.center, self.merged_mesh.position)
             self.boundingsphere = THREE.Mesh(bs, _BoundingSphereMaterial)
-            self.boundingsphere.position.copy(center)
+            # self.boundingsphere.position.copy(center)
             self.boundingsphere.visible = True
-            scene.add(self.boundingsphere)
+            self.merged_mesh.add(self.boundingsphere)
 
         if self.level > 4 and Config['terrain']['debug']['normals']:
             self.normals = THREE.VertexNormalsHelper(mesh, 1, 0xff0000, 1)
@@ -169,7 +186,9 @@ class Quadtree:
         """
 
         # create and register the mesh
+        # translate the mesh coordinate(world) to the quadrant coordinate
         mesh = object.build_mesh(level)
+        mesh.position.set(object.position.x - self.center.x, object.position.y - self.center.y, object.position.z)
         if mesh:
             self.scenary_meshes.append(mesh)
 
@@ -204,3 +223,19 @@ class Quadtree:
                 if not quadrand[target]:
                     self.sub[target].insert_object(object, level+1)
                     quadrand[target] = True
+
+    def optimize_meshes(self, level):
+        """
+        merge all the meshes into a super mesh
+        :param level:
+        :return:
+        """
+        if len(self.scenary_meshes) > 0:
+            self.merged_mesh = THREE_utils.mergeMeshes(self.scenary_meshes)
+
+        # delete the scenary meshes
+        # self.scenary_meshes = None
+
+        for sub in self.sub:
+            if sub is not None:
+                sub.optimize_meshes(level+1)

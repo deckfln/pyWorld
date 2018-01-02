@@ -1,5 +1,10 @@
-DONE: use collada model as actor.
-DONE: use idle and walking animation for the actor
-TODO: use running animation for the actor
-TODO: use smooth transition from one animation to the next one
-TODO: actor should slide down a slope if it is steep
+31/12/17: use collada model as actor.
+31/12/17: use idle and walking animation for the actor
+TODO: 30/12/17/ actor should slide down a slope if it is steep
+TODO: 31/12/17/ when pickle loading THREE objects, be aware of the ID's
+TODO: 30/12/17/ pickle cache the loaders (like collada or OBJ)
+DONE on 02/01/18: 30/12/17/ get building to display
+TODO: 30/12/17/ get running move to work
+TODO: 30/12/17/ use running animation for the actor
+TODO: 30/12/17/ use smooth transition from one animation to the next one
+TODO: 02/01/18/ implement procedural forest

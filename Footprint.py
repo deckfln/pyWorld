@@ -154,7 +154,7 @@ class FootPrint:
         ortho = THREE.Vector2()
         
         for i in range(4):
-            if Config.player.debug_collision:
+            if Config['player']['debug']['collision']:
                 if self.dbghelper[i]:
                     scene.remove(self.dbghelper[i])
             
@@ -187,7 +187,7 @@ class FootPrint:
                 ortho.set(x - x3, y - y3)
                 d = ortho.length()
                 
-                if Config.player.debug_collision:
+                if Config['player']['debug']['collision']:
                     o = THREE.Vector3(ortho.x, ortho.y, 0)
                     o.normalize()
                     self.dbghelper[i] = THREE.ArrowHelper(
