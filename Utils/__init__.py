@@ -22,10 +22,10 @@ def Geometry2indexedBufferGeometry(geometry):
 
     # identified buffers
     indices = []
-    hposition = []
+    hposition = {}
     
     # general buffers
-    attrib = []
+    attrib = {}
     for key in attributes:
         attrib[key] = []
     
@@ -38,7 +38,7 @@ def Geometry2indexedBufferGeometry(geometry):
         p.y = array1[i+1]
         p.z = array1[i+2]
 
-        key=p.x+":"+p.y+":"+p.z
+        key= "%d:%d:%d" % (p.x, p.y, p.z)
         if key in hposition:
             vertice_index = hposition[key]
         else:
@@ -58,7 +58,7 @@ def Geometry2indexedBufferGeometry(geometry):
         
         indices.append(vertice_index)
     
-    bufGeometry = THREE.BufferGeometry
+    bufGeometry = THREE.BufferGeometry()
     bufGeometry.boundingSphere = geometry.boundingSphere
     bufGeometry.setIndex( indices )
     
@@ -254,7 +254,7 @@ def cylinder(radius, length, radialSegments):
 
         # faces
         indices.extend([ a, d, b ])
-        indices.append([ a, c, d ])
+        indices.extend([ a, c, d ])
     
     bufGeometry = THREE.BufferGeometry()
     bufGeometry.setIndex( indices )

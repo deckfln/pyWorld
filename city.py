@@ -1,11 +1,11 @@
 """
 
 """
-import terrain as terr
+import Terrain as terr
 import THREE as THREE
 
 from Heightmap import *
-from scenery import *
+from Scenery import *
 from Footprint import *
 
 

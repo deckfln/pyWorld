@@ -1,10 +1,15 @@
 31/12/17: use collada model as actor.
 31/12/17: use idle and walking animation for the actor
-TODO: 30/12/17/ actor should slide down a slope if it is steep
-TODO: 31/12/17/ when pickle loading THREE objects, be aware of the ID's
-TODO: 30/12/17/ pickle cache the loaders (like collada or OBJ)
-DONE on 02/01/18: 30/12/17/ get building to display
-TODO: 30/12/17/ get running move to work
-TODO: 30/12/17/ use running animation for the actor
-TODO: 30/12/17/ use smooth transition from one animation to the next one
-TODO: 02/01/18/ implement procedural forest
+TODO: 30/12/17  player              actor should slide down a slope if it is steep
+TODO: 31/12/17  THREEpy             when pickle loading THREE objects, be aware of the ID's
+TODO: 30/12/17  THREEpy             pickle cache the loaders (like collada or OBJ)
+DONE on 02/01/18: 30/12/17 city generation  get building to display
+TODO: 30/12/17  player              get running move to work
+TODO: 30/12/17  animation           use running animation for the actor
+TODO: 30/12/17  animation           use smooth transition from one animation to the next one
+DONE on 03/01/18: 02/01/18  forest generation   implement procedural forest
+TODO: 03/01/18  forest generation   trees should not be implemented on steep slopes
+TODO: 03/01/18  terrain generation  optimize normalMap building
+TODO: 03/01/18  shadows             get shadows to display
+TODO: 03/01/18  shadows             implement low and high level shadows based on distance
+TODO: 03/01/18  shadows             get shadows to fade away from the source object

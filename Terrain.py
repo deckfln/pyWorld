@@ -73,6 +73,14 @@ class Terrain:
         self.textures = []
         self.light = None
 
+        # total number of tiles
+        nb_tiles = 1
+        width = 1
+        for i in range(self.nb_levels):
+            nb_tiles += width
+            width *= 4
+        self.nb_tiles = nb_tiles
+
         """
         compute the radius at each level
         this is the sum of the radius at one level + the radiuses at at sub-levels
@@ -567,13 +575,14 @@ class Terrain:
         normalMap.forEach( norm )
         progress(0, 0)
 
-    def _build_lod_mesh(self, quad, level, x, y, size, material):
+    def _build_lod_mesh(self, quad, level, x, y, size, material, count):
         """
 
         :param center:
         :param size:
         :return:
         """
+        progress(count, self.nb_tiles, "Build terrain mesh")
         geometry = THREE.PlaneBufferGeometry(size, size, 16, 16)
 
         positions = geometry.attributes['position'].array
@@ -631,10 +640,12 @@ class Terrain:
             quad.sub[2] = Quadtree( -1, -1, -1)     # sw
             quad.sub[3] = Quadtree( -1, -1, -1)     # se
 
-            self._build_lod_mesh(quad.sub[0], level + 1, x - quadSize, y - quadSize, halfSize, material)
-            self._build_lod_mesh(quad.sub[1], level + 1, x + quadSize, y - quadSize, halfSize, material)
-            self._build_lod_mesh(quad.sub[2], level + 1, x - quadSize, y + quadSize, halfSize, material)
-            self._build_lod_mesh(quad.sub[3], level + 1, x + quadSize, y + quadSize, halfSize, material)
+            count = self._build_lod_mesh(quad.sub[0], level + 1, x - quadSize, y - quadSize, halfSize, material, count + 1)
+            count = self._build_lod_mesh(quad.sub[1], level + 1, x + quadSize, y - quadSize, halfSize, material, count + 1)
+            count = self._build_lod_mesh(quad.sub[2], level + 1, x - quadSize, y + quadSize, halfSize, material, count + 1)
+            count = self._build_lod_mesh(quad.sub[3], level + 1, x + quadSize, y + quadSize, halfSize, material, count + 1)
+
+        return count
 
     def _build_mesh(self, start_x, start_y, tile_onscreen_size, material):
         """
@@ -808,22 +819,8 @@ class Terrain:
         Build the LOD meshes and the Quad Tree
         :return:
         """
-        nb_levels = self.nb_levels
-
-        self._build_lod_mesh(self.quadtree, 0, 0, 0, self.size, None)
-
-        """
-        # // build each tile mesh
-        current = 0
-        for i in range(nb_levels):
-            self.tiles[i] = self._build_tiles_lod(i, None)
-            current += 1
-#            progress(current, nb_levels, "Build mesh")
-#        progress(0, 0)
-
-        # // connect all tiles in a quadtree
-        self._initLOD()
-        """
+        self._build_lod_mesh(self.quadtree, 0, 0, 0, self.size, None, 1)
+        progress(0, 0)
 
     def buildIndexMap(self):
         """
@@ -1158,7 +1155,15 @@ class Terrain:
         """
         root = self.quadtree
 
+        nb = len(self.scenery)
+        i = 0
         for object in self.scenery:
+            progress(i, nb, "Prepare scenery")
             root.insert_object(object, 0)
+            i += 1
 
-        root.optimize_meshes(0)
+        progress(0, 0)
+
+        root.optimize_meshes(0, 0, self.nb_tiles)
+
+        progress(0, 0)

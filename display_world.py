@@ -9,7 +9,7 @@ from THREE import *
 from THREE.pyOpenGL.pyOpenGL import *
 from THREE.controls.TrackballControls import *
 
-from terrain import *
+from Terrain import *
 from Player import *
 from Config import *
 from PlayerCamera import *

@@ -1,8 +1,9 @@
 """
 
 """
-from terrain import *
+from Terrain import *
 from road import *
+from progress import *
 
 
 class Roads:
@@ -10,6 +11,8 @@ class Roads:
 
     """
     def __init__(self, terrain):
+        progress(0, 100, "Build Roads")
+
         self.terrain = terrain
 
         size = terrain.size
@@ -29,12 +32,16 @@ class Roads:
         # // generate first road
         road = Road(terrain, source, target, 12)
 
+        progress(25, 100, "Build Roads")
+
         # // generate second road
         main_path = len(road.astar.path)
         intersection = round(main_path/2)
         current = road.astar.path[intersection]
 
         road1 = Road(terrain, source_left, current, 12)
+
+        progress(50, 100, "Build Roads")
 
         # merge the 2 paths
         self.path = road.astar.path[:]
@@ -43,6 +50,8 @@ class Roads:
         # // build roads in 3D
         road.convert3d(terrain)
         road1.convert3d(terrain)
+
+        progress(75, 100, "Build Roads")
 
         elevationmap = Heightmap(size)
         elevationmap_effect = Heightmap(size)
@@ -54,12 +63,16 @@ class Roads:
         road1.buildNormals()
         road1.patchTerrain(terrain, elevationmap, elevationmap_effect)
 
+        progress(100, 100, "Build Roads")
+
         # // apply the elevation masks on the heightmap
         terrain.heightmap.applyMask(elevationmap, elevationmap_effect)
 
         # // draw the road on the blendmap
         road.draw_road(terrain, 3)
         road1.draw_road(terrain, 3)
+
+        progress(0, 0)
 
     def distanceTo(self, p):
         """

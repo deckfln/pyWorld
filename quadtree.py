@@ -4,6 +4,8 @@ import pickle
 import THREE
 import Utils as THREE_utils
 from Config import *
+from progress import *
+
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
             'color': 0x0000ff,
@@ -188,8 +190,8 @@ class Quadtree:
         # create and register the mesh
         # translate the mesh coordinate(world) to the quadrant coordinate
         mesh = object.build_mesh(level)
-        mesh.position.set(object.position.x - self.center.x, object.position.y - self.center.y, object.position.z)
         if mesh:
+            mesh.position.set(object.position.x - self.center.x, object.position.y - self.center.y, object.position.z)
             self.scenary_meshes.append(mesh)
 
         # register the 2D footprint
@@ -224,12 +226,13 @@ class Quadtree:
                     self.sub[target].insert_object(object, level+1)
                     quadrand[target] = True
 
-    def optimize_meshes(self, level):
+    def optimize_meshes(self, level, count, nb):
         """
         merge all the meshes into a super mesh
         :param level:
         :return:
         """
+        progress(count, nb, "Build scenery mesh")
         if len(self.scenary_meshes) > 0:
             self.merged_mesh = THREE_utils.mergeMeshes(self.scenary_meshes)
 
@@ -238,4 +241,6 @@ class Quadtree:
 
         for sub in self.sub:
             if sub is not None:
-                sub.optimize_meshes(level+1)
+                count = sub.optimize_meshes(level+1, count + 1, nb)
+
+        return count
