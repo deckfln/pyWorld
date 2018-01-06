@@ -11,7 +11,6 @@ from progress import *
 from quadtree import *
 from TextureMap import *
 from Array2D import *
-from city import*
 
 
 myrandom = Random(5454334)
@@ -966,68 +965,6 @@ class Terrain:
         """
         self.roads = Roads(self)
 
-    def build_city(self):
-        """
-        Find a flat area on the map and build a city
-        :return:
-        """
-        objects = self.scenery
-        indexmap_size = self.indexmap.size
-        road = self.roads
-
-        # // find a relatively flat section of the heightmap to implement the city
-        center = city_find_flat_surface(self)
-
-        # // from the center of the flat section, paint the city following less height delta
-        city_paint_indexmap(self, center)
-
-        v = THREE.Vector2()
-
-        screen2hm = self.size/self.onscreen
-
-        # // implement boxes
-        for i in range(indexmap_size):
-            for j in range(indexmap_size):
-                v.x = j
-                v.y = i
-
-                # // ensure we are on the city area
-                if not self.isCity_indexmap(v):
-                    continue
-
-                # // check there is no road nor river at that place
-                if self.isRiverOrRoad_indexmap(v):
-                    continue
-
-                # // convert from indexmap coordinate to heightmap coordinate
-                v.x += 0.5
-                hm = self.indexmap2heighmap(v)
-
-                # // check the terrain is not too vertical at that point
-                normal = self.normalMap.getV(hm)
-                if normal.z < 0.95:
-                    continue
-
-                # // ensure we're not too close to the road
-                if road.distanceTo(hm) < 16:
-                    continue
-
-                r = normal.x*math.pi
-                z = self.get(hm.x, hm.y)
-
-                # rt from heightmap coordinate to world coordinate
-                world = self.map2screen(hm)
-
-                position = THREE.Vector3(world.x, world.y, z)
-
-                box = House(8, 8, 8, r, position)
-
-                # flatten the terrain around the object
-                City_flatten_terrain(self, box, hm, screen2hm)
-
-                # add to the terrain
-                objects.append(box)
-
     def dump(self):
         """
         Save all data of the terrain
@@ -1128,7 +1065,7 @@ class Terrain:
         self.material.uniforms.light.value.y = self.light.position.y
         self.material.uniforms.light.value.z = self.light.position.z
 
-    def colisionObjects(self, footprint):
+    def colisionObjects(self, footprint, debug=None):
         """
         Check if there are objects on the terrain colliding with the given footprint
         :param footprint:
@@ -1141,7 +1078,7 @@ class Terrain:
 
         for object in objects:
             for mfootprint in object.footprints:
-                if mfootprint.isNear(footprint):
+                if mfootprint.isNear(footprint, debug):
                     colision.append(object)
                     break
 

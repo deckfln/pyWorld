@@ -142,7 +142,7 @@ class FootPrint:
 
         return inside
 
-    def isPointNearPolygon(self,p, radius):
+    def isPointNearPolygon(self, p, radius, debug=None):
         """
          * @param {THREE.Vector2} p
          * @param {float} radius
@@ -154,9 +154,9 @@ class FootPrint:
         ortho = THREE.Vector2()
         
         for i in range(4):
-            if Config['player']['debug']['collision']:
+            if Config['player']['debug']['collision'] and debug is not None:
                 if self.dbghelper[i]:
-                    scene.remove(self.dbghelper[i])
+                    debug.remove(self.dbghelper[i])
             
             # segment
             v0 = polygon[i]
@@ -187,15 +187,15 @@ class FootPrint:
                 ortho.set(x - x3, y - y3)
                 d = ortho.length()
                 
-                if Config['player']['debug']['collision']:
+                if Config['player']['debug']['collision'] and debug is not None:
                     o = THREE.Vector3(ortho.x, ortho.y, 0)
                     o.normalize()
                     self.dbghelper[i] = THREE.ArrowHelper(
                         o, 
-                        THREE.Vector3(p.x, p.y, 1), 
+                        THREE.Vector3(p.x, p.y, 20),
                         d, 
                         0xf0000f)
-                    scene.add(self.dbghelper[i])
+                    debug.add(self.dbghelper[i])
 
                 # Return the distance of the point to the line passing through the segment
                 if d < radius:
@@ -232,7 +232,7 @@ class FootPrint:
         
         return False
 
-    def isNear(self, footprint):
+    def isNear(self, footprint, debug=None):
         """
          * @param {type} footprint
          * @returns {undefined}
@@ -251,7 +251,7 @@ class FootPrint:
                         return True
                     else:
                         # Now check the distance from the point to each segment of the polygon
-                        return self.isPointNearPolygon(footprint.center, footprint.radius)
+                        return self.isPointNearPolygon(footprint.center, footprint.radius, debug)
                 else:
                     # round footprint
                     return True
@@ -386,3 +386,38 @@ class FootPrint:
         self.p[2].y = miny
         self.p[3].x = maxx
         self.p[3].y = maxy    
+
+    def AxisAlignedBoundingBox(self, position):
+        box = THREE.Box3()
+        for p in self.p:
+            if p.x < box.min.x:
+                box.min.x = p.x
+            if p.y < box.min.y:
+                box.min.y = p.y
+            if p.x > box.max.x:
+                box.max.x = p.x
+            if p.y > box.max.y:
+                box.max.y = p.y
+
+        x = position.x
+        y = position.y
+        z = position.z
+
+        box.min.x -= x
+        box.max.x -= x
+        box.min.y -= y
+        box.max.y -= y
+
+        aabb = THREE.BoxHelper()
+        aabb.matrixAutoUpdate = False
+        positions = aabb.geometry.attributes.position.array
+        positions[0] = box.min.x;        positions[1] = box.min.y;    positions[2] = z
+        positions[3] = box.min.x;        positions[4] = box.max.y;    positions[5] = z
+        positions[6] = box.max.x;        positions[7] = box.max.y;    positions[8] = z
+        positions[9] = box.max.x;        positions[10] = box.min.y;   positions[11] = z
+        positions[12] = box.min.x;       positions[13] = box.min.y;   positions[14] = z+1
+        positions[15] = box.min.x;       positions[16] = box.max.y;   positions[17] = z+1
+        positions[18] = box.max.x;       positions[19] = box.max.y;   positions[20] = z+1
+        positions[21] = box.max.x;       positions[22] = box.min.y;   positions[23] = z+1
+
+        return aabb

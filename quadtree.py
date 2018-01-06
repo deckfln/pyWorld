@@ -133,6 +133,8 @@ class Quadtree:
 
         self.mesh = THREE.Mesh(geometry, self.material)
         self.mesh.position = mesh.position
+        self.mesh.castShadow = True
+        self.mesh.receiveShadow = True
 
         # print("TODO: quadtree._loadMesh > why build a new mesh and not use the loaded one ?")
         # mesh.material = self.material
@@ -143,6 +145,8 @@ class Quadtree:
         # load the scenary mesh and display
         if merged_mesh is not None:
             mesh1 = THREE.Mesh(merged_mesh.geometry, merged_mesh.material)
+            mesh1.castShadow = True
+            mesh1.receiveShadow = True
             # mesh1.position.copy(mesh.position)
             self.mesh.add(mesh1)
 
@@ -156,6 +160,11 @@ class Quadtree:
             # self.boundingsphere.position.copy(center)
             self.boundingsphere.visible = True
             self.merged_mesh.add(self.boundingsphere)
+
+        if Config['player']['debug']['collision']:
+            center = self.mesh.position.clone()
+            for obj in self.objects:
+                self.mesh.add(obj.AxisAlignedBoundingBoxes(center))
 
         if self.level > 4 and Config['terrain']['debug']['normals']:
             self.normals = THREE.VertexNormalsHelper(mesh, 1, 0xff0000, 1)

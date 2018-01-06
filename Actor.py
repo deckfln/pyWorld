@@ -22,6 +22,7 @@ class Actor:
         self.clip = None
 
         self.run = False
+        self.actor_mesh = None
 
         if file:
             loader = ColladaLoader()
@@ -47,7 +48,10 @@ class Actor:
             # find the mesh and get the boundingsphere
             for child in self.mesh.children:
                 if child.my_class(isSkinnedMesh):
+                    self.actor_mesh = child
                     child.geometry.computeBoundingSphere()
+                    child.castShadow = True
+                    child.receiveShadow = True
                     # * @property {number} radius face the player is moving to
                     self.radius = child.geometry.boundingSphere.radius
                     self.center = child.geometry.boundingSphere.center.clone()

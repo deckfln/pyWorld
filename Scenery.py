@@ -2,6 +2,7 @@
  @class Scenary: Upper class for all scenary objects
  @returns {Scenery}
 """
+from THREE.Group import *
 
 
 class Scenery:
@@ -30,3 +31,11 @@ class Scenery:
         # translate the footprints
         for footprint in self.footprints:
             footprint.translate(v)
+
+    def AxisAlignedBoundingBoxes(self, center):
+        aabbs = THREE.Group()
+        center.z = self.position.z
+        for footprint in self.footprints:
+            aabbs.add(footprint.AxisAlignedBoundingBox(center))
+
+        return aabbs

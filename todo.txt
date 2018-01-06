@@ -10,6 +10,7 @@ TODO: 30/12/17  animation           use smooth transition from one animation to 
 DONE on 03/01/18: 02/01/18  forest generation   implement procedural forest
 TODO: 03/01/18  forest generation   trees should not be implemented on steep slopes
 TODO: 03/01/18  terrain generation  optimize normalMap building
-TODO: 03/01/18  shadows             get shadows to display
+DONE on 06/01/18: 03/01/18  shadows             get shadows to display
 TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
+TODO: 03/01/18  frustum culling     remove tiles outside of the frustum

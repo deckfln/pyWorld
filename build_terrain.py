@@ -10,6 +10,7 @@ from THREE.pyOpenGL.pyOpenGL import *
 from THREE.loaders.BinaryLoader import *
 from Terrain import *
 from Forest import *
+from city import *
 
 
 def build():
@@ -18,13 +19,13 @@ def build():
     terrain.build_normalmap()
     terrain.buildIndexMap()
     terrain.build_roads()
-    terrain.build_city()
 
-    trees = []
-    create_forest(trees, terrain)
-    terrain.scenery.extend(trees)
+    city_create(terrain)
 
-    #    terrain.buildHeightmapsLOD()
+    # trees = []
+    # forest_create(trees, terrain)
+    # terrain.scenery.extend(trees)
+
     terrain.build_normalmap()
     terrain.buildTerrainMesh()
     terrain.build_mesh_scenery()

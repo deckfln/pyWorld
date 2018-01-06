@@ -80,15 +80,23 @@ def init(p):
         'color': 0xffffff
     })
     p.sun = THREE.DirectionalLight(0xffffff, 1)
+    p.sun.position.set(100, 100, 100)
 
     # sun imposter
     g_sun = THREE.SphereBufferGeometry(2, 8, 8)
     m_sun = THREE.Mesh(g_sun, _material)
-    # m_sun.position.set(100, 100, 100)
     p.sun.add(m_sun)
+
+    # init the scene
+    p.scene = THREE.Scene()
+    p.scene.add(p.camera)
+    p.scene.add(ambLight)
+    p.scene.add(p.sun)
+    p.scene.background = background
 
     # init the shadowmap
     if Config['shadow']['enabled']:
+        p.renderer.shadowMap.enabled = True
         p.sun.castShadow = True
         p.sun.shadow.mapSize.width = Config['shadow']['size']
         p.sun.shadow.mapSize.height = Config['shadow']['size']
@@ -110,13 +118,6 @@ def init(p):
     # init the terrain
     p.terrain = Terrain(512, 25, 512)
     p.terrain.load(p.sun)
-
-    # init the scene
-    p.scene = THREE.Scene()
-    p.scene.add(p.camera)
-    p.scene.add(ambLight)
-    p.scene.add(p.sun)
-    p.scene.background = background
     p.terrain.scene = p.scene
 
     p.player = Player(THREE.Vector3(3,3,0), p.scene, p.terrain)
@@ -163,7 +164,6 @@ def animate(p):
     p.sun.position.y = 256 * math.cos(p.hour)
     p.sun.position.z = 256 * math.sin(p.hour)
 
-    """
     # get the directional light to point to the player
     p.sun.target.position.x = p.player.position.x
     p.sun.target.position.y = p.player.position.y
@@ -171,14 +171,15 @@ def animate(p):
     p.sun.target.updateMatrixWorld()
 
     # slightly move the sun's position to cover the player
+    """
     p.sun.position.x += p.player.position.x
     p.sun.position.y += p.player.position.y
     p.sun.updateMatrixWorld()
+    """
 
     # need to update the projectmatric, don't know why
     # if the camera herlper is turned on, it does the update
     p.sun.shadow.camera.updateProjectionMatrix()
-    """
 
     # time passes
     # complete half-circle in 5min = 9000 frames

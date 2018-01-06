@@ -9,6 +9,69 @@ from Scenery import *
 from Footprint import *
 
 
+def city_create(terrain):
+    """
+    Find a flat area on the map and build a city
+    :return:
+    """
+    objects = terrain.scenery
+    indexmap_size = terrain.indexmap.size
+    road = terrain.roads
+
+    # // find a relatively flat section of the heightmap to implement the city
+    center = city_find_flat_surface(terrain)
+
+    # // from the center of the flat section, paint the city following less height delta
+    city_paint_indexmap(terrain, center)
+
+    v = THREE.Vector2()
+
+    screen2hm = terrain.size / terrain.onscreen
+
+    # // implement boxes
+    for i in range(indexmap_size):
+        for j in range(indexmap_size):
+            v.x = j
+            v.y = i
+
+            # // ensure we are on the city area
+            if not terrain.isCity_indexmap(v):
+                continue
+
+            # // check there is no road nor river at that place
+            if terrain.isRiverOrRoad_indexmap(v):
+                continue
+
+            # // convert from indexmap coordinate to heightmap coordinate
+            v.x += 0.5
+            hm = terrain.indexmap2heighmap(v)
+
+            # // check the terrain is not too vertical at that point
+            normal = terrain.normalMap.getV(hm)
+            if normal.z < 0.95:
+                continue
+
+            # // ensure we're not too close to the road
+            if road.distanceTo(hm) < 16:
+                continue
+
+            r = normal.x * math.pi
+            z = terrain.get(hm.x, hm.y)
+
+            # rt from heightmap coordinate to world coordinate
+            world = terrain.map2screen(hm)
+
+            position = THREE.Vector3(world.x, world.y, z)
+
+            box = House(8, 8, 8, r, position)
+
+            # flatten the terrain around the object
+            City_flatten_terrain(terrain, box, hm, screen2hm)
+
+            # add to the terrain
+            objects.append(box)
+
+
 def city_find_flat_surface(terrain):
     """
     Find the center of a relatively flat surface on the terrain

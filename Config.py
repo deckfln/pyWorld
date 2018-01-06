@@ -41,7 +41,7 @@ Config = {
 
     "player": {
         "debug": {
-            "collision": False,
+            "collision": True,
             "direction": False,
             "boundingsphere": False
         },

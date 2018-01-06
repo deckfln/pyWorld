@@ -62,7 +62,8 @@ class Player(Actor):
 
         if Config['player']['debug']['collision']:
             # * @property {type} aabb Axis Aligned Bounding Box of the player
-            aabb = THREE.BoxHelper(self.mesh)
+            aabb = THREE.BoxHelper(self.actor_mesh)
+            aabb.matrixAutoUpdate = True
             positions = aabb.geometry.attributes.position.array
             positions[0] = self.footprint.p[3].x;        positions[1] = self.footprint.p[3].y
             positions[3] = self.footprint.p[2].x;        positions[4] = self.footprint.p[2].y
@@ -72,9 +73,10 @@ class Player(Actor):
             positions[15]= self.footprint.p[2].x;        positions[16] =self.footprint.p[2].y
             positions[18]= self.footprint.p[0].x;        positions[19] =self.footprint.p[0].y
             positions[21]= self.footprint.p[1].x;        positions[22] =self.footprint.p[1].y
-            
             self.aabb = aabb
             self.aabb_z = position.z
+
+            self.scene.add(aabb)
             
             # * @property {type} ortho1 colisiong helpers right
             self.ortho1 = None
@@ -93,9 +95,6 @@ class Player(Actor):
         self.add2scene(self.scene)
         if Config['player']['debug']['direction']:
             self.scene.add(self.helper)
-        
-        if Config['player']['debug']['collision']:
-            self.scene.add(self.aabb)
         
         self.heightmap.draw(self.position)
 
@@ -163,7 +162,7 @@ class Player(Actor):
          * @param {float} delta
          * @param {Boolean} run
         """
-        if self.colision(self.direction):
+        if self.colision(self.direction, self.scene):
             return False
         
         self.start()
@@ -200,8 +199,8 @@ class Player(Actor):
         
         if Config['player']['debug']['direction']:
             self.helper.position.copy(p)
+
         if Config['player']['debug']['collision']:
-            p.z -= self.aabb_z
             self.aabb.position.copy(p)
         
         return True
@@ -247,7 +246,6 @@ class Player(Actor):
             self.helper.position.copy(p)
 
         if Config['player']['debug']['collision']:
-            p.z -= self.aabb_z
             self.aabb.position.copy(p)
 
         return True
@@ -299,7 +297,7 @@ class Player(Actor):
             super().stop()
     """
 
-    def colision(self,direction):
+    def colision(self,direction, debug=None):
         """
          * @param {THREE.Vector3} direction
          * @returns {Boolean}
@@ -307,4 +305,4 @@ class Player(Actor):
         next_position = self.position.clone().add(direction)
         footprint = self.footprint.clone(next_position)
         
-        return self.heightmap.colisionObjects(footprint)
+        return self.heightmap.colisionObjects(footprint, debug)
