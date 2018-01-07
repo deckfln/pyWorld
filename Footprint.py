@@ -13,7 +13,7 @@ from Config import *
 class FootPrint:
     dbghelper = [None, None, None, None]
 
-    def __init__(self, topleft=None, heightwidth=None, radius=None, position=None, scenery=None):
+    def __init__(self, topleft=None, heightwidth=None, radius=None, position=None, height=None, scenery=None):
         if topleft is None:
             # empty creation
             self.p = [
@@ -32,7 +32,8 @@ class FootPrint:
             
             self.radius = 0
             self.center = THREE.Vector2()
-            
+            self.height = 0
+
             return
 
         # * @property {array of Vector2} p Axis aligned bounding box of the footprint
@@ -66,6 +67,7 @@ class FootPrint:
         # * @property {Scenary} scenary back pointer to the object
         self.scenery = scenery
 
+        self.height = height
 
     def rotate(self,angle):
         """
@@ -268,9 +270,9 @@ class FootPrint:
             n.p[i].copy(self.p[i]).add(translation)
         
         n.center.copy(self.center).add(translation)
-        
         n.radius = self.radius
-        
+        n.height = self.height
+
         return n
 
     def distanceTo(self, p):
@@ -415,9 +417,9 @@ class FootPrint:
         positions[3] = box.min.x;        positions[4] = box.max.y;    positions[5] = z
         positions[6] = box.max.x;        positions[7] = box.max.y;    positions[8] = z
         positions[9] = box.max.x;        positions[10] = box.min.y;   positions[11] = z
-        positions[12] = box.min.x;       positions[13] = box.min.y;   positions[14] = z+1
-        positions[15] = box.min.x;       positions[16] = box.max.y;   positions[17] = z+1
-        positions[18] = box.max.x;       positions[19] = box.max.y;   positions[20] = z+1
-        positions[21] = box.max.x;       positions[22] = box.min.y;   positions[23] = z+1
+        positions[12] = box.min.x;       positions[13] = box.min.y;   positions[14] = z + self.height
+        positions[15] = box.min.x;       positions[16] = box.max.y;   positions[17] = z + self.height
+        positions[18] = box.max.x;       positions[19] = box.max.y;   positions[20] = z + self.height
+        positions[21] = box.max.x;       positions[22] = box.min.y;   positions[23] = z + self.height
 
         return aabb

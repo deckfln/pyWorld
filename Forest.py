@@ -53,6 +53,7 @@ class Tree(Scenery):
                 THREE.Vector2(1, 1),
                 0.5,
                 position,
+                10,
                 self
                 )
         self.footprints.append(footprint)
@@ -163,6 +164,7 @@ class Evergreen(Scenery):
                 THREE.Vector2(1, 1),
                 0.5,
                 position,
+                10,
                 self
                 )
         self.footprints.append(footprint)

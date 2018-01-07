@@ -50,10 +50,11 @@ class Player(Actor):
         
         # * @property {type} footprint
         self.footprint = FootPrint(
-                THREE.Vector2(-self.radius/2, -self.radius/2),
-                THREE.Vector2(self.radius, self.radius),
-                self.radius/2,
-                THREE.Vector2(0, 0)
+            THREE.Vector2(-self.radius/2, -self.radius/2),
+            THREE.Vector2(self.radius, self.radius),
+            self.radius/2,
+            THREE.Vector2(0, 0),
+            10
         )
         
         if Config['player']['debug']['direction']:

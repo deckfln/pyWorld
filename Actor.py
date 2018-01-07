@@ -6,12 +6,19 @@ from THREE.loaders.ColladaLoader2 import *
 from quadtree import _BoundingSphereMaterial
 from Config import *
 import math
+from THREE.pyOpenGL.pyCache import *
 
 
 _material = THREE.MeshLambertMaterial({
     'color': 0x00ffff,
     'wireframe': False
     })
+
+
+class _actor:
+    def __init__(self, animations, scene):
+        self.animations = animations
+        self.scene = scene
 
 
 class Actor:
@@ -25,11 +32,19 @@ class Actor:
         self.actor_mesh = None
 
         if file:
-            loader = ColladaLoader()
-            # loader.options.convertUpAxis = True
-            collada  = loader.load(file)
-            self.animations = collada.animations
-            self.mesh = collada.scene
+            cache = pyCache(file)
+            actor = cache.load()
+            if actor is None:
+                loader = ColladaLoader()
+                # loader.options.convertUpAxis = True
+                collada  = loader.load(file)
+                actor = _actor(collada.animations, collada.scene)
+                cache.save(actor)
+            else:
+                actor.scene.rebuild_id()
+
+            self.animations = actor.animations
+            self.mesh = actor.scene
             self.mesh.rotation.x = -math.pi/64
             self.mesh.rotation.z = math.pi/2
             self.basic = None

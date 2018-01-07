@@ -1,8 +1,8 @@
 31/12/17: use collada model as actor.
 31/12/17: use idle and walking animation for the actor
 TODO: 30/12/17  player              actor should slide down a slope if it is steep
-TODO: 31/12/17  THREEpy             when pickle loading THREE objects, be aware of the ID's
-TODO: 30/12/17  THREEpy             pickle cache the loaders (like collada or OBJ)
+DONE on 07/01/18: 31/12/17  THREEpy             when pickle loading THREE objects, be aware of the ID's
+DONE on 07/01/18: 30/12/17  THREEpy             pickle cache the loaders (like collada or OBJ)
 DONE on 02/01/18: 30/12/17 city generation  get building to display
 TODO: 30/12/17  player              get running move to work
 TODO: 30/12/17  animation           use running animation for the actor
@@ -14,3 +14,4 @@ DONE on 06/01/18: 03/01/18  shadows             get shadows to display
 TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
 TODO: 03/01/18  frustum culling     remove tiles outside of the frustum
+TODO: 07/01/18  performance         move the tile streaming to an secondary process

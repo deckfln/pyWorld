@@ -127,11 +127,12 @@ class Quadtree:
             merged_mesh = pickle.load(f)
 
         param = mesh.geometry.parameters
-        geometry = THREE.PlaneBufferGeometry(param['height'], param['width'], param['heightSegments'], param['widthSegments'])
+        #geometry = THREE.PlaneBufferGeometry(param['height'], param['width'], param['heightSegments'], param['widthSegments'])
 
-        geometry.attributes = mesh.geometry.attributes
+        #geometry.attributes = mesh.geometry.attributes
 
-        self.mesh = THREE.Mesh(geometry, self.material)
+        self.mesh = mesh    #Mesh(geometry, self.material)
+        self.mesh.material = self.material
         self.mesh.position = mesh.position
         self.mesh.castShadow = True
         self.mesh.receiveShadow = True
@@ -144,11 +145,11 @@ class Quadtree:
 
         # load the scenary mesh and display
         if merged_mesh is not None:
-            mesh1 = THREE.Mesh(merged_mesh.geometry, merged_mesh.material)
-            mesh1.castShadow = True
-            mesh1.receiveShadow = True
+            #mesh1 = THREE.Mesh(merged_mesh.geometry, merged_mesh.material)
+            merged_mesh.castShadow = True
+            merged_mesh.receiveShadow = True
             # mesh1.position.copy(mesh.position)
-            self.mesh.add(mesh1)
+            self.mesh.add(merged_mesh)
 
         scene.add(self.mesh)
 

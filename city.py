@@ -242,6 +242,7 @@ class House(Scenery):
                 THREE.Vector2(width, len),
                 radius,
                 position,
+                10,
                 self
                 )
 
