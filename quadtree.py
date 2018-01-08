@@ -1,11 +1,13 @@
 import json
 import pickle
+import multiprocessing
 
 import THREE
 import Utils as THREE_utils
 from Config import *
 from progress import *
 
+AsyncIO = None
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
             'color': 0x0000ff,
@@ -16,8 +18,24 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
 _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load('img/evergreen.png')})
 
 
+def _loadMeshIO(name):
+    """
+    # load the terrain mesh and display
+    # load the merged mesh
+    :return:
+    """
+    with open("bin/" + name + ".terrain.pkl", "rb") as f:
+        mesh = pickle.load(f)
+
+    with open("bin/" + name + ".scenary.pkl", "rb") as f:
+        merged_mesh = pickle.load(f)
+
+    return (mesh, merged_mesh)
+
+
 class Quadtree:
     material = None
+    asyncIO = None
 
     def __init__(self, level, center, size):
         self.name = ""
@@ -91,9 +109,12 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
+        global AsyncIO
+
         # Add to scene if not yet there
         if not self.mesh:
-            self._loadMesh(scene)
+            AsyncIO.read(self, scene)
+            # self._loadMesh(scene, terrain_mesh, scenary_mesh)
             return
 
         self.mesh.visible = True
@@ -106,59 +127,39 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
+        if self.mesh is None:
+            return
+
         self.mesh.visible = False
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
 
-    def _loadMesh(self, scene):
+    def _loadMesh(self, scene, terrain_mesh, scenary_mesh):
         """
         @param {type} name
         @param {type} scene
         @returns {undefined}
         """
 
-        # load the terrain mesh and display
-        with open("bin/" + self.name + ".terrain.pkl", "rb") as f:
-            mesh = pickle.load(f)
-
-        # load the merged mesh
-        with open("bin/" + self.name + ".scenary.pkl", "rb") as f:
-            merged_mesh = pickle.load(f)
-
-        param = mesh.geometry.parameters
-        #geometry = THREE.PlaneBufferGeometry(param['height'], param['width'], param['heightSegments'], param['widthSegments'])
-
-        #geometry.attributes = mesh.geometry.attributes
-
-        self.mesh = mesh    #Mesh(geometry, self.material)
+        self.mesh = terrain_mesh
         self.mesh.material = self.material
-        self.mesh.position = mesh.position
         self.mesh.castShadow = True
         self.mesh.receiveShadow = True
 
-        # print("TODO: quadtree._loadMesh > why build a new mesh and not use the loaded one ?")
-        # mesh.material = self.material
-        # self.merged_mesh = mesh
-
-        # self.merged_mesh.material = Materials['terrain']
-
         # load the scenary mesh and display
-        if merged_mesh is not None:
-            #mesh1 = THREE.Mesh(merged_mesh.geometry, merged_mesh.material)
-            merged_mesh.castShadow = True
-            merged_mesh.receiveShadow = True
-            # mesh1.position.copy(mesh.position)
-            self.mesh.add(merged_mesh)
+        if scenary_mesh is not None:
+            scenary_mesh.castShadow = True
+            scenary_mesh.receiveShadow = True
+            self.mesh.add(scenary_mesh)
 
         scene.add(self.mesh)
 
         if Config['terrain']['debug']['boundingsphere']:
             radius = self.merged_mesh.geometry.boundingSphere.radius
             bs = THREE.SphereBufferGeometry(radius, 32, 32)
-            # center = THREE.Vector3().addVectors(self.merged_mesh.geometry.boundingSphere.center, self.merged_mesh.position)
             self.boundingsphere = THREE.Mesh(bs, _BoundingSphereMaterial)
-            # self.boundingsphere.position.copy(center)
+            self.boundingsphere.position.copy(center)
             self.boundingsphere.visible = True
             self.merged_mesh.add(self.boundingsphere)
 
@@ -254,3 +255,75 @@ class Quadtree:
                 count = sub.optimize_meshes(level+1, count + 1, nb)
 
         return count
+
+
+class quadtreeMessage:
+    def __init__(self, name):
+        self.name = name
+        self.terrain_mesh = None
+        self.scenary_mesh = None
+
+
+class QuadtreeReader(multiprocessing.Process):
+    """
+    """
+    def __init__(self, task_queue, result_queue):
+        multiprocessing.Process.__init__(self)
+        self.task_queue = task_queue
+        self.result_queue = result_queue
+
+    def run(self):
+        proc_name = self.name
+        while True:
+            quadtree_msg = self.task_queue.get()
+            if quadtree_msg is None:
+                # Poison pill means shutdown
+                break
+            (terrain_mesh, scenary_mesh) = _loadMeshIO(quadtree_msg.name)
+            quadtree_msg.terrain_mesh = terrain_mesh
+            quadtree_msg.scenary_mesh = scenary_mesh
+            self.result_queue.put(quadtree_msg)
+        return
+
+
+class QuadtreeProcess:
+    """
+
+    :return:
+    """
+    def __init__(self):
+        # Establish communication queues
+        self.tasks = multiprocessing.Queue()
+        self.results = multiprocessing.Queue()
+        self.process = QuadtreeReader(self.tasks, self.results).start()
+        self.callbacks = {}
+        self.scene = None
+
+    def read(self, quadtree, scene):
+        self.callbacks[quadtree.name] = quadtree
+        self.scene = scene
+        self.tasks.put(quadtreeMessage(quadtree.name))
+
+    def check(self):
+        if not self.results.empty():
+            quadtree_msg = self.results.get()
+            quadtree = self.callbacks[quadtree_msg.name]
+            quadtree._loadMesh(self.scene, quadtree_msg.terrain_mesh, quadtree_msg.scenary_mesh)
+
+    def close(self):
+        self.tasks.join()
+
+
+def initQuadtreeProcess():
+    global AsyncIO
+    AsyncIO = QuadtreeProcess()
+
+
+def checkQuadtreeProcess():
+    global AsyncIO
+    AsyncIO.check()
+
+
+def killQuadtreeProcess():
+    global AsyncIO
+    AsyncIO.close()

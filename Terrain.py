@@ -10,18 +10,9 @@ from PerlinSimplexNoise import *
 from progress import *
 from quadtree import *
 from TextureMap import *
-from Array2D import *
-
+from VectorMap import *
 
 myrandom = Random(5454334)
-
-
-def newv():
-    return THREE.Vector3(0, 0, 0)
-
-
-def norm(vec3):
-    vec3.normalize()
 
 
 TILE_blend_png = 0
@@ -57,7 +48,7 @@ class Terrain:
         self.heightmaps = [None]*self.nb_levels
         self.quad_lod = [None]*self.nb_levels
         self.tiles = [None]*self.nb_levels
-        self.normalMap = Array2D(size, newv)
+        self.normalMap = VectorMap(size)
         self.indexmap = TextureMap(32, 128)
         self.blendmap = TextureMap(256, 1)
         self.scenery = []
@@ -149,19 +140,23 @@ class Terrain:
                 self.textures.append(t)
 
             loader = THREE.FileLoader()
+            uniforms = {
+                'textures': {type: "tv", 'value': self.textures},
+                'light': {type: "v3", 'value': light.position},
+                'water_shift': {type: "f", 'value': 0},
+                'indexmap': {type: "t", 'value': self.indexmap.texture},
+                'indexmap_size': {type: "f", 'value': self.indexmap.size},
+                'indexmap_repeat': {type: "f", 'value': self.indexmap.repeat},
+                'blendmap_repeat': {type: "f", 'value': 64}
+            }
+
+            if Config["shadow"]["enabled"]:
+                uniforms['directionalShadowMap'] = {type: 'v', 'value': light.shadow.map.texture}
+                uniforms['directionalShadowMatrix'] = {type: 'm4', 'value': light.shadow.matrix}
+                uniforms['directionalShadowSize'] = {type: 'v2', 'value': light.shadow.mapSize}
+
             self.material = THREE.ShaderMaterial( {
-                'uniforms': {
-                        'textures': { type: "tv", 'value': self.textures},
-                        'light': {type: "v3", 'value': light.position},
-                        'water_shift': {type: "f", 'value': 0},
-                        'indexmap': {type: "t", 'value': self.indexmap.texture},
-                        'indexmap_size': {type: "f", 'value': self.indexmap.size},
-                        'indexmap_repeat': {type: "f", 'value': self.indexmap.repeat},
-                        'blendmap_repeat': {type: "f", 'value': 64},
-                        'directionalShadowMap': { type: 'v', 'value': light.shadow.map.texture},
-                        'directionalShadowMatrix': { type: 'm4', 'value': light.shadow.matrix},
-                        'directionalShadowSize': { type: 'v2', 'value': light.shadow.mapSize}
-                        },
+                'uniforms': uniforms,
                 'vertexShader': loader.load('shaders/vertex.gl'),
                 'fragmentShader': loader.load('shaders/fragment.gl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
@@ -513,11 +508,7 @@ class Terrain:
         cb = THREE.Vector3()
         ab = THREE.Vector3()
 
-        # reset the normal map
-        def _zeros(v3):
-            v3.x = v3.y = v3.z = 0
-
-        normalMap.forEach( _zeros )
+        normalMap.empty()
 
         current = 0
         total = heightmap.size * heightmap.size
@@ -571,7 +562,7 @@ class Terrain:
             progress(current, total, "Build normalMap")
 
         # // normalize the normals
-        normalMap.forEach( norm )
+        normalMap.normalize()
         progress(0, 0)
 
     def _build_lod_mesh(self, quad, level, x, y, size, material, count):
@@ -610,7 +601,7 @@ class Terrain:
             uvs[uv_index + 1] = hm.y / (self.size - 1)
             uv_index += 2
 
-            normal = self.normalMap.bilinear(hm.x, hm.y, _bilinear)
+            normal = self.normalMap.bilinear(hm.x, hm.y)
             normals[p] = normal.x
             normals[p+1] = normal.y
             normals[p+2] = normal.z

@@ -16,9 +16,9 @@ Config = {
 
     "terrain": {
         "flat": False,               # do not generate noise
-        "forest": False,             # display forest
-        "city": False,               # generate a city
-        "roads": False,
+        "forest": True,             # display forest
+        "city": True,               # generate a city
+        "roads": True,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,
         "debug": {
@@ -41,7 +41,7 @@ Config = {
 
     "player": {
         "debug": {
-            "collision": True,
+            "collision": False,
             "direction": False,
             "boundingsphere": False
         },
@@ -49,7 +49,7 @@ Config = {
     },
 
     'shadow': {
-        'enabled': True,
+        'enabled': False,
         'size': 512,
         'debug': False
     }

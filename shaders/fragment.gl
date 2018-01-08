@@ -14,6 +14,7 @@ float unpackRGBAToDepth( const in vec4 v ) {
 // chunk(packing)
 
 // chunk(shadowmap_pars_fragment);
+#ifdef USE_SHADOWMAP
 uniform sampler2D directionalShadowMap;
 uniform vec2 directionalShadowSize;
 varying vec4 vDirectionalShadowCoord;
@@ -58,6 +59,7 @@ float getShadowMap()
 {
     return  getShadow( directionalShadowMap, directionalShadowSize, 0.0, 0.5, vDirectionalShadowCoord );
 }
+#endif
 
 uniform sampler2D textures[ 14 ];
 uniform sampler2D indexmap;
@@ -241,12 +243,16 @@ void main()
     float brightness = max(nDotl, 0.0);
     vec4 diffuse = vec4(1.0) * brightness;
 
+#ifdef USE_SHADOWMAP
     // extract the shadow
     float shadow = clamp(getShadowMap(), 0.5, 1.0);
 
 //    gl_FragColor = vec4(shadow, 0.0, 0.0, 1.0);
 
     gl_FragColor = shadow * diffuse*( mix(ground, fromBlend, blend_idx));
+#else
+    gl_FragColor = diffuse*( mix(ground, fromBlend, blend_idx));
+#endif
 
     // for debug, tint the pixel with the indexmap first value
 //    gl_FragColor.r *= (texture2D(indexmap, vUv).g*50.0);

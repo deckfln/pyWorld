@@ -47,7 +47,7 @@ def city_create(terrain):
             hm = terrain.indexmap2heighmap(v)
 
             # // check the terrain is not too vertical at that point
-            normal = terrain.normalMap.getV(hm)
+            normal = terrain.normalMap.bilinear(hm.x, hm.y)
             if normal.z < 0.95:
                 continue
 

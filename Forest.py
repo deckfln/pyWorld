@@ -260,7 +260,7 @@ class Evergreen(Scenery):
 """
 
 
-def create_forest(trees, terrain):
+def forest_create(trees, terrain):
     # ratio conversion from indexmap coordinates to world oordinates
     ratio = terrain.onscreen / terrain.indexmap.size
     size = terrain.indexmap.size
@@ -313,6 +313,11 @@ def create_forest(trees, terrain):
 
         # ignore the tree if there is a road or a river on the heightmap
         if terrain.isRiverOrRoad_heightmap(hm):
+            continue
+
+        # // check the terrain is not too steep at that point
+        normal = terrain.normalMap.bilinear(hm.x, hm.y)
+        if normal.z < 0.75:
             continue
 
         world = terrain.map2screen(hm)

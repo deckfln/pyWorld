@@ -18,13 +18,17 @@ def build():
     terrain.perl_generate()
     terrain.build_normalmap()
     terrain.buildIndexMap()
-    terrain.build_roads()
 
-    city_create(terrain)
+    if Config['terrain']['roads']:
+        terrain.build_roads()
 
-    # trees = []
-    # forest_create(trees, terrain)
-    # terrain.scenery.extend(trees)
+    if Config['terrain']['city']:
+        city_create(terrain)
+
+    if Config['terrain']['forest']:
+        trees = []
+        forest_create(trees, terrain)
+        terrain.scenery.extend(trees)
 
     terrain.build_normalmap()
     terrain.buildTerrainMesh()

@@ -13,6 +13,7 @@ from Terrain import *
 from Player import *
 from Config import *
 from PlayerCamera import *
+from quadtree import *
 
 
 class Params:
@@ -123,6 +124,8 @@ def init(p):
     p.player = Player(THREE.Vector3(3,3,0), p.scene, p.terrain)
     p.actors.append(p.player)
 
+    initQuadtreeProcess()
+
     p.terrain.draw(THREE.Vector2(3, 3))
     p.player.draw()
 
@@ -144,6 +147,8 @@ def onWindowResize(event, p):
 
 
 def animate(p):
+    checkQuadtreeProcess()
+
     # target 30 FPS, if time since last animate is exactly 0.033ms, delta=1
     delta = (p.clock.getDelta() * 30)
 
@@ -220,3 +225,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     sys.exit(main())
+    killQuadtreeProcess()

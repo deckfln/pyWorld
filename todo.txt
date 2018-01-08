@@ -14,4 +14,7 @@ DONE on 06/01/18: 03/01/18  shadows             get shadows to display
 TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
 TODO: 03/01/18  frustum culling     remove tiles outside of the frustum
-TODO: 07/01/18  performance         move the tile streaming to an secondary process
+DONE on 08/01/18: 07/01/18  performance         move the tile streaming to an secondary process
+TODO: 08/01/18  performance         pre-load one sub level of tile
+TODO: 08/01/18  terrain             only hide a parent tile once the 4 sub tiles are loaded and ready to be displayed
+TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
