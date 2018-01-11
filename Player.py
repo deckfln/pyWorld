@@ -97,7 +97,7 @@ class Player(Actor):
         if Config['player']['debug']['direction']:
             self.scene.add(self.helper)
         
-        self.heightmap.draw(self.position)
+        # self.heightmap.draw(self.position)
 
     def getZ(self, position=None):
         """
@@ -143,12 +143,12 @@ class Player(Actor):
         if direction.x == 1:
             self.move_forward(delta, run)
             self.set(self.position)
-            self.heightmap.draw(self.position)
+            # self.heightmap.draw(self.position)
             self.setZ()
         elif direction.x == -1:
             self.move_back(delta, run)
             self.set(self.position)
-            self.heightmap.draw(self.position)
+            # self.heightmap.draw(self.position)
             self.setZ()
 
         # this only update the player position

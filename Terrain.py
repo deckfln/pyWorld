@@ -85,7 +85,7 @@ class Terrain:
         """
         initialize the quadtree
         """
-        self.quadtree = Quadtree(-1, -1, -1)
+        self.quadtree = Quadtree(-1, -1, -1, None)
 
     def shaders(self, light):
         """
@@ -625,10 +625,10 @@ class Terrain:
         quadSize = size / 4
 
         if level < self.nb_levels - 1:
-            quad.sub[0] = Quadtree( -1, -1, -1)     # nw
-            quad.sub[1] = Quadtree( -1, -1, -1)     # ne
-            quad.sub[2] = Quadtree( -1, -1, -1)     # sw
-            quad.sub[3] = Quadtree( -1, -1, -1)     # se
+            quad.sub[0] = Quadtree( -1, -1, -1, quad)     # nw
+            quad.sub[1] = Quadtree( -1, -1, -1, quad)     # ne
+            quad.sub[2] = Quadtree( -1, -1, -1, quad)     # sw
+            quad.sub[3] = Quadtree( -1, -1, -1, quad)     # se
 
             count = self._build_lod_mesh(quad.sub[0], level + 1, x - quadSize, y - quadSize, halfSize, material, count + 1)
             count = self._build_lod_mesh(quad.sub[1], level + 1, x + quadSize, y - quadSize, halfSize, material, count + 1)
@@ -985,6 +985,8 @@ class Terrain:
         @param {type} tiles_2_display
         @returns {undefined}
         """
+        quad.traversed = True
+
         # detect end of tree
         if not quad.sub[0]:
             tiles_2_display.append(quad)
@@ -1006,6 +1008,9 @@ class Terrain:
         @param {type} position
         @returns {undefined}
         """
+        for quad in self.tiles_onscreen:
+            quad.traversed = False
+
         tiles_2_display = []
 
         position2D = THREE.Vector2(position.x, position.y)
@@ -1014,28 +1019,46 @@ class Terrain:
         # compare the list of tiles to display with the current list of tiles
 
         # remove tiles no more on screen
-        for i in range(len(self.tiles_onscreen) - 1, -1, -1):
+        for i in range(len(self.tiles_onscreen)-1, -1, -1):
             quad = self.tiles_onscreen[i]
-            found = False
-            for j in range(len(tiles_2_display)):
-                if tiles_2_display[j] == quad:
-                    found = True
-                    break
-            if not found:
-                del self.tiles_onscreen[i]
-                quad.remove4scene(self.scene)
+            if quad not in tiles_2_display:
+                if quad.traversed:
+                    # hide tile => the sub-tiles need to be loaded first
+                    loaded = 0
+                    for sub in quad.sub:
+                        if sub.mesh is not None:
+                            loaded += 1
+                    if loaded == 4:
+                        del self.tiles_onscreen[i]
+                        quad.hide()
+                        # else keep the tile on screen until ALL sub tiles are loaded
+                else:
+                    del self.tiles_onscreen[i]
+                    quad.hide()
 
         # add missing tiles
-        for j in range(len(tiles_2_display)):
-            quad = tiles_2_display[j]
-            found = False
-            for i in range(len(self.tiles_onscreen)):
-                if self.tiles_onscreen[i] == quad:
-                    found = True
-                    break
-            if not found:
-                self.tiles_onscreen.append(quad)
-                quad.add2scene(self.scene)
+        to_load = []
+        for quad in tiles_2_display:
+            if quad not in self.tiles_onscreen:
+                if quad.mesh and quad.parent.visible is False:
+                    if quad.added is False:
+                        quad.added = True
+                        self.scene.add(quad.mesh)
+
+                    self.tiles_onscreen.append(quad)
+                    quad.display()
+                else:
+                    to_load.append(quad)
+
+        # sort the loading priority by distance
+        def _sort(quad):
+            return quad.center.distanceToSquared(position2D)
+
+        to_load.sort(key = _sort)
+
+        # load the tile in background for next frame
+        for quad in to_load:
+            quad.load()
 
     def update(self, time):
         """

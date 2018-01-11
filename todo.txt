@@ -15,6 +15,8 @@ TODO: 03/01/18  shadows             implement low and high level shadows based o
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
 TODO: 03/01/18  frustum culling     remove tiles outside of the frustum
 DONE on 08/01/18: 07/01/18  performance         move the tile streaming to an secondary process
-TODO: 08/01/18  performance         pre-load one sub level of tile
+DONE on 11/01/18: 08/01/18  performance         load tiles in order of distance
+DONE on 11/01/18: 08/01/18  terrain             during redraw, only hide a tile if all sub-tiles are loaded in memory
 TODO: 08/01/18  terrain             only hide a parent tile once the 4 sub tiles are loaded and ready to be displayed
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
+TODO: 11/01/18  performance         avoid hichku when the player moves forward

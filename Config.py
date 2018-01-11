@@ -27,7 +27,8 @@ Config = {
             "wireframe": False,      # display terrain meshes as wireframe
             "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
-        }
+        },
+        'display_scenary': True
     },
 
     "river": {

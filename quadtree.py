@@ -37,7 +37,7 @@ class Quadtree:
     material = None
     asyncIO = None
 
-    def __init__(self, level, center, size):
+    def __init__(self, level, center, size, parent):
         self.name = ""
         self.level = level
         self.center = center
@@ -47,6 +47,11 @@ class Quadtree:
         self.scenary_meshes = []  # // scenary meshes
         self.mesh = None          # // terrain mesh
         self.merged_mesh = None   # // merged mesh of terrain and scenaries
+        self.traversed = False    # was the node traversed during a recursive pass
+        self.visible = False
+        self.parent = parent
+        self.added = False
+
         self.sub = [None]*4
 
         if Config['terrain']['debug']['normals']:
@@ -104,7 +109,7 @@ class Quadtree:
             for q in self.sub:
                 q.dump_mesh()
 
-    def add2scene(self, scene):
+    def load(self):
         """
         @param {type} scene
         @returns {undefined}
@@ -113,16 +118,19 @@ class Quadtree:
 
         # Add to scene if not yet there
         if not self.mesh:
-            AsyncIO.read(self, scene)
-            # self._loadMesh(scene, terrain_mesh, scenary_mesh)
-            return
+            AsyncIO.read(self)
 
-        self.mesh.visible = True
+    def display(self):
+        """
+
+        :return:
+        """
+        self.visible = self.mesh.visible = True
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = True
 
-    def remove4scene(self, scene):
+    def hide(self):
         """
         @param {type} scene
         @returns {undefined}
@@ -130,12 +138,12 @@ class Quadtree:
         if self.mesh is None:
             return
 
-        self.mesh.visible = False
+        self.visible = self.mesh.visible = False
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
 
-    def _loadMesh(self, scene, terrain_mesh, scenary_mesh):
+    def _record_mesh(self, scene, terrain_mesh, scenary_mesh):
         """
         @param {type} name
         @param {type} scene
@@ -148,12 +156,10 @@ class Quadtree:
         self.mesh.receiveShadow = True
 
         # load the scenary mesh and display
-        if scenary_mesh is not None:
+        if Config['terrain']['display_scenary'] and scenary_mesh is not None:
             scenary_mesh.castShadow = True
             scenary_mesh.receiveShadow = True
             self.mesh.add(scenary_mesh)
-
-        scene.add(self.mesh)
 
         if Config['terrain']['debug']['boundingsphere']:
             radius = self.merged_mesh.geometry.boundingSphere.radius
@@ -295,23 +301,26 @@ class QuadtreeProcess:
         # Establish communication queues
         self.tasks = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
-        self.process = QuadtreeReader(self.tasks, self.results).start()
+        self.process = QuadtreeReader(self.tasks, self.results)
+        self.process.start()
         self.callbacks = {}
         self.scene = None
 
-    def read(self, quadtree, scene):
+    def read(self, quadtree):
+        if quadtree.name in self.callbacks:
+            return
+
         self.callbacks[quadtree.name] = quadtree
-        self.scene = scene
         self.tasks.put(quadtreeMessage(quadtree.name))
 
     def check(self):
-        if not self.results.empty():
+        while not self.results.empty():
             quadtree_msg = self.results.get()
             quadtree = self.callbacks[quadtree_msg.name]
-            quadtree._loadMesh(self.scene, quadtree_msg.terrain_mesh, quadtree_msg.scenary_mesh)
+            quadtree._record_mesh(self.scene, quadtree_msg.terrain_mesh, quadtree_msg.scenary_mesh)
 
-    def close(self):
-        self.tasks.join()
+    def terminate(self):
+        self.process.terminate()
 
 
 def initQuadtreeProcess():
@@ -324,6 +333,11 @@ def checkQuadtreeProcess():
     AsyncIO.check()
 
 
+def loadQuadtreeProcess(quad, scene):
+    global AsyncIO
+    AsyncIO.read(quad, scene, False)
+
+
 def killQuadtreeProcess():
     global AsyncIO
-    AsyncIO.close()
+    AsyncIO.terminate()

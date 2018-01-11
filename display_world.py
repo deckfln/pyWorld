@@ -51,7 +51,7 @@ def init(p):
     p.renderer = THREE.pyOpenGLRenderer({'antialias': True})
     p.renderer.setSize( window.innerWidth, window.innerHeight )
 
-    p.camera = PlayerCamera(window.innerWidth / window.innerHeight, 25, 12, 32)
+    p.camera = PlayerCamera(window.innerWidth / window.innerHeight, 0, 0, 100)
     p.controls = TrackballControls(p.camera, p.container)
     p.camera.set_controls(p.controls)
 
@@ -195,6 +195,8 @@ def animate(p):
 
     p.terrain.update(p.hour)
 
+    p.terrain.draw(p.player.position)
+
     render(p)
 
 
@@ -224,5 +226,7 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    r = main()
     killQuadtreeProcess()
+
+    sys.exit(r)
