@@ -51,9 +51,12 @@ def init(p):
     p.renderer = THREE.pyOpenGLRenderer({'antialias': True})
     p.renderer.setSize( window.innerWidth, window.innerHeight )
 
-    p.camera = PlayerCamera(window.innerWidth / window.innerHeight, 0, 0, 100)
+    p.camera = THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000)
+    p.camera.position.set(0, 0, 100)
+    p.camera.up.set(0, 0, 1)
+
     p.controls = TrackballControls(p.camera, p.container)
-    p.camera.set_controls(p.controls)
+    p.camera.controls = p.controls
 
     # cubemap
     path = "img/skybox/"
@@ -126,7 +129,6 @@ def init(p):
 
     initQuadtreeProcess()
 
-    p.terrain.draw(THREE.Vector2(3, 3))
     p.player.draw()
 
 
@@ -156,7 +158,7 @@ def animate(p):
 
     # Check player direction
     # and move the terrain if needed
-    p.player.move(delta, p.terrain, p.camera)
+    p.player.move(delta, p.terrain)
 
     # update the animation loops
     for actor in p.actors:
@@ -195,14 +197,18 @@ def animate(p):
 
     p.terrain.update(p.hour)
 
-    p.terrain.draw(p.player.position)
+    # move the camera
+    p.player.vcamera.display(p.camera)
 
+    p.terrain.draw(p.player)
+    # t = time.time()
     render(p)
-
+    # c = time.time() - t
+    # if c > 0.033:
+    #     print(c)
 
 def render(p):
     p.renderer.render(p.scene, p.camera)
-
 
 def keyboard(event, p):
     keyCode = event.keyCode

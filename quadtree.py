@@ -1,6 +1,7 @@
 import json
 import pickle
 import multiprocessing
+import random
 
 import THREE
 import Utils as THREE_utils
@@ -41,7 +42,8 @@ class Quadtree:
         self.name = ""
         self.level = level
         self.center = center
-        self.radius = 0
+        self.lod_radius = 0       # LOD radius load the tile
+        self.visibility_radius = 0  # frustrum visibility radius
         self.size = size
         self.objects = []         # // scenary objects
         self.scenary_meshes = []  # // scenary meshes
@@ -66,7 +68,7 @@ class Quadtree:
                 "name": self.name,
                 "level": self.level,
                 "center": self.center.toArray(),
-                "radius": self.radius,
+                "radius": self.lod_radius,
                 "size": self.size,
             }
         else:
@@ -74,7 +76,7 @@ class Quadtree:
                 "name": self.name,
                 "level": self.level,
                 "center": self.center.toArray(),
-                "radius": self.radius,
+                "radius": self.lod_radius,
                 "size": self.size,
                 "sub_name": [a.name for a in self.sub]
             }
@@ -151,7 +153,10 @@ class Quadtree:
         """
 
         self.mesh = terrain_mesh
-        self.mesh.material = self.material
+        if self.material is None:
+            self.mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
+        else:
+            self.mesh.material = self.material
         self.mesh.castShadow = True
         self.mesh.receiveShadow = True
 
@@ -159,6 +164,7 @@ class Quadtree:
         if Config['terrain']['display_scenary'] and scenary_mesh is not None:
             scenary_mesh.castShadow = True
             scenary_mesh.receiveShadow = True
+            # scenary_mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
             self.mesh.add(scenary_mesh)
 
         if Config['terrain']['debug']['boundingsphere']:
@@ -252,9 +258,14 @@ class Quadtree:
         progress(count, nb, "Build scenery mesh")
         if len(self.scenary_meshes) > 0:
             self.merged_mesh = THREE_utils.mergeMeshes(self.scenary_meshes)
+            self.merged_mesh.geometry.computeBoundingSphere()
 
-        # delete the scenary meshes
-        # self.scenary_meshes = None
+        # clean up the scenary data
+        self.scenary_meshes = None
+        self.scenery = None
+
+        # pre compute the bounding sphere (cpu intensive at run time)
+        self.mesh.geometry.computeBoundingSphere()
 
         for sub in self.sub:
             if sub is not None:
@@ -301,8 +312,8 @@ class QuadtreeProcess:
         # Establish communication queues
         self.tasks = multiprocessing.Queue()
         self.results = multiprocessing.Queue()
-        self.process = QuadtreeReader(self.tasks, self.results)
-        self.process.start()
+        # self.process = QuadtreeReader(self.tasks, self.results)
+        # self.process.start()
         self.callbacks = {}
         self.scene = None
 
@@ -311,17 +322,20 @@ class QuadtreeProcess:
             return
 
         self.callbacks[quadtree.name] = quadtree
-        self.tasks.put(quadtreeMessage(quadtree.name))
+        # self.tasks.put(quadtreeMessage(quadtree.name))
+        (terrain_mesh, scenary_mesh) = _loadMeshIO(quadtree.name)
+        quadtree._record_mesh(self.scene, terrain_mesh, scenary_mesh)
 
     def check(self):
+        return
         while not self.results.empty():
             quadtree_msg = self.results.get()
             quadtree = self.callbacks[quadtree_msg.name]
             quadtree._record_mesh(self.scene, quadtree_msg.terrain_mesh, quadtree_msg.scenary_mesh)
 
     def terminate(self):
-        self.process.terminate()
-
+        # self.process.terminate()
+        return
 
 def initQuadtreeProcess():
     global AsyncIO

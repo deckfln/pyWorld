@@ -44,7 +44,8 @@ Config = {
         "debug": {
             "collision": False,
             "direction": False,
-            "boundingsphere": False
+            "boundingsphere": False,
+            "frustrum": False
         },
         "tps": True
     },

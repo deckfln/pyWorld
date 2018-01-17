@@ -70,9 +70,9 @@ class Tree(Scenery):
         """
         material1 = tree_material_trunk
         material2 = tree_material_foliage
-        if Config['terrain']['debug']['lod']:
-            material1 = lod_materials[level]
-            material2 = material1
+        # if Config['terrain']['debug']['lod']:
+        #    material1 = lod_materials[level]
+        #    material2 = material1
 
         g_trunk = THREE_Utils.cylinder(0.5, height/1.5, trunk)
         m_trunk = THREE.Mesh( g_trunk, material1 )
@@ -113,8 +113,8 @@ class Tree(Scenery):
             mergedGeometry.merge(pane1)
 
             material = tree_texture
-            if Config['terrain']['debug']['lod']:
-                material = lod_materials[level]
+            # if Config['terrain']['debug']['lod']:
+            #    material = lod_materials[level]
 
             mesh = THREE.Mesh(mergedGeometry, material)
         elif level == 2:
@@ -181,9 +181,9 @@ class Evergreen(Scenery):
         """
         material1 = tree_material_trunk
         material2 = evergreen_material_foliage
-        if Config['terrain']['debug']['lod']:
-            material1 = lod_materials[level]
-            material2 = material1
+        #if Config['terrain']['debug']['lod']:
+        #    material1 = lod_materials[level]
+        #    material2 = material1
 
         g_trunk = THREE_Utils.cylinder(0.5, height/3, trunk)
         m_trunk = THREE.Mesh( g_trunk, material1 )
@@ -232,8 +232,8 @@ class Evergreen(Scenery):
             mergedGeometry.merge(pane1)
 
             material = evergreen_texture
-            if Config['terrain']['debug']['lod']:
-                material = lod_materials[level]
+            # if Config['terrain']['debug']['lod']:
+            #    material = lod_materials[level]
 
             mesh = THREE.Mesh(mergedGeometry, material)
         elif level == 2:

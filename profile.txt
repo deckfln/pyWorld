@@ -1,0 +1,3 @@
+#kernprof -l -v display_world.py
+python -m cProfile -s tottime -o out.prof display_world.py
+snakeviz out.prof

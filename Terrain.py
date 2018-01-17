@@ -99,6 +99,8 @@ class Terrain:
                 'map': loader.load('img/UV_Grid_Sm.jpg'),
                 'wireframe': False
             })
+        elif Config['terrain']['debug']['lod']:
+            self.material = None
         else:
             """
             Initialize the various maps
@@ -141,19 +143,19 @@ class Terrain:
 
             loader = THREE.FileLoader()
             uniforms = {
-                'textures': {type: "tv", 'value': self.textures},
-                'light': {type: "v3", 'value': light.position},
-                'water_shift': {type: "f", 'value': 0},
-                'indexmap': {type: "t", 'value': self.indexmap.texture},
-                'indexmap_size': {type: "f", 'value': self.indexmap.size},
-                'indexmap_repeat': {type: "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {type: "f", 'value': 64}
+                'textures': {'type': "tv", 'value': self.textures},
+                'light': {'type': "v3", 'value': light.position},
+                'water_shift': {'type': "f", 'value': 0},
+                'indexmap': {'type': "t", 'value': self.indexmap.texture},
+                'indexmap_size': {'type': "f", 'value': self.indexmap.size},
+                'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
+                'blendmap_repeat': {'type': "f", 'value': 64}
             }
 
             if Config["shadow"]["enabled"]:
-                uniforms['directionalShadowMap'] = {type: 'v', 'value': light.shadow.map.texture}
-                uniforms['directionalShadowMatrix'] = {type: 'm4', 'value': light.shadow.matrix}
-                uniforms['directionalShadowSize'] = {type: 'v2', 'value': light.shadow.mapSize}
+                uniforms['directionalShadowMap'] = {'type': 'v', 'value': light.shadow.map.texture}
+                uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': light.shadow.matrix}
+                uniforms['directionalShadowSize'] = {'type': 'v2', 'value': light.shadow.mapSize}
 
             self.material = THREE.ShaderMaterial( {
                 'uniforms': uniforms,
@@ -423,17 +425,20 @@ class Terrain:
         )
         return p
 
-    def screen2map(self, position):
+    def screen2map(self, position, target=None):
         """
          * @description convert screen coordinate to heightmap (max level) coord
         """
         # // The center if the onscreen grid is 0,0
         # // so we have to move by the half of the grid size
-        p = THREE.Vector2(
+        if not target:
+            target = THREE.Vector2()
+
+        target.set(
                 (position.x + self.onscreen/2)*(self.size-1)/self.onscreen,
                 (position.y + self.onscreen/2)*(self.size-1)/self.onscreen
         )
-        return p
+        return target
 
     def heightmap2blendmap(self, position):
         """
@@ -575,9 +580,9 @@ class Terrain:
         progress(count, self.nb_tiles, "Build terrain mesh")
         geometry = THREE.PlaneBufferGeometry(size, size, 16, 16)
 
-        positions = geometry.attributes['position'].array
-        uvs = geometry.attributes['uv'].array
-        normals = geometry.attributes['normal'].array
+        positions = geometry.attributes.position.array
+        uvs = geometry.attributes.uv.array
+        normals = geometry.attributes.normal.array
 
         screen = THREE.Vector2()
         uv_index = 0
@@ -615,7 +620,8 @@ class Terrain:
 
         quad.mesh = plane
         quad.center = THREE.Vector2(x, y)
-        quad.radius = self.radiuses[level]
+        quad.lod_radius = self.radiuses[level]
+        quad.visibility_radius = math.sqrt(2)*size/2
         quad.size = size
         quad.level = level
         quad.name = "%d-%d-%d" % (level, x, y)
@@ -773,7 +779,7 @@ class Terrain:
                     mesh = self.tiles[i][current_level_index]
                     quad.mesh = mesh
                     quad.center = THREE.Vector2(mesh.position.x, mesh.position.y)
-                    quad.radius = radiuses[i]
+                    quad.lod_radius = radiuses[i]
                     quad.size = self.onscreen / math.pow(2, i)
                     quad.level = i
                     quad.name = "%d-%d-%d" % (i, x , y)
@@ -993,7 +999,7 @@ class Terrain:
             return
 
         distance = position.distanceTo(quad.center)
-        if distance < quad.radius:
+        if distance < quad.lod_radius:
             # check the sub tiles
             for i in range(4):
                 self._check_quad_lod(position, quad.sub[i], tiles_2_display)
@@ -1002,12 +1008,15 @@ class Terrain:
             # add the tile on the display list if needed
             tiles_2_display.append(quad)
 
-    def draw(self, position):
+    def draw(self, player):
         """
         @description Update the terrain mesh based on the pgiven position
         @param {type} position
         @returns {undefined}
         """
+        position = player.vcamera.position
+        direction = player.direction
+
         for quad in self.tiles_onscreen:
             quad.traversed = False
 
@@ -1060,6 +1069,73 @@ class Terrain:
         for quad in to_load:
             quad.load()
 
+        # check the frustrum culling
+        def isInFront(a, b, c):
+            return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) < 0
+
+        def distance2(a, b, c, distance):
+            a1 = abs((b.y - a.y) * c.x - (b.x - a.x) * c.y + b.x * a.y - b.y * a.x)
+            b1 = math.sqrt(math.pow(b.y - a.y, 2) + math.pow(b.x - a.x, 2))
+            d = a1 / b1
+
+            return d < distance
+
+        # convert player position and line of view to heightmap coordinates
+        hm = THREE.Vector2()
+        self.screen2map(position, hm)
+
+        # build the horizon line (90deg of direction)
+        horizon = THREE.Vector2(-direction.y, direction.x)
+        hm_behind = THREE.Vector2(hm.x + horizon.x, hm.y + horizon.y)
+
+        # build a simple frustrum (45deg left and right)
+        left = THREE.Vector2(direction.x + horizon.x + hm.x, direction.y + horizon.y + hm.y)
+        right= THREE.Vector2(direction.x - horizon.x + hm.x, direction.y - horizon.y + hm.y)
+
+        if Config["player"]["debug"]["frustrum"]:
+            if hasattr(player, "frustrum"):
+                player.scene.remove(player.frustrum)
+                player.scene.remove(player.frustrum1)
+
+            player.frustrum = THREE.ArrowHelper(THREE.Vector3(right.x - hm.x, right.y - hm.y, 0).normalize(), player.get_position(), 500, 0xff0000)
+            self.scene.add(player.frustrum)
+            player.frustrum1 = THREE.ArrowHelper(THREE.Vector3(left.x - hm.x, left.y - hm.y, 0).normalize(), player.get_position(), 500, 0x0000ff)
+            self.scene.add(player.frustrum1)
+
+        # check if the object is behind the player
+        hm_quad = THREE.Vector2()
+        hm_quad_radius = 0
+        p = THREE.Vector2(position.x, position.y)
+        for quad in self.tiles_onscreen:
+            # if p.distanceTo(quad.center) < quad.visibility_radius:
+            #    print("debug")
+            self.screen2map(quad.center, hm_quad)
+            hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
+            # if isLeft(hm, hm_behind, hm_quad) and isLeft(hm, left, hm_quad) and not isLeft(hm, right, hm_quad):
+            #    quad.mesh.visible = True
+            if isInFront(hm, hm_behind, hm_quad) :
+                quad.mesh.visible = True
+            elif distance2(hm, hm_behind, hm_quad, hm_quad_radius):
+                quad.mesh.visible = True
+            else:
+                quad.mesh.visible = False
+
+            if quad.mesh.visible:
+                if isInFront(hm, left, hm_quad):
+                    quad.mesh.visible = True
+                elif distance2(hm, left, hm_quad, hm_quad_radius):
+                    quad.mesh.visible = True
+                else:
+                   quad.mesh.visible = False
+
+            if quad.mesh.visible:
+                if not isInFront(hm, right, hm_quad):
+                    quad.mesh.visible = True
+                elif distance2(hm, right, hm_quad, hm_quad_radius):
+                    quad.mesh.visible = True
+                else:
+                    quad.mesh.visible = False
+
     def update(self, time):
         """
         @description: update the terrain
@@ -1075,9 +1151,10 @@ class Terrain:
         """
 
         # update light position
-        self.material.uniforms.light.value.x = self.light.position.x
-        self.material.uniforms.light.value.y = self.light.position.y
-        self.material.uniforms.light.value.z = self.light.position.z
+        if self.material is not None:
+            self.material.uniforms.light.value.x = self.light.position.x
+            self.material.uniforms.light.value.y = self.light.position.y
+            self.material.uniforms.light.value.z = self.light.position.z
 
     def colisionObjects(self, footprint, debug=None):
         """

@@ -26,8 +26,9 @@ def Geometry2indexedBufferGeometry(geometry):
     
     # general buffers
     attrib = {}
-    for key in attributes:
-        attrib[key] = []
+    for key in attributes.__dict__:
+        if attributes.__dict__[key] is not None:
+            attrib[key] = []
     
     # deduplicate positions
     # and build indices
@@ -44,8 +45,9 @@ def Geometry2indexedBufferGeometry(geometry):
         else:
             hposition[key] = total_vert
 
-            for key in attributes:
-                attribute1 = attributes[ key ]
+            for key in attrib:
+                attribute1 = attributes.__dict__[ key ]
+
                 attributeArray1 = attribute1.array
                 itemSize = attribute1.itemSize
                 
@@ -63,11 +65,12 @@ def Geometry2indexedBufferGeometry(geometry):
     bufGeometry.setIndex( indices )
     
     itemSize = 0
-    for key in attributes:
+    for key in attrib:
         if key== 'position' or key== 'normal' or key == 'color':
             itemSize=3
         elif key == 'uv':
             itemSize=2
+
         bufGeometry.addAttribute( key, THREE.Float32BufferAttribute( attrib[key], itemSize ) )
     
     return bufGeometry
@@ -167,8 +170,11 @@ def mergeMeshes(orig_meshes):
             # merge the attributes
             attributes = geometry.attributes
 
-            for key in attributes:
-                attribute1 = attributes[ key ]
+            for key in attributes.__dict__:
+                attribute1 = attributes.__dict__[ key ]
+                if attribute1 is None:
+                    continue
+
                 attributeArray1 = attribute1.array
 
                 if key == 'position':

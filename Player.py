@@ -10,36 +10,23 @@ import THREE
 from Actor import *
 from Config import *
 from Footprint import *
+from PlayerCamera import *
 
 
 class Player(Actor):
     def __init__(self, position, scene, heightmap):
         super().__init__("models/marie-jane.dae")
 
-        # @property { string } status display the object status
         self.status = "drop"
-
-        # * @property {THREE.Vector2} position position of the player
-        self.position = position
-
-        # * @property {THREE.Vector3} direction face the player is moving to
-        self.direction = THREE.Vector3(0.6, 0, 0)
-
-        # action the controler is given (forward, left, right, backward)
-        self.action = THREE.Vector2()
-
-        # * @property {THREE.Vector3} rotation_speed direction face the player is moving to
+        self.position = position                      # position position of the player
+        self.direction = THREE.Vector3(0.6, 0, 0)     # direction face the player is moving to
+        self.action = THREE.Vector2()                 # action the controler is given (forward, left, right, backward)
         self.rotation_speed = math.pi/128
         self.rotation = 0
-
-        # * @property {number} heightmap
         self.heightmap = heightmap
-
-        # * @property {string} animation
         self.animation = "stop"
-
-        # * @property {THREE.Scene} scene
         self.scene = scene
+        self.vcamera = PlayerCamera()
         
         # pre-compute the bounding sphere
         #    player.geometry.computeBoundingSphere()
@@ -101,8 +88,9 @@ class Player(Actor):
 
     def getZ(self, position=None):
         """
-         * @param {type} position
-         * @returns {undefined}
+        Get the position of the player based on the heightmap
+        :param position:
+        :return:
         """
         if position is None:
             position = self.position
@@ -113,19 +101,20 @@ class Player(Actor):
     
     def setZ(self):
         """
-         * @returns {undefined}
+        Set okayer position based on the heightmap it stand on
+        :return:
         """
         # force the player to stick to the surface
         p = self.heightmap.screen2map(self.position)
         self.position.z = self.heightmap.get(p.x, p.y)
         super().setZ(self.position.z)
   
-    def move(self, delta, terrain, camera):
+    def move(self, delta, terrain):
         """
-         * @param {time} delta ms since last frame
-         * @param {THREE.Vector2} direction
-         * @param {Boolean} run
-         * @returns {undefined}
+
+        :param delta:
+        :param terrain:
+        :return:
         """
         run = self.run
         direction = self.action
@@ -143,19 +132,14 @@ class Player(Actor):
         if direction.x == 1:
             self.move_forward(delta, run)
             self.set(self.position)
-            # self.heightmap.draw(self.position)
             self.setZ()
         elif direction.x == -1:
             self.move_back(delta, run)
             self.set(self.position)
-            # self.heightmap.draw(self.position)
             self.setZ()
 
-        # this only update the player position
-        # the actor movement is managed by from the main loop
-        # super().update(delta)
         # TODO: get the players camera from smehwere
-        camera.move(self, terrain)
+        self.vcamera.move(self, terrain)
  
     def move_forward(self, delta, run):
         """

@@ -6,13 +6,13 @@ from THREE.Camera import *
 from Config import *
 
 
-class PlayerCamera(PerspectiveCamera):
-    def __init__(self, aspect, x, y, z):
-        super().__init__(65, aspect, 0.1, 2000)
-        self.position.set (x, y, z)
-        self.up.set ( 0,0,1)
+class PlayerCamera:
+    def __init__(self):
+        self.position = THREE.Vector3()
         self.controls = None
-        
+        self.lookAt = THREE.Vector3()
+        self.updated = False
+
         if Config['camera']['debug']:
             material = THREE.LineBasicMaterial({
                     'color': 0x0000ff
@@ -27,8 +27,7 @@ class PlayerCamera(PerspectiveCamera):
             self.line = THREE.Line(geometry, material)
             self.line.frustumCulled = False
 
-    def add2scene(self, scene):
-        scene.add(self)
+    def debug(self, scene):
         if Config['camera']['debug']:
             scene.add(self.line)
 
@@ -44,7 +43,7 @@ class PlayerCamera(PerspectiveCamera):
         behind.sub(distance)
         behind.z += 2    # over the shoulder
         
-        # check if there is an obstable on our line of sight
+        # check if there is an obstacle on our line of sight
         # move the camera near the player 
         d = behind.clone().sub(shoulder)
         p = THREE.Vector3()
@@ -59,7 +58,7 @@ class PlayerCamera(PerspectiveCamera):
 
             hm = terrain.screen2map(p)
             ground = terrain.getV(hm)
-            if p.z - ground < i:    # the neareset to the camera the more over the ground
+            if p.z - ground < i:    # the nearest to the camera the more over the ground
                 p.z = ground + i    # to avoid clipping of the terrain
                 
                 # compute a line of sight
@@ -73,6 +72,8 @@ class PlayerCamera(PerspectiveCamera):
                 
             i += 0.05
 
+        self.updated = True
+
         if Config['camera']['debug']:
             self.line.geometry.vertices[0].copy(shoulder)
             self.line.geometry.vertices[1].copy(behind)
@@ -80,4 +81,11 @@ class PlayerCamera(PerspectiveCamera):
         
         if Config['player']['tps']:
             self.position.copy(behind)
-            self.controls.target.copy(shoulder)
+            self.lookAt.copy(shoulder)
+
+    def display(self, camera):
+        if self.updated:
+            camera.position.copy(self.position)
+            camera.controls.target.copy(self.lookAt)
+            camera.up.set(0, 0, 1)
+            self.updated = False
