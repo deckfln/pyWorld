@@ -50,15 +50,14 @@ class Actor:
             self.basic = None
             self.clips = {}
 
-            # find the walking and idle animations
+            # generate the actions
             self.mixer = THREE.AnimationMixer(self.mesh)
             for i in range(len(self.animations)):
                 animation = self.animations[i]
-                self.clips[animation.name] = i
+                self.clips[animation.name] = self.mixer.clipAction(self.animations[i])
 
-            # generate the actions
-            self.clips["walking"] = self.mixer.clipAction(self.animations[self.clips["walking"]])
-            self.clips["idle"] = self.mixer.clipAction(self.animations[self.clips["lookaround"]])
+            # self.clips["walking"] = self.mixer.clipAction(self.animations[self.clips["walking"]])
+            # self.clips["idle"] = self.mixer.clipAction(self.animations[self.clips["lookaround"]])
 
             # find the mesh and get the boundingsphere
             for child in self.mesh.children:
@@ -170,6 +169,22 @@ class Actor:
          * @returns {Character.mesh.position}
         """
         return self.mesh.position
+
+    def define(self, animation):
+        """
+
+        :param animation:
+        :return:
+        """
+        if self.current_animation == animation:
+            return
+
+        self.clip.stop()
+        self.clip = self.clips[animation]
+        self.clip.play()
+        # self.clip.crossFadeTo(self.clips["walking"], 0)
+
+        self.current_animation = animation
 
     def start(self):
         """

@@ -1,24 +1,31 @@
-31/12/17: use collada model as actor.
-31/12/17: use idle and walking animation for the actor
-TODO: 30/12/17  player              actor should slide down a slope if it is steep
-DONE on 07/01/18: 31/12/17  THREEpy             when pickle loading THREE objects, be aware of the ID's
-DONE on 07/01/18: 30/12/17  THREEpy             pickle cache the loaders (like collada or OBJ)
-DONE on 02/01/18: 30/12/17  city generation  get building to display
-DONE on 17/01/18: 30/12/17  player              get running move to work
-TODO: 30/12/17  animation           use running animation for the actor
+-- DONE --
+31/12/17:                               use collada model as actor.
+31/12/17:                               use idle and walking animation for the actor
+02/01/18: 30/12/17  city generation  get building to display
+03/01/18: 02/01/18  forest generation   implement procedural forest
+06/01/18: 03/01/18  shadows             get shadows to display
+07/01/18: 31/12/17  THREEpy             when pickle loading THREE objects, be aware of the ID's
+07/01/18: 30/12/17  THREEpy             pickle cache the loaders (like collada or OBJ)
+08/01/18: 07/01/18  performance         move the tile streaming to an secondary process
+08/01/18:           terrain             only hide a parent tile once the 4 sub tiles are loaded and ready to be displayed
+11/01/18: 08/01/18  performance         load tiles in order of distance
+11/01/18: 08/01/18  terrain             during redraw, only hide a tile if all sub-tiles are loaded in memory
+17/01/18: 30/12/17  player              get running move to work
+17/01/18: 03/01/18  frustum culling     remove tiles outside of the frustum
+17/01/18: 30/12/17  animation           use dedicated animation for the actor while running
+
+--TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
-DONE on 03/01/18: 02/01/18  forest generation   implement procedural forest
+TODO: 30/12/17  player              actor should slide down a slope if it is steep
 TODO: 03/01/18  forest generation   trees should not be implemented on steep slopes
 TODO: 03/01/18  terrain generation  optimize normalMap building
-DONE on 06/01/18: 03/01/18  shadows             get shadows to display
 TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
-DONE on 17/01/18: 03/01/18  frustum culling     remove tiles outside of the frustum
-DONE on 08/01/18: 07/01/18  performance         move the tile streaming to an secondary process
-DONE on 11/01/18: 08/01/18  performance         load tiles in order of distance
-DONE on 11/01/18: 08/01/18  terrain             during redraw, only hide a tile if all sub-tiles are loaded in memory
-DONE: 08/01/18  terrain             only hide a parent tile once the 4 sub tiles are loaded and ready to be displayed
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
 TODO: 11/01/18  performance         avoid hiccup when the player moves forward
 TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 16/01/18  performance         replace scenaries merged mesh with instanced meshes
+
+-- BUGS --
+TODO: 17/01/18  BUG collision       can be stuck in a tree
+TODO: 17/01/18  BUG camera          engine crash if camera if outside of the heightmap

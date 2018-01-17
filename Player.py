@@ -119,10 +119,13 @@ class Player(Actor):
         run = self.run
         direction = self.action
         if direction.x == 0 and direction.y == 0:
-            self.stop()
+            self.define("lookaround")
             return
 
-        self.start()
+        if run:
+            self.define("running")
+        else:
+            self.define("walking")
 
         if direction.y == 1:
             self.turn_right(delta, run)
@@ -150,8 +153,6 @@ class Player(Actor):
         if self.colision(self.direction, self.scene):
             return False
         
-        self.start()
-
         # forward speed depend of the steep and the run param
         z = self.getZ()
         p = self.position.clone()
@@ -198,8 +199,7 @@ class Player(Actor):
         """
         if self.colision(self.direction.clone().negate()):
             return False
-        self.start()
-        
+
         # forward speed depend of the steep
         z = self.getZ()
         p = self.position.clone()
