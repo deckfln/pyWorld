@@ -36,6 +36,7 @@ class Params:
             275: 0,     # left
             276: 0      # right
         }
+        self.shift = False
 
 
 def init(p):
@@ -207,12 +208,19 @@ def animate(p):
     # if c > 0.033:
     #     print(c)
 
+
 def render(p):
     p.renderer.render(p.scene, p.camera)
+
 
 def keyboard(event, p):
     keyCode = event.keyCode
     down = (event.type == 'keydown' ) * 1
+
+    # change status of SHIFT
+    if keyCode == 304:
+        p.shift = down
+        p.player.run = down
 
     if keyCode in p.keymap:
         p.keymap[keyCode] = down
