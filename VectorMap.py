@@ -13,7 +13,7 @@ def _bilinear(v1, v2, v3, v4, offsetx, offsety):
 
 
 def _newvector():
-    return THREE.Vector3(0, 0, 0)
+    return THREE.Vector3(0, 0, 1.0)
 
 
 # reset the normal map

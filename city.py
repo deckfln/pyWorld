@@ -7,6 +7,7 @@ import THREE as THREE
 from Heightmap import *
 from Scenery import *
 from Footprint import *
+from Utils import *
 
 
 def city_create(terrain):
@@ -220,18 +221,73 @@ def city_paint_indexmap(terrain, center):
                 terrain.setIndexMap(center, [terr.TILE_stone_path_png, 255, 255, 255])
 
 
-house_texture = THREE.MeshLambertMaterial({
+vertexShader = """
+precision highp float;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+attribute vec3 position;
+attribute vec3 offset;
+atrribute vec3 normal;
+attribute vec3 color;
+
+varying vec3 vColor;
+varying vec3 vNormal;
+
+void main() {
+    vColor.xyz = color.xyz;
+    vec3 vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( offset + vPosition, 1.0 );
+
+    vNormal = normal;
+}
+"""
+
+fragmentShader = """
+precision highp float;
+
+uniform vec3 light;
+uniform vec3 ambientLight;
+
+varying vec3 vColor;
+varying vec3 vNormal;
+
+void main() {
+
+    // Add directional light
+    vec3 nlight = normalize(light);
+    float nDotl = dot(vertexNormal, nlight);
+    float brightness = max(nDotl, 0.0);
+    vec3 diffuse = vec4(1.0) * brightness;
+
+    gl_FragColor = diffuse * vec4(vColor, 255);
+
+}
+"""
+
+"""
+house_texture = (THREE.MeshLambertMaterial({
     'color': 0xeeeeee,
     'wireframe': False,
     'name': "house_texture"
-})
+}))
+"""
 
+house_texture = THREE.RawShaderMaterial({
+        'uniforms': {
+            'light': {'type': "v3", 'value': THREE.Vector3()},
+        },
+        'vertexShader': vertexShader,
+        'fragmentShader': fragmentShader,
+    })
 
 class House(Scenery):
     def __init__(self, width, len, height, alpha, position):
         radius = math.sqrt(width*width + len*len)/2
         super().__init__(position, radius)
 
+        self.type = 0
         self.width = width
         self.height = height
         self.len = len
@@ -255,6 +311,7 @@ class House(Scenery):
         geometry.translate(0, 0, self.height/2)
         geometry.rotateZ(self.rotation)
 
-        mesh = THREE.Mesh(geometry, house_texture)
+        instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(geometry)
+        mesh = THREE.Mesh(instancedBufferGeometry, house_texture)
 
         return mesh

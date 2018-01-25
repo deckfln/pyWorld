@@ -400,7 +400,7 @@ class Terrain:
         """
         self._buildLOD(0, self.lod, self.heightmaps)
 
-    def map2screen(self, position):
+    def map2screen(self, position, target=None):
         """
         convert heightmap (max level) coord to screen coordinate
         :param position:
@@ -412,18 +412,20 @@ class Terrain:
         )
         return p
 
-    def map2screenXY(self, x, y):
+    def map2screenXY(self, x, y, target=None):
         """
         convert heightmap (max level) coord to screen coordinate
         :param x:
         :param y:
         :return:
         """
-        p = THREE.Vector2(
-                x * self.onscreen / self.size - self.onscreen / 2,
-                y * self.onscreen / self.size - self.onscreen / 2
-        )
-        return p
+        if target is None:
+            target = THREE.Vector2()
+
+        target.x = x * self.onscreen / self.size - self.onscreen / 2
+        target.y = y * self.onscreen / self.size - self.onscreen / 2
+
+        return target
 
     def screen2map(self, position, target=None):
         """
@@ -519,6 +521,21 @@ class Terrain:
         total = heightmap.size * heightmap.size
 
         # // for each vertex, compute the face normal, and add to the vertex normal
+        def _initVector():
+            return THREE.Vector3()
+
+        mA = THREE.Vector2()
+        mB = THREE.Vector2()
+        mC = THREE.Vector2()
+
+        """
+        m = Array2D(heightmap.size, _initVector)
+        for y in range(heightmap.size-1):
+            for x in range(heightmap.size-1):
+                v = m.get(x, y)
+                self.map2screenXY(x, y - 1, v)
+        """
+
         for y in range(heightmap.size-1):
             for x in range(heightmap.size-1):
                 if y > 0:
@@ -527,9 +544,9 @@ class Terrain:
                     zB = heightmap.get(x+1, y)
                     zC = heightmap.get(x, y)
 
-                    mA = self.map2screenXY(x, y-1)
-                    mB = self.map2screenXY(x+1, y)
-                    mC = self.map2screenXY(x, y)
+                    self.map2screenXY(x, y-1, mA)
+                    self.map2screenXY(x+1, y, mB)
+                    self.map2screenXY(x, y, mC)
 
                     pA.set(mA.x, mA.y, zA)
                     pB.set(mB.x, mB.y, zB)
@@ -547,9 +564,9 @@ class Terrain:
                 zB = heightmap.get(x+1, y)
                 zC = heightmap.get(x+1, y+1)
 
-                mA = self.map2screenXY(x, y)
-                mB = self.map2screenXY(x+1, y)
-                mC = self.map2screenXY(x+1, y+1)
+                self.map2screenXY(x, y, mA)
+                self.map2screenXY(x+1, y, mB)
+                self.map2screenXY(x+1, y+1, mC)
 
                 pA.set(mA.x, mA.y, zA)
                 pB.set(mB.x, mB.y, zB)
@@ -1152,9 +1169,9 @@ class Terrain:
 
         # update light position
         if self.material is not None:
-            self.material.uniforms.light.value.x = self.light.position.x
-            self.material.uniforms.light.value.y = self.light.position.y
-            self.material.uniforms.light.value.z = self.light.position.z
+            self.material.uniforms.light.value.copy(self.light.position)
+
+        instance_material.uniforms.light.value.copy(self.light.position)
 
     def colisionObjects(self, footprint, debug=None):
         """
@@ -1192,6 +1209,6 @@ class Terrain:
 
         progress(0, 0)
 
-        root.optimize_meshes(0, 0, self.nb_tiles)
+        root.scenery_instance()
 
         progress(0, 0)

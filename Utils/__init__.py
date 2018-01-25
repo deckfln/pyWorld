@@ -18,7 +18,7 @@ def Geometry2indexedBufferGeometry(geometry):
     attributes = geometry.attributes
     position = attributes.position
     p = THREE.Vector3()
-    total_vert=0
+    total_vert = 0
 
     # identified buffers
     indices = []
@@ -44,6 +44,7 @@ def Geometry2indexedBufferGeometry(geometry):
             vertice_index = hposition[key]
         else:
             hposition[key] = total_vert
+            vertice_index = total_vert
 
             for key in attrib:
                 attribute1 = attributes.__dict__[ key ]
@@ -53,8 +54,6 @@ def Geometry2indexedBufferGeometry(geometry):
                 
                 for i in range(itemSize):
                     attrib[key].append(attributeArray1[j * itemSize + i])
-            
-            vertice_index = total_vert
             
             total_vert += 1
         
@@ -212,6 +211,83 @@ def mergeMeshes(orig_meshes):
 
     # Create the combined mesh
     return THREE.Mesh(mergedGeometry, Materials)
+
+
+def mergeGeometries(geometries, target):
+    """
+
+    :param geometries:
+    :param target:
+    :return:
+    """
+    # convert all geometry to BufferGeometry
+    for geometry in geometries:
+        if geometry.my_class(isGeometry):
+            # convert geometry to nonindexed BufferGeometry
+            bufgeometry = THREE.BufferGeometry()
+            bufgeometry.fromGeometry(geometry)
+
+            geometry = bufgeometry
+
+    # convert all meshes to indexed BufferGeometry
+    for geometry in geometries:
+        if geometry.index is None:
+            geometry = Geometry2indexedBufferGeometry(geometry)
+
+    # merge all indexed BufferGeometry
+
+    # buffers
+    indices = []
+    vertices = []
+    normals = []
+    uvs = []
+    colors = []
+
+    item_start = 0
+
+    for geometry in geometries:
+        # merge the indexes
+        index = geometry.index
+        for j in range(len(index.array)):
+            indices.append(index.array[j] + item_start)
+
+        # merge the attributes
+        attributes = geometry.attributes
+
+        for key in attributes.__dict__:
+            attribute1 = attributes.__dict__[key]
+            if attribute1 is None:
+                continue
+
+            attributeArray1 = attribute1.array
+
+            if key == 'position':
+                attr_target = vertices
+                item_start += attribute1.count
+            elif key == 'normal':
+                attr_target = normals
+            elif key == 'uv':
+                attr_target = uvs
+            elif key == 'color':
+                attr_target = colors
+
+            for j in range(attribute1.count * attribute1.itemSize):
+                attr_target.append(attributeArray1[j])
+
+    target.setIndex(indices)
+    if len(vertices) > 0:
+        target.addAttribute('position', THREE.Float32BufferAttribute(vertices, 3))
+
+    if len(normals) > 0:
+        target.addAttribute('normal', THREE.Float32BufferAttribute(normals, 3))
+
+    if len(colors) > 0:
+        target.addAttribute('color', THREE.Float32BufferAttribute(colors, 3))
+
+    if len(uvs) > 0:
+        target.addAttribute('uv', THREE.Float32BufferAttribute(uvs, 2))
+
+    return target
 
 
 def cylinder(radius, length, radialSegments):
@@ -406,48 +482,26 @@ def THREE_utils_point2line(A, B, C):
     return P.distanceTo(A)
 
 
-class ShadowMap:
-    def __init__(self, size):
-        """*
-         * 
-         * @param {type} size
-         * @returns {ShadowMap}
-        """
-        self.target = THREE.WebGLRenderTarget( size, size, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            generateMipmaps: False})
-        self.target.stencilBuffer = False
-        self.depthBuffer = False
-    #    this.depthTexture = THREE.DepthTexture()
-    #    this.depthTexture.type = THREE.UnsignedShortType
+def Material2InstancedMaterial(material):
+    shader = None
 
-        self.camera = THREE.OrthographicCamera( -256, 256, 256, -256, 0, 512)
-        self.depthMaterial = THREE.MeshDepthMaterial()
-        if Config.shadow.debug_camera:
-            self.helper = THREE.CameraHelper(self.camera)
-            scene.add(self.helper)
+    if isinstance(material, MeshBasicMaterial):
+        shader = ShaderLib['basic']
+    elif isinstance(material, MeshLambertMaterial):
+            shader = ShaderLib['lambert']
+    elif isinstance(material, MeshPhongMaterial):
+        shader = ShaderLib['phong']
+    else:
+        raise RuntimeError("unknown material")
 
-        self.shadowMatrix = THREE.Matrix4()
+    vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 offset;")
+    vertexShader = vertexShader.replace("#include <worldpos_vertex>",
+                                        "tranformed = tranformed + offset;\n#include <worldpos_vertex>")
 
-    def render(self, scene):
-        scene.overrideMaterial = self.depthMaterial
-        renderer.render( scene, self.camera, self.target )
-        scene.overrideMaterial = None
+    instancedMaterial = THREE.RawShaderMaterial({
+        'uniforms': UniformsUtils.clone(shader.uniforms),
+        'vertexShader': vertexShader,
+        'fragmentShader': shader.fragmentShader,
+    })
 
-    def light(self, position):
-        self.camera.position.copy(position)
-        self.camera.lookAt(THREE.Vector3(0,0,0))
-        self.camera.updateMatrixWorld()
-        
-        self.shadowMatrix.set(
-                0.5, 0.0, 0.0, 0.5,
-                0.0, 0.5, 0.0, 0.5,
-                0.0, 0.0, 0.5, 0.5,
-                0.0, 0.0, 0.0, 1.0
-        )
-
-        self.shadowMatrix.multiply( self.camera.projectionMatrix )
-        self.shadowMatrix.multiply( self.camera.matrixWorldInverse )
-                                            
-        terrain.material1.directionalShadowMatrix = self.shadowMatrix
+    return instancedMaterial

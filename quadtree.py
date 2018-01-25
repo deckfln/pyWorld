@@ -7,6 +7,8 @@ import THREE
 import Utils as THREE_utils
 from Config import *
 from progress import *
+from THREE.javascriparray import *
+import math
 
 AsyncIO = None
 
@@ -18,6 +20,16 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
 
 _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load('img/evergreen.png')})
 
+loader = THREE.FileLoader()
+instance_material = THREE.RawShaderMaterial({
+    'uniforms': {
+        'light': {'type': "v3", 'value': THREE.Vector3()},
+    },
+    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
+    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
+    'wireframe': False
+})
+
 
 def _loadMeshIO(name):
     """
@@ -27,11 +39,15 @@ def _loadMeshIO(name):
     """
     with open("bin/" + name + ".terrain.pkl", "rb") as f:
         mesh = pickle.load(f)
+        mesh.rebuild_id()
 
     with open("bin/" + name + ".scenary.pkl", "rb") as f:
-        merged_mesh = pickle.load(f)
+        scenary_meshes = pickle.load(f)
+        for obj in scenary_meshes.values():
+            if obj is not None:
+                obj.rebuild_id()
 
-    return (mesh, merged_mesh)
+    return (mesh, scenary_meshes)
 
 
 class Quadtree:
@@ -46,13 +62,12 @@ class Quadtree:
         self.visibility_radius = 0  # frustrum visibility radius
         self.size = size
         self.objects = []         # // scenary objects
-        self.scenary_meshes = []  # // scenary meshes
+        self.scenary_meshes = {}  # // scenary meshes
         self.mesh = None          # // terrain mesh
-        self.merged_mesh = None   # // merged mesh of terrain and scenaries
         self.traversed = False    # was the node traversed during a recursive pass
-        self.visible = False
-        self.parent = parent
-        self.added = False
+        self.visible = False      # display or not the tile
+        self.parent = parent      #
+        self.added = False        # is the tile added to the Scene ?
 
         self.sub = [None]*4
 
@@ -84,7 +99,7 @@ class Quadtree:
     def dump(self, t):
         # j = self.toJSON()
         # t.append(j)
-        self.mesh = self.scenary_meshes = self.merged_mesh = None
+        self.mesh = self.scenary_meshes = None
         t.append(self)
 
         if not self.sub[0] is None:
@@ -105,7 +120,7 @@ class Quadtree:
             pickle.dump(self.mesh, f)
 
         with open("bin/" + self.name + ".scenary.pkl", "wb") as f:
-            pickle.dump(self.merged_mesh, f)
+            pickle.dump(self.scenary_meshes, f)
 
         if not self.sub[0] is None:
             for q in self.sub:
@@ -153,6 +168,7 @@ class Quadtree:
         """
 
         self.mesh = terrain_mesh
+
         if self.material is None:
             self.mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
         else:
@@ -162,18 +178,21 @@ class Quadtree:
 
         # load the scenary mesh and display
         if Config['terrain']['display_scenary'] and scenary_mesh is not None:
-            scenary_mesh.castShadow = True
-            scenary_mesh.receiveShadow = True
-            # scenary_mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
-            self.mesh.add(scenary_mesh)
+            for obj in scenary_mesh.values():
+                if obj is not None:
+                    obj.castShadow = True
+                    obj.receiveShadow = True
+                    obj.material = instance_material
+                    self.mesh.add(obj)
 
-        if Config['terrain']['debug']['boundingsphere']:
-            radius = self.merged_mesh.geometry.boundingSphere.radius
-            bs = THREE.SphereBufferGeometry(radius, 32, 32)
-            self.boundingsphere = THREE.Mesh(bs, _BoundingSphereMaterial)
-            self.boundingsphere.position.copy(center)
-            self.boundingsphere.visible = True
-            self.merged_mesh.add(self.boundingsphere)
+        # if Config['terrain']['debug']['boundingsphere']:
+        # TODO : how do you draw the bounding spheres of an instance ?
+        #    radius = self.merged_mesh.geometry.boundingSphere.radius
+        #    bs = THREE.SphereBufferGeometry(radius, 32, 32)
+        #    self.boundingsphere = THREE.Mesh(bs, _BoundingSphereMaterial)
+        #    self.boundingsphere.position.copy(center)
+        #    self.boundingsphere.visible = True
+        #    self.merged_mesh.add(self.boundingsphere)
 
         if Config['player']['debug']['collision']:
             center = self.mesh.position.clone()
@@ -181,8 +200,8 @@ class Quadtree:
                 self.mesh.add(obj.AxisAlignedBoundingBoxes(center))
 
         if self.level > 4 and Config['terrain']['debug']['normals']:
-            self.normals = THREE.VertexNormalsHelper(mesh, 1, 0xff0000, 1)
-            self.merged_mesh.add(self.normals)
+            self.normals = THREE.VertexNormalsHelper(terrain_mesh, 1, 0xff0000, 1)
+            self.mesh.add(self.normals)
 
         return self
 
@@ -210,15 +229,24 @@ class Quadtree:
         Use the footprint of the object to insert it mesh on all quads it covers
         """
 
-        # create and register the mesh
-        # translate the mesh coordinate(world) to the quadrant coordinate
-        mesh = object.build_mesh(level)
-        if mesh:
-            mesh.position.set(object.position.x - self.center.x, object.position.y - self.center.y, object.position.z)
-            self.scenary_meshes.append(mesh)
+        # create and register the mesh for the instance
+        if object.type not in self.scenary_meshes:
+            mesh = object.build_mesh(level)
+            if mesh is not None:
+                mesh.instances = []
 
-        # register the 2D footprint
-        self.objects.append(object)
+            self.scenary_meshes[object.type] = mesh
+
+        # translate the object position
+        # register the instance
+        if self.scenary_meshes[object.type] is not None:
+            self.scenary_meshes[object.type].instances.extend([
+                object.position.x - self.center.x,
+                object.position.y - self.center.y,
+                object.position.z
+            ])
+            # register the 2D footprint
+            self.objects.append(object)
 
         if self.sub[0] is None:
             # reached the deepest level
@@ -249,29 +277,52 @@ class Quadtree:
                     self.sub[target].insert_object(object, level+1)
                     quadrand[target] = True
 
-    def optimize_meshes(self, level, count, nb):
+    def scenery_instance(self):
         """
-        merge all the meshes into a super mesh
-        :param level:
         :return:
         """
-        progress(count, nb, "Build scenery mesh")
-        if len(self.scenary_meshes) > 0:
-            self.merged_mesh = THREE_utils.mergeMeshes(self.scenary_meshes)
-            self.merged_mesh.geometry.computeBoundingSphere()
+        box = THREE.Box3()
+        vector = THREE.Vector3()
+
+        def computeBoundingSphere(geometry):
+            if geometry.boundingSphere is None:
+                geometry.boundingSphere = THREE.Sphere()
+
+            offset = geometry.attributes.offset
+            if offset:
+                center = geometry.boundingSphere.center
+                box.setFromBufferAttribute(offset)
+                box.getCenter(center)
+                # // hoping to find a boundingSphere with a radius smaller than the
+                # // boundingSphere of the boundingBox: sqrt(3) smaller in the best case
+
+                maxRadiusSq = 0
+                for i in range(0, len(offset.array), offset.itemSize):
+                    vector.np[0] = offset.array[i]
+                    vector.np[1] = offset.array[i + 1]
+                    vector.np[2] = offset.array[i + 2]
+                    maxRadiusSq = max(maxRadiusSq, center.distanceToSquared(vector))
+
+                    geometry.boundingSphere.radius = math.sqrt(maxRadiusSq)
+                if math.isnan(geometry.boundingSphere.radius):
+                    print(
+                        'THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values.', self)
 
         # clean up the scenary data
-        self.scenary_meshes = None
-        self.scenery = None
+
+        # create instances of each type of scenery
+        for obj in self.scenary_meshes.values():
+            if obj is not None:
+                offsets = THREE.InstancedBufferAttribute(Float32Array(obj.instances), 3, 1)
+                obj.geometry.addAttribute( 'offset', offsets ) # per mesh translation
+                computeBoundingSphere(obj.geometry)
 
         # pre compute the bounding sphere (cpu intensive at run time)
         self.mesh.geometry.computeBoundingSphere()
 
         for sub in self.sub:
             if sub is not None:
-                count = sub.optimize_meshes(level+1, count + 1, nb)
-
-        return count
+                count = sub.scenery_instance()
 
 
 class quadtreeMessage:

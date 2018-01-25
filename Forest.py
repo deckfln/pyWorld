@@ -12,25 +12,20 @@ from Scenery import *
 from progress import *
 import Utils as THREE_Utils
 import Terrain
+from Utils import *
+import city
 
 
-"""
-* @class Tree: inerite from Scenary
-* @param {float} radius
-* @param {float} height
-* @returns {Tree}
-"""
-
-tree_material_trunk= THREE.MeshLambertMaterial( {
+tree_material_trunk= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
             'color': 0x8B4513,
             'wireframe': False,
-            'name':"tree_material_trunk"})
+            'name': "tree_material_trunk"}))
 
-tree_material_foliage= THREE.MeshLambertMaterial( {
+tree_material_foliage= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
             'color': 0x00ff00,
             'wireframe': False,
-            'name':"tree_material_foliage"} )
-tree_texture = THREE.MeshBasicMaterial({
+            'name':"tree_material_foliage"} ))
+tree_texture = Material2InstancedMaterial(THREE.MeshBasicMaterial({
     'side': THREE.DoubleSide,
     'transparent': True,
     'depthWrite': True,
@@ -39,15 +34,23 @@ tree_texture = THREE.MeshBasicMaterial({
     'alphaTest': 0.1,
     'map': THREE.ImageUtils.loadTexture('img/tree.png'),
     'name':"tree_texture"
-})
+}))
 
 
 class Tree(Scenery):
+    """
+    * @class Tree: inerite from Scenary
+    * @param {float} radius
+    * @param {float} height
+    * @returns {Tree}
+    """
     def __init__(self, radius, height, position):
+        super().__init__(position, radius)
+
         self.radius = radius
         self.height = height
-        super().__init__(position, radius)
-        
+        self.type = 1
+
         footprint = FootPrint(
                 THREE.Vector2(-0.5, -0.5),  # footprint of the TRUNK
                 THREE.Vector2(1, 1),
@@ -68,28 +71,27 @@ class Tree(Scenery):
          * @param {type} level
          * @returns {THREE.Group|Tree.prototype._build.m_tree|.Object@call;create._build.m_tree}
         """
-        material1 = tree_material_trunk
-        material2 = tree_material_foliage
-        # if Config['terrain']['debug']['lod']:
-        #    material1 = lod_materials[level]
-        #    material2 = material1
-
-        g_trunk = THREE_Utils.cylinder(0.5, height/1.5, trunk)
-        m_trunk = THREE.Mesh( g_trunk, material1 )
+        g_trunk = THREE_Utils.cylinder(0.5, height/3, trunk)
+        colors = g_trunk.attributes.position.clone()
+        for i in range(0, len(colors.array), 3):
+            colors.array[i] = 0.54
+            colors.array[i + 1] = 0.27
+            colors.array[i + 2] = 0.07
+        g_trunk.addAttribute('color', colors)
 
         g_foliage = THREE.SphereBufferGeometry(radius, foliage, foliage)
-        g_foliage.translate(0, 0, height/3 + radius)
-        m_foliage = THREE.Mesh(g_foliage, material2)
+        g_foliage.translate(0, 0, height/2 + height/3)
+        colors = g_foliage.attributes.position.clone()
+        for i in range(0, len(colors.array), 3):
+            colors.array[i] = 0.0
+            colors.array[i + 1] = 1.0
+            colors.array[i + 2] = 0.0
+        g_foliage.addAttribute('color', colors)
 
-        m_tree = THREE.Group()
-        m_tree.add(m_trunk)
-        m_tree.add(m_foliage)
+        geometry = THREE.InstancedBufferGeometry()
+        mergeGeometries([g_trunk, g_foliage], geometry)
 
-        if Config['player']['debug']['collision']:
-            aabb = THREE.BoxHelper(m_trunk)
-            m_tree.add(aabb)
-        
-        return m_tree
+        return THREE.Mesh(geometry, None)
     
     def build_mesh(self, level):
         """
@@ -97,53 +99,32 @@ class Tree(Scenery):
          * @param {type} level
          * @returns {Tree.prototype.build_mesh.mesh|THREE.Group|Tree.prototype.build_mesh.m_tree|.Object@call;create.build_mesh.m_tree|THREE.Mesh|.Object@call;create.build_mesh.mesh}
         """
-        height = self.height
-        radius = self.radius
-        mesh = None
+        height = 10
+        radius = 5
 
         if level == 0:
             return None
         elif level == 1:
-            mergedGeometry = THREE.Geometry()
-            pane1 = THREE.PlaneGeometry(radius*3, radius*2 + height/3, 1 , 1)
-            pane1.rotateX(math.pi/2)
-            pane1.translate(0, 0, (radius*2 + height/3)/2)
-            mergedGeometry.merge(pane1)
-            pane1.rotateZ(math.pi/2)
-            mergedGeometry.merge(pane1)
-
-            material = tree_texture
-            # if Config['terrain']['debug']['lod']:
-            #    material = lod_materials[level]
-
-            mesh = THREE.Mesh(mergedGeometry, material)
+            mesh = self._build(radius, height, 3, 4, level)
         elif level == 2:
             mesh = self._build(radius, height, 3, 8, level)
         elif level == 3:
             mesh = self._build(radius, height, 4, 16, level)
-        elif level == 3:
+        elif level == 4:
             mesh = self._build(radius, height, 8, 32, level)
         else:    # maximum details
             mesh = self._build(radius, height, 16, 64, level)
             self.mesh = mesh
-        
-        if mesh:
-            mesh.position.copy(self.position)
-        
+
         return mesh
 
-"""
-* @class Evergreen: inerite from Scenary
-* @param {float} radius
-* @param {float} height
-* @returns {Tree}
-"""
-evergreen_material_foliage= THREE.MeshLambertMaterial( {
+
+evergreen_material_foliage= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
             'color': 0x008800,
             'wireframe': False,
-            'name':"evergreen_material_foliage"} )
+            'name':"evergreen_material_foliage"} ))
 
-evergreen_texture = THREE.MeshBasicMaterial({
+evergreen_texture = Material2InstancedMaterial(THREE.MeshBasicMaterial({
     'side': THREE.DoubleSide,
     'transparent': True,
     'depthWrite': True,
@@ -151,14 +132,23 @@ evergreen_texture = THREE.MeshBasicMaterial({
     'wireframe': False,
     'alphaTest': 0.1,
     'map': THREE.ImageUtils.loadTexture('img/evergreen.png'),
-    'name':"evergreen_texture"} )
+    'name':"evergreen_texture"} ))
+
 
 class Evergreen(Scenery):
+    """
+    * @class Evergreen: inerite from Scenary
+    * @param {float} radius
+    * @param {float} height
+    * @returns {Tree}
+    """
     def __init__(self, radius, height, position):
+        super().__init__(position, radius)
+
         self.radius = radius
         self.height = height
-        super().__init__(position, radius)
-        
+        self.type = 2
+
         footprint = FootPrint(
                 THREE.Vector2(-0.5, -0.5),
                 THREE.Vector2(1, 1),
@@ -179,76 +169,56 @@ class Evergreen(Scenery):
          * @param {type} level
          * @returns {THREE.Group|Evergreen.prototype._build.m_tree|.Object@call;create._build.m_tree}
         """
-        material1 = tree_material_trunk
-        material2 = evergreen_material_foliage
-        #if Config['terrain']['debug']['lod']:
-        #    material1 = lod_materials[level]
-        #    material2 = material1
+        if height < 2:
+            height = 2
 
         g_trunk = THREE_Utils.cylinder(0.5, height/3, trunk)
-        m_trunk = THREE.Mesh( g_trunk, material1 )
+        colors = g_trunk.attributes.position.clone()
+        for i in range(0, len(colors.array), 3):
+            colors.array[i] = 0.54
+            colors.array[i + 1] = 0.27
+            colors.array[i + 2] = 0.07
+        g_trunk.addAttribute('color', colors)  # per mesh translation
 
-        foliage_height = height
-        if foliage_height < 2:
-            foliage_height = 2
-            
-        """
-        g_foliage = THREE.CylinderBufferGeometry(radius, 0,foliage_height, foliage, 1, true)
-        g_foliage.rotateX(-Math.PI/2)
-        """
-        g_foliage = THREE_Utils.cone(radius, foliage_height, foliage)
-        g_foliage.translate(0,0,height/3)
-        m_foliage = THREE.Mesh( g_foliage, material2 )
+        g_foliage = THREE_Utils.cone(radius, height, foliage)
+        g_foliage.translate(0, 0, height/3)
+        colors = g_foliage.attributes.position.clone()
+        for i in range(0, len(colors.array), 3):
+            colors.array[i] = 0.0
+            colors.array[i + 1] = 1.0
+            colors.array[i + 2] = 0.0
+        g_foliage.addAttribute('color', colors)  # per mesh translation
 
-        m_tree = THREE.Group()
-        m_tree.add(m_trunk)
-        m_tree.add(m_foliage)
-        
-        if Config['player']['debug']['collision']:
-            aabb = THREE.BoxHelper(m_trunk)
-            m_tree.add(aabb)
-            
-        return m_tree
-        
+        geometry = THREE.InstancedBufferGeometry()
+        mergeGeometries([g_trunk, g_foliage], geometry)
+
+        return THREE.Mesh(geometry, None)
+
     def build_mesh(self, level):
         """
          * 
          * @param {type} level
          * @returns {Evergreen.prototype.build_mesh.mesh|THREE.Group|THREE.Mesh|.Object@call;create.build_mesh.mesh}
         """
-        height = self.height
-        radius = self.radius
-        mesh = None
+        # height = self.height
+        # radius = self.radius
+        height = 10
+        radius = 5
 
         if level == 0:
             mesh = None
         elif level == 1:
-            mergedGeometry = THREE.Geometry()
-            pane1 = THREE.PlaneGeometry(radius*3, height + height/3, 1 , 1)
-            pane1.rotateX(math.pi/2)
-            pane1.translate(0, 0, (height + height/3)/2)
-            mergedGeometry.merge(pane1)
-            pane1.rotateZ(math.pi/2)
-            mergedGeometry.merge(pane1)
-
-            material = evergreen_texture
-            # if Config['terrain']['debug']['lod']:
-            #    material = lod_materials[level]
-
-            mesh = THREE.Mesh(mergedGeometry, material)
-        elif level == 2:
             mesh = self._build(radius, height, 3, 3, level)
+        elif level == 2:
+            mesh = self._build(radius, height, 3, 6, level)
         elif level == 3:
-            mesh = self._build(radius, height, 4, 4, level)
+            mesh = self._build(radius, height, 4, 12, level)
         elif level == 4:
-            mesh = self._build(radius, height, 8, 8, level)
+            mesh = self._build(radius, height, 8, 24, level)
         else: # maximum details
-            mesh = self._build(radius, height, 16, 16, level)
+            mesh = self._build(radius, height, 16, 48, level)
             self.mesh = mesh
-            
-        if mesh:
-            mesh.position.copy(self.position)
-            
+
         return mesh
 
 

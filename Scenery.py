@@ -22,6 +22,8 @@ class Scenery:
         # @property {Array of FootPrint} name description
         self.footprints = []
 
+        self.type = None
+
     def rotateZ(self, r):
         self.mesh.geometry.rotateZ(r)    
 
