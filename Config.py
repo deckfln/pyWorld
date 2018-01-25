@@ -15,17 +15,17 @@ Config = {
     "terrain_width":512,
 
     "terrain": {
-        "flat": True,               # do not generate noise
+        "flat": False,               # do not generate noise
         "forest": True,             # display forest
-        "city": False,               # generate a city
-        "roads": False,
+        "city": True,               # generate a city
+        "roads": True,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,
         "debug": {
             "normals": False,        # display normals of terrain meshes
             "boundingsphere": False,
             "wireframe": False,      # display terrain meshes as wireframe
-            "lod": True,            # display meshes LOD as colored wireframe
+            "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
         },
         'display_scenary': True

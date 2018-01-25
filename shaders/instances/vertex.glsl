@@ -19,6 +19,6 @@ void main() {
     vColor.xyz = color.xyz;
     vNormal = normal;
 
-    vec3 vPosition = position;
+    vec3 vPosition = position * vec3(scale.x, scale.x,  scale.y);
     gl_Position = projectionMatrix * modelViewMatrix * vec4( offset + vPosition, 1.0 );
 }

@@ -234,6 +234,7 @@ class Quadtree:
             mesh = object.build_mesh(level)
             if mesh is not None:
                 mesh.instances = []
+                mesh.scales = []
 
             self.scenary_meshes[object.type] = mesh
 
@@ -244,6 +245,10 @@ class Quadtree:
                 object.position.x - self.center.x,
                 object.position.y - self.center.y,
                 object.position.z
+            ])
+            self.scenary_meshes[object.type].scales.extend([
+                object.radius/5,
+                object.height/10
             ])
             # register the 2D footprint
             self.objects.append(object)
@@ -314,7 +319,9 @@ class Quadtree:
         for obj in self.scenary_meshes.values():
             if obj is not None:
                 offsets = THREE.InstancedBufferAttribute(Float32Array(obj.instances), 3, 1)
-                obj.geometry.addAttribute( 'offset', offsets ) # per mesh translation
+                scales = THREE.InstancedBufferAttribute(Float32Array(obj.scales), 2, 1)
+                obj.geometry.addAttribute( 'offset', offsets )  # per mesh translation
+                obj.geometry.addAttribute( 'scale', scales)     # per mesh scale
                 computeBoundingSphere(obj.geometry)
 
         # pre compute the bounding sphere (cpu intensive at run time)

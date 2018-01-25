@@ -14,6 +14,8 @@
 17/01/18: 30/12/17  player              get running move to work
 17/01/18: 03/01/18  frustum culling     remove tiles outside of the frustum
 17/01/18: 30/12/17  animation           use dedicated animation for the actor while running
+25/01/18: 16/01/18  performance         replace scenaries merged mesh with instanced meshes: all instances have the same size
+25/01/18: 24/01/18  scenery             display instance sceneries at different scale
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -24,14 +26,14 @@ TODO: 03/01/18  shadows             get shadows to fade away from the source obj
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
 TODO: 11/01/18  performance         avoid hiccup when the player moves forward
 TODO: 15/01/18  performance         use occlusion culling on tiles
-TODO: 16/01/18  performance         replace scenaries merged mesh with instanced meshes: all instances have the same size
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap
 TODO: 22/01/18  performance         merge instances of an object for all tiles on screen into a single drawcall, remove frustrum culling
-TODO: 24/01/18  scenery             display instance sceneries at different scale
 TODO: 24/01/18  scenery             use OBJ model do display scenery
 TODO: 25/01/18  scenery             implement shadows on instances
+TODO: 25/01/18  lights              add ambient light
 
 -- BUGS --
-TODO: 17/01/18  BUG collision       can be stuck in a tree
-TODO: 17/01/18  BUG camera          engine crash if camera if outside of the heightmap
-TODO: 24/01/18  BUG scenery         if the footprint of scenery is over multiple tiles, multiple meshes will be displayed. Meshes should only be displayed if center of the mesh is on the tile
+TODO: 17/01/18  collision           can be stuck in a tree
+TODO: 17/01/18  camera              engine crash if camera if outside of the heightmap
+TODO: 24/01/18  scenery             if the footprint of scenery is over multiple tiles, multiple meshes will be displayed. Meshes should only be displayed if center of the mesh is on the tile
+TODO: 25/01/18  lod                 tiles on the edge of the screen are not displayed. scenery also disapear too often
