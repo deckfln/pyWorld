@@ -15,7 +15,7 @@ Config = {
     "terrain_width":512,
 
     "terrain": {
-        "flat": False,               # do not generate noise
+        "flat": True,               # do not generate noise
         "forest": True,             # display forest
         "city": True,               # generate a city
         "roads": True,
@@ -51,8 +51,8 @@ Config = {
     },
 
     'shadow': {
-        'enabled': False,
+        'enabled': True,
         'size': 512,
-        'debug': False
+        'debug': True
     }
 }

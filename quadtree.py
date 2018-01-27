@@ -5,6 +5,8 @@ import random
 
 import THREE
 import Utils as THREE_utils
+import THREE.ShaderLib as THREE_ShaderLib
+
 from Config import *
 from progress import *
 from THREE.javascriparray import *
@@ -21,13 +23,27 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
 _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load('img/evergreen.png')})
 
 loader = THREE.FileLoader()
-instance_material = THREE.RawShaderMaterial({
-    'uniforms': {
-        'light': {'type': "v3", 'value': THREE.Vector3()},
-    },
+
+uniforms = {
+    'light': {'type': "v3", 'value': None},
+}
+if Config["shadow"]["enabled"]:
+    uniforms['directionalShadowMap'] = {'type': 'v', 'value': None}
+    uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': None}
+    uniforms['directionalShadowSize'] = {'type': 'v2', 'value': None}
+
+instance_material = THREE.ShaderMaterial({
+    'uniforms': uniforms,
     'vertexShader': loader.load('shaders/instances/vertex.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
-    'wireframe': False
+    'wireframe': False,
+    'vertexColors': THREE.Constants.VertexColors,
+})
+
+instance_depth_material = THREE.ShaderMaterial({
+    'uniforms': {},
+    'vertexShader': loader.load('shaders/instances/depth_vertex.glsl'),
+    'fragmentShader': loader.load('shaders/instances/depth_fragment.glsl')
 })
 
 
@@ -173,16 +189,16 @@ class Quadtree:
             self.mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
         else:
             self.mesh.material = self.material
-        self.mesh.castShadow = True
-        self.mesh.receiveShadow = True
 
         # load the scenary mesh and display
         if Config['terrain']['display_scenary'] and scenary_mesh is not None:
             for obj in scenary_mesh.values():
                 if obj is not None:
-                    obj.castShadow = True
-                    obj.receiveShadow = True
                     obj.material = instance_material
+                    obj.customDepthMaterial = instance_depth_material
+                    obj.frustumCulled = False
+                    obj.geometry.maxInstancedCount = obj.geometry.attributes.offset.meshPerAttribute * obj.geometry.attributes.offset.count
+
                     self.mesh.add(obj)
 
         # if Config['terrain']['debug']['boundingsphere']:
@@ -235,6 +251,9 @@ class Quadtree:
             if mesh is not None:
                 mesh.instances = []
                 mesh.scales = []
+                mesh.castShadow = True
+                mesh.receiveShadow = True
+                mesh.customDepthMaterial = instance_depth_material
 
             self.scenary_meshes[object.type] = mesh
 
@@ -394,6 +413,7 @@ class QuadtreeProcess:
     def terminate(self):
         # self.process.terminate()
         return
+
 
 def initQuadtreeProcess():
     global AsyncIO

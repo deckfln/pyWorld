@@ -87,6 +87,8 @@ def init(p):
     p.sun = THREE.DirectionalLight(0xffffff, 1)
     p.sun.position.set(100, 100, 100)
 
+    instance_material.uniforms.light.value = p.sun.position
+
     # sun imposter
     g_sun = THREE.SphereBufferGeometry(2, 8, 8)
     m_sun = THREE.Mesh(g_sun, _material)
@@ -119,6 +121,10 @@ def init(p):
         if Config['shadow']['debug']:
             helper = THREE.CameraHelper(p.sun.shadow.camera)
             p.scene.add(helper)
+
+        instance_material.uniforms.directionalShadowMap.value = p.sun.shadow.map.texture
+        instance_material.uniforms.directionalShadowMatrix.value = p.sun.shadow.matrix
+        instance_material.uniforms.directionalShadowSize.value = p.sun.shadow.mapSize
 
     # init the terrain
     p.terrain = Terrain(512, 25, 512)

@@ -16,6 +16,7 @@
 17/01/18: 30/12/17  animation           use dedicated animation for the actor while running
 25/01/18: 16/01/18  performance         replace scenaries merged mesh with instanced meshes: all instances have the same size
 25/01/18: 24/01/18  scenery             display instance sceneries at different scale
+27/01/18: 25/01/18  scenery             implement shadows on instances
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -29,8 +30,8 @@ TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap
 TODO: 22/01/18  performance         merge instances of an object for all tiles on screen into a single drawcall, remove frustrum culling
 TODO: 24/01/18  scenery             use OBJ model do display scenery
-TODO: 25/01/18  scenery             implement shadows on instances
 TODO: 25/01/18  lights              add ambient light
+TODO: 27/01/18  shadows             move the shadowmap center from the player object-> ahead of the player object (whats's behind the player is culled, so lost for the shadowmap)
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

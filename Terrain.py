@@ -731,7 +731,7 @@ class Terrain:
             y += step
 
         plane = THREE.Mesh(geometry, material)
-        plane.castShadow = False
+        plane.castShadow = True
         plane.receiveShadow = True
 
         return plane
@@ -1170,8 +1170,6 @@ class Terrain:
         # update light position
         if self.material is not None:
             self.material.uniforms.light.value.copy(self.light.position)
-
-        instance_material.uniforms.light.value.copy(self.light.position)
 
     def colisionObjects(self, footprint, debug=None):
         """
