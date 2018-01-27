@@ -17,6 +17,7 @@
 25/01/18: 16/01/18  performance         replace scenaries merged mesh with instanced meshes: all instances have the same size
 25/01/18: 24/01/18  scenery             display instance sceneries at different scale
 27/01/18: 25/01/18  scenery             implement shadows on instances
+27/01/18: 27/01/18  shadows             let the terrain cast shadows too
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one

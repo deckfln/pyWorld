@@ -630,7 +630,7 @@ class Terrain:
             normal_index += 1
 
         plane = THREE.Mesh(geometry, material)
-        plane.castShadow = False
+        plane.castShadow = True
         plane.receiveShadow = True
         plane.position.x = x
         plane.position.y = y

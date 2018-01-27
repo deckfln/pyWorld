@@ -1,3 +1,7 @@
+//https://stackoverflow.com/questions/34205069/three-instancedbuffergeometry-and-shadows/34230060
+//http://blog.edankwan.com/post/three-js-advanced-tips-shadow
+//https://jsfiddle.net/mikatalk/4fn1oqz9/
+
 #define DEPTH_PACKING 3201
 #if DEPTH_PACKING == 3200
     uniform float opacity;
