@@ -12,6 +12,9 @@ class PlayerCamera:
         self.controls = None
         self.lookAt = THREE.Vector3()
         self.updated = False
+        self.shoulder = THREE.Vector3()
+        self.behind = THREE.Vector3()
+        self.distance = THREE.Vector3()
 
         if Config['camera']['debug']:
             material = THREE.LineBasicMaterial({
@@ -35,17 +38,17 @@ class PlayerCamera:
         self.controls = controls
 
     def move(self, player, terrain):
-        shoulder = player.position.clone()
-        behind = shoulder.clone()
-        distance = player.direction.clone()
-        distance.multiplyScalar(20)
-        l1 = distance.length()
-        behind.sub(distance)
-        behind.z += 2    # over the shoulder
+        self.shoulder.copy(player.position)
+        self.behind.copy(self.shoulder)
+        self.distance.copy(player.direction)
+        self.distance.multiplyScalar(10)
+        l1 = self.distance.length()
+        self.behind.sub(self.distance)
+        self.behind.z += 2    # over the shoulder
         
         # check if there is an obstacle on our line of sight
         # move the camera near the player 
-        d = behind.clone().sub(shoulder)
+        d = self.behind.clone().sub(self.shoulder)
         p = THREE.Vector3()
         p1 = THREE.Vector3()
         
@@ -53,7 +56,7 @@ class PlayerCamera:
         while i < 1.05:
             p1.copy(d)
             p1.multiplyScalar(i)
-            p.copy(shoulder)
+            p.copy(self.shoulder)
             p.add(p1)
 
             hm = terrain.screen2map(p)
@@ -62,12 +65,12 @@ class PlayerCamera:
                 p.z = ground + i    # to avoid clipping of the terrain
                 
                 # compute a line of sight
-                p.sub(shoulder)
+                p.sub(self.shoulder)
                 l = p.length()
                 l = l1 / l
                 p.multiplyScalar(l)
                 
-                behind.copy(shoulder).add(p)
+                self.behind.copy(self.shoulder).add(p)
                 d.copy(p)
                 
             i += 0.05
@@ -75,13 +78,13 @@ class PlayerCamera:
         self.updated = True
 
         if Config['camera']['debug']:
-            self.line.geometry.vertices[0].copy(shoulder)
-            self.line.geometry.vertices[1].copy(behind)
+            self.line.geometry.vertices[0].copy(self.shoulder)
+            self.line.geometry.vertices[1].copy(self.behind)
             self.line.geometry.verticesNeedUpdate = True
         
         if Config['player']['tps']:
-            self.position.copy(behind)
-            self.lookAt.copy(shoulder)
+            self.position.copy(self.behind)
+            self.lookAt.copy(self.shoulder)
 
     def display(self, camera):
         if self.updated:

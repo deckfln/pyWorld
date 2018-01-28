@@ -135,13 +135,14 @@ class Actor:
         self.clip = self.clips["idle"]
         self.clip.play()
         self.current_animation = 'idle'
+        self.position = self.mesh.position                      # position position of the player
 
     def set(self, position):
         """
          * @param {type} position
          * @returns {undefined}
         """
-        self.mesh.position.copy(position)
+        self.position.copy(position)
 
     def add2scene(self, scene):
         """ 
@@ -168,7 +169,7 @@ class Actor:
         """ 
          * @returns {Character.mesh.position}
         """
-        return self.mesh.position
+        return self.position
 
     def define(self, animation):
         """

@@ -5,11 +5,16 @@ from THREE.Vector3 import *
 from Array2D import *
 
 
+# reusable vectors
+v1_static = THREE.Vector3()
+v2_static = THREE.Vector3()
+
+
 def _bilinear(v1, v2, v3, v4, offsetx, offsety):
     # https://forum.unity.com/threads/vector-bilinear-interpolation-of-a-square-grid.205644/
-    abu = v1.clone().lerp(v2, offsetx)
-    dcu = v3.clone().lerp(v4, offsetx)
-    return abu.lerp(dcu, offsety)
+    v1_static.copy(v1).lerp(v2, offsetx)
+    v2_static.copy(v3).lerp(v4, offsetx)
+    return v1_static.lerp(v2_static, offsety)
 
 
 def _newvector():

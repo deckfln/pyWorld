@@ -13,17 +13,22 @@ from Footprint import *
 from PlayerCamera import *
 
 
+# re(usable vector
+_v2d_static = THREE.Vector2()
+_v3d_static = THREE.Vector3()
+_v3d1_static = THREE.Vector3()
+
+
 class Player(Actor):
-    def __init__(self, position, scene, heightmap):
+    def __init__(self, position, scene, terrain):
         super().__init__("models/marie-jane.dae")
 
         self.status = "drop"
-        self.position = position                      # position position of the player
-        self.direction = THREE.Vector3(0.6, 0, 0)     # direction face the player is moving to
-        self.action = THREE.Vector2()                 # action the controler is given (forward, left, right, backward)
+        self.direction = THREE.Vector3(0.6, 0, 0).normalize()     # direction face the player is moving to
+        self.action = THREE.Vector2()                             # action the controler is given (forward, left, right, backward)
         self.rotation_speed = math.pi/128
         self.rotation = 0
-        self.heightmap = heightmap
+        self.terrain = terrain
         self.animation = "stop"
         self.scene = scene
         self.vcamera = PlayerCamera()
@@ -35,7 +40,6 @@ class Player(Actor):
         self.setZ()
         self.frustumCulled = False
         
-        # * @property {type} footprint
         self.footprint = FootPrint(
             THREE.Vector2(-self.radius/2, -self.radius/2),
             THREE.Vector2(self.radius, self.radius),
@@ -96,8 +100,8 @@ class Player(Actor):
             position = self.position
 
         # force the player to stick to the surface
-        p = self.heightmap.screen2map(position)
-        return self.heightmap.get(p.x, p.y)
+        self.terrain.screen2map(position, _v2d_static)
+        return self.terrain.get(_v2d_static.x, _v2d_static.y)
     
     def setZ(self):
         """
@@ -105,10 +109,9 @@ class Player(Actor):
         :return:
         """
         # force the player to stick to the surface
-        p = self.heightmap.screen2map(self.position)
-        self.position.z = self.heightmap.get(p.x, p.y)
-        super().setZ(self.position.z)
-  
+        self.terrain.screen2map(self.position, _v2d_static)
+        self.position.z = self.terrain.get(_v2d_static.x, _v2d_static.y)
+
     def move(self, delta, terrain):
         """
 
@@ -119,27 +122,41 @@ class Player(Actor):
         run = self.run
         direction = self.action
         if direction.x == 0 and direction.y == 0:
-            self.define("lookaround")
-            return
+            # test the terrain
+            self.terrain.screen2map(self.position, _v2d_static)
+            normal = self.terrain.get_normalV(_v2d_static)
+            if normal.z < 0.7:
+                # steep slope
+                # for the player to slip down tje slope
+                self.position.x += normal.x/4
+                self.position.y += normal.y/4
+                self.setZ()
+                """
+                old_direction = _v3d_static.copy(self.direction)
+                self.direction.set(normal.x, normal.y, 0).normalize()
+                self.mesh.quaternion.setFromUnitVectors(old_direction, self.direction)
+                """
+                self.define("wobbly")
+            else:
+                self.define("lookaround")
 
-        if run:
-            self.define("running")
         else:
-            self.define("walking")
+            if run:
+                self.define("running")
+            else:
+                self.define("walking")
 
-        if direction.y == 1:
-            self.turn_right(delta, run)
-        elif direction.y == -1:
-            self.turn_left(delta, run)
+            if direction.y == 1:
+                self.turn_right(delta, run)
+            elif direction.y == -1:
+                self.turn_left(delta, run)
 
-        if direction.x == 1:
-            self.move_forward(delta, run)
-            self.set(self.position)
-            self.setZ()
-        elif direction.x == -1:
-            self.move_back(delta, run)
-            self.set(self.position)
-            self.setZ()
+            if direction.x == 1:
+                self.move_forward(delta, run)
+                self.setZ()
+            elif direction.x == -1:
+                self.move_back(delta, run)
+                self.setZ()
 
         # TODO: get the players camera from smehwere
         self.vcamera.move(self, terrain)
@@ -155,8 +172,8 @@ class Player(Actor):
         
         # forward speed depend of the steep and the run param
         z = self.getZ()
-        p = self.position.clone()
-        d = self.direction.clone()
+        p = _v3d_static.copy(self.position)
+        d = _v3d1_static.copy(self.direction)
         d.multiplyScalar(delta)    # handle time
         
         # handle speed
@@ -202,8 +219,8 @@ class Player(Actor):
 
         # forward speed depend of the steep
         z = self.getZ()
-        p = self.position.clone()
-        d = self.direction.clone()
+        p = _v3d_static.copy(self.position)
+        d = _v3d1_static.copy(self.direction)
         d.multiplyScalar(delta)    # handle time
         if run:
             d.multiplyScalar(2)
@@ -290,4 +307,4 @@ class Player(Actor):
         next_position = self.position.clone().add(direction)
         footprint = self.footprint.clone(next_position)
         
-        return self.heightmap.colisionObjects(footprint, debug)
+        return self.terrain.colisionObjects(footprint, debug)

@@ -176,6 +176,9 @@ class Terrain:
         with open("bin/heightmap.pkl", "rb") as f:
             self.heightmap = pickle.load(f)
 
+        with open("bin/normalmap.pkl", "rb") as f:
+            self.normalMap = pickle.load(f)
+
         with open("bin/worldmap.pkl", "rb") as f:
             quads = pickle.load(f)
             self.quadtree = quads[0]
@@ -210,6 +213,9 @@ class Terrain:
 
     def setV(self, v, z):
         self.set(v.x, v.y, z)
+
+    def get_normalV(self, v):
+        return self.normalMap.bilinear(v.x, v.y)
 
     def getBlendMap(self, v):
         """
@@ -986,6 +992,9 @@ class Terrain:
         """
         with open("bin/heightmap.pkl", "wb") as f:
             pickle.dump(self.heightmap, f)
+
+        with open("bin/normalmap.pkl", "wb") as f:
+            pickle.dump(self.normalMap, f)
 
         # dump the meshes
         self.quadtree.dump_mesh()

@@ -18,10 +18,10 @@
 25/01/18: 24/01/18  scenery             display instance sceneries at different scale
 27/01/18: 25/01/18  scenery             implement shadows on instances
 27/01/18: 27/01/18  shadows             let the terrain cast shadows too
+28/01/18: 30/12/17  player              actor should slide down a slope if it is steep
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
-TODO: 30/12/17  player              actor should slide down a slope if it is steep
 TODO: 03/01/18  terrain generation  optimize normalMap building
 TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 03/01/18  shadows             get shadows to fade away from the source object
@@ -33,6 +33,9 @@ TODO: 22/01/18  performance         merge instances of an object for all tiles o
 TODO: 24/01/18  scenery             use OBJ model do display scenery
 TODO: 25/01/18  lights              add ambient light
 TODO: 27/01/18  shadows             move the shadowmap center from the player object-> ahead of the player object (whats's behind the player is culled, so lost for the shadowmap)
+TODO: 27/01/18  camera              smooth the movement when then camera goes upward or downward to follow the terrain
+TODO: 28/01/18  player              when the player is sliding down a slope, turn the player along the normal of the slope
+TODO: 28/01/18  shadows             Cast shodows for scenery outside of the frusturm AND outside of the shadow camera cone
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
