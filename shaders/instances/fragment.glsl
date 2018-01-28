@@ -1,5 +1,5 @@
 uniform vec3 light;
-uniform vec3 ambientLight;
+uniform vec3 ambientLightColor;
 
 varying vec3 vColor;
 varying vec3 vNormal;
@@ -72,7 +72,7 @@ void main()
     vec3 nlight = normalize(light);
     float nDotl = dot(vNormal, nlight);
     float brightness = max(nDotl, 0.0);
-    vec4 diffuse = vec4(1.0) * brightness;
+    vec4 diffuse = vec4(1.0) * brightness + vec4(ambientLightColor, 1.0);
 
 #ifdef USE_SHADOWMAP
     // extract the shadow

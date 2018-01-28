@@ -26,7 +26,9 @@ loader = THREE.FileLoader()
 
 uniforms = {
     'light': {'type': "v3", 'value': None},
+    'ambientLightColor': {'type': "v3", 'value': None},
 }
+
 if Config["shadow"]["enabled"]:
     uniforms['directionalShadowMap'] = {'type': 'v', 'value': None}
     uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': None}
@@ -37,7 +39,7 @@ instance_material = THREE.ShaderMaterial({
     'vertexShader': loader.load('shaders/instances/vertex.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
     'wireframe': False,
-    'vertexColors': THREE.Constants.VertexColors,
+    'vertexColors': THREE.Constants.VertexColors
 })
 
 instance_depth_material = THREE.ShaderMaterial({

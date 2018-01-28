@@ -78,7 +78,7 @@ def init(p):
     p.clock = THREE.Clock()
 
     # Lights
-    ambLight = THREE.AmbientLight(0x404040)
+    ambLight = THREE.AmbientLight(0x999999)
 
     # initialize the sun
     _material = THREE.MeshBasicMaterial({
@@ -88,6 +88,7 @@ def init(p):
     p.sun.position.set(100, 100, 100)
 
     instance_material.uniforms.light.value = p.sun.position
+    instance_material.uniforms.ambientLightColor.value = ambLight.color
 
     # sun imposter
     g_sun = THREE.SphereBufferGeometry(2, 8, 8)
@@ -208,6 +209,7 @@ def animate(p):
     p.player.vcamera.display(p.camera)
 
     p.terrain.draw(p.player)
+
     # t = time.time()
     render(p)
     # c = time.time() - t
