@@ -23,9 +23,15 @@ uniform vec2 directionalShadowSize;
 varying vec4 vDirectionalShadowCoord;
 
 float texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
-    return step( compare, unpackRGBAToDepth( texture2D( depths, uv ) ) );
+    float depth = unpackRGBAToDepth( texture2D( depths, uv ) );
+    float distance = compare - depth;
+    if (distance < 0)
+        return 1.0;
 
+    float shadow = distance*20.0;
+    return shadow;
 }
+
 float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {
     float shadow = 1.0;
     shadowCoord.xyz /= shadowCoord.w;

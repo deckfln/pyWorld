@@ -10,9 +10,9 @@ Config = {
     },
 
     # Terrainc configuration
-    "terrain_size":512,
-    "terrain_maxheight":18,
-    "terrain_width":512,
+    "terrain_size": 512,
+    "terrain_maxheight": 18,
+    "terrain_width": 512,
 
     "terrain": {
         "flat": False,               # do not generate noise
@@ -52,7 +52,7 @@ Config = {
 
     'shadow': {
         'enabled': True,
-        'size': 512,
+        'size': 1024,
         'debug': False
     }
 }

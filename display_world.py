@@ -37,6 +37,9 @@ class Params:
             276: 0      # right
         }
         self.shift = False
+        self.free_camera = False
+        self.debug = None
+        self.helper = None
 
 
 def init(p):
@@ -113,15 +116,17 @@ def init(p):
         p.sun.shadow.camera.right = 32
         p.sun.shadow.camera.left = -32
         p.sun.shadow.camera.near = 128
-        p.sun.shadow.camera.far = 512
+        p.sun.shadow.camera.far = 256+32
         pars = {'minFilter': THREE.NearestFilter, 'magFilter': THREE.NearestFilter, 'format': THREE.RGBAFormat}
 
-        p.sun.shadow.map = THREE.pyOpenGLRenderTarget(512, 512, pars)
+        p.sun.shadow.map = THREE.pyOpenGLRenderTarget(Config['shadow']['size'], Config['shadow']['size'], pars)
         p.sun.shadow.map.texture.name = p.sun.name + ".shadowMap"
 
         if Config['shadow']['debug']:
-            helper = THREE.CameraHelper(p.sun.shadow.camera)
-            p.scene.add(helper)
+            p.helper = THREE.CameraHelper(p.sun.shadow.camera)
+            p.scene.add(p.helper)
+            p.debug = THREE.Mesh(THREE.SphereBufferGeometry(2, 8, 8), _material)
+            p.scene.add(p.debug)
 
         instance_material.uniforms.directionalShadowMap.value = p.sun.shadow.map.texture
         instance_material.uniforms.directionalShadowMatrix.value = p.sun.shadow.matrix
@@ -175,26 +180,28 @@ def animate(p):
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
 
-    # rotate "sun"
-    p.sun.position.y = 256 * math.cos(p.hour)
-    p.sun.position.z = 256 * math.sin(p.hour)
+    # "sun" directional vector
+    sun_vector = THREE.Vector3(0, 256 * math.cos(p.hour), 256 * math.sin(p.hour))
 
-    # get the directional light to point to the player
-    p.sun.target.position.x = p.player.position.x
-    p.sun.target.position.y = p.player.position.y
-    p.sun.target.position.z = p.player.position.z
+    # define the shadowmap camera target, 10 units ahead of the player position along the view sight
+    line_of_sight = p.player.direction.clone().multiplyScalar(24).add(p.player.position)
+    # hm = p.terrain.screen2map(line_of_sight)
+    line_of_sight.z = p.player.position.z   # p.terrain.get(hm.x, hm.y)
+    p.sun.target.position.copy(line_of_sight)
     p.sun.target.updateMatrixWorld()
 
-    # slightly move the sun's position to cover the player
-    """
-    p.sun.position.x += p.player.position.x
-    p.sun.position.y += p.player.position.y
-    p.sun.updateMatrixWorld()
-    """
+    if Config['shadow']['debug']:
+        p.debug.position.copy(line_of_sight)
+
+    # move back the sun direction to set the shadow camera position
+    line_of_sight.add(sun_vector)
+    p.sun.shadow.camera.position.copy(line_of_sight)
+    p.sun.position.copy(line_of_sight)
 
     # need to update the projectmatric, don't know why
     # if the camera herlper is turned on, it does the update
     p.sun.shadow.camera.updateProjectionMatrix()
+    p.sun.shadow.camera.updateMatrixWorld()
 
     # time passes
     # complete half-circle in 5min = 9000 frames
@@ -206,7 +213,8 @@ def animate(p):
     p.terrain.update(p.hour)
 
     # move the camera
-    p.player.vcamera.display(p.camera)
+    if not p.free_camera:
+        p.player.vcamera.display(p.camera)
 
     p.terrain.draw(p.player)
 
@@ -229,6 +237,9 @@ def keyboard(event, p):
     if keyCode == 304:
         p.shift = down
         p.player.run = down
+
+    if keyCode == 99:
+        p.free_camera = not p.free_camera
 
     if keyCode in p.keymap:
         p.keymap[keyCode] = down
