@@ -23,16 +23,16 @@
 28/01/18: 03/01/18  shadows             get shadows to fade away from the source object
 02/02/18: 28/01/18  camera              control camera is not working any more
 03/02/18: 27/01/18  shadows             move the shadowmap center from the player object-> ahead of the player object (whats's behind the player is culled, so lost for the shadowmap)
+08/02/18: 22/01/18  performance         merge instances of an object for all tiles on screen into a single drawcall, remove frustrum culling
+08/02/18: 04/02/18  instances           set source object to unit 1 so it's easier to rescale at display
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
 TODO: 03/01/18  terrain generation  optimize normalMap building
-TODO: 03/01/18  shadows             implement low and high level shadows based on distance
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
 TODO: 11/01/18  performance         avoid hiccup when the player moves forward
 TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap
-TODO: 22/01/18  performance         merge instances of an object for all tiles on screen into a single drawcall, remove frustrum culling
 TODO: 24/01/18  scenery             use OBJ model do display scenery
 TODO: 27/01/18  camera              smooth the movement when then camera goes upward or downward to follow the terrain
 TODO: 28/01/18  player              when the player is sliding down a slope, turn the player along the normal of the slope
@@ -40,6 +40,8 @@ TODO: 28/01/18  shadows             Cast shadows for scenery outside of the frus
 TODO: 28/01/18  lights              implement lights in the shaders following UniformsLibs implementation
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poison based shadow attenuation
+TODO: 06/02/18  scenery             add grass instances
+TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

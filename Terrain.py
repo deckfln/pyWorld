@@ -1216,6 +1216,6 @@ class Terrain:
 
         progress(0, 0)
 
-        root.scenery_instance()
+        # root.scenery_instance()
 
         progress(0, 0)

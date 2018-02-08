@@ -39,39 +39,31 @@ tree_texture = Material2InstancedMaterial(THREE.MeshBasicMaterial({
 
 class Tree(Scenery):
     """
-    * @class Tree: inerite from Scenary
-    * @param {float} radius
-    * @param {float} height
-    * @returns {Tree}
     """
     def __init__(self, radius, height, position):
-        super().__init__(position, radius)
+        if radius is None:
+            return
+
+        super().__init__(position, radius*2, "tree")
 
         self.radius = radius
         self.height = height
         self.type = 1
 
         footprint = FootPrint(
-                THREE.Vector2(-0.5, -0.5),  # footprint of the TRUNK
-                THREE.Vector2(1, 1),
-                0.5,
-                position,
-                10,
-                self
-                )
+            THREE.Vector2(-0.5, -0.5),  # footprint of the TRUNK
+            THREE.Vector2(1, 1),
+            0.5,
+            position,
+            10,
+            self
+        )
         self.footprints.append(footprint)
 
     def _build(self, radius, height, trunk, foliage, level):
         """
-         * 
-         * @param {type} radius
-         * @param {type} height
-         * @param {type} trunk
-         * @param {type} foliage
-         * @param {type} level
-         * @returns {THREE.Group|Tree.prototype._build.m_tree|.Object@call;create._build.m_tree}
         """
-        g_trunk = THREE_Utils.cylinder(0.5, height/3, trunk)
+        g_trunk = THREE_Utils.cylinder(0.1, height/3, trunk)
         colors = g_trunk.attributes.position.clone()
         for i in range(0, len(colors.array), 3):
             colors.array[i] = 0.54
@@ -80,7 +72,7 @@ class Tree(Scenery):
         g_trunk.addAttribute('color', colors)
 
         g_foliage = THREE.SphereBufferGeometry(radius, foliage, foliage)
-        g_foliage.translate(0, 0, height/2 + height/3)
+        g_foliage.translate(0, 0, height/2 + height/4)
         colors = g_foliage.attributes.position.clone()
         for i in range(0, len(colors.array), 3):
             colors.array[i] = 0.0
@@ -88,19 +80,16 @@ class Tree(Scenery):
             colors.array[i + 2] = 0.0
         g_foliage.addAttribute('color', colors)
 
-        geometry = THREE.InstancedBufferGeometry()
+        geometry = THREE.BufferGeometry()
         mergeGeometries([g_trunk, g_foliage], geometry)
 
         return THREE.Mesh(geometry, None)
-    
+
     def build_mesh(self, level):
         """
-         * 
-         * @param {type} level
-         * @returns {Tree.prototype.build_mesh.mesh|THREE.Group|Tree.prototype.build_mesh.m_tree|.Object@call;create.build_mesh.m_tree|THREE.Mesh|.Object@call;create.build_mesh.mesh}
         """
-        height = 10
-        radius = 5
+        height = 1
+        radius = 0.5
 
         if level == 0:
             return None
@@ -115,6 +104,8 @@ class Tree(Scenery):
         else:    # maximum details
             mesh = self._build(radius, height, 16, 64, level)
             self.mesh = mesh
+
+        self.instantiate_mesh(mesh)
 
         return mesh
 
@@ -143,7 +134,11 @@ class Evergreen(Scenery):
     * @returns {Tree}
     """
     def __init__(self, radius, height, position):
-        super().__init__(position, radius)
+        if radius is None:
+            return
+
+        # the width of the tree is actually twice the radius
+        super().__init__(position, radius*2, "evergreen")
 
         self.radius = radius
         self.height = height
@@ -172,7 +167,7 @@ class Evergreen(Scenery):
         if height < 2:
             height = 2
 
-        g_trunk = THREE_Utils.cylinder(0.5, height/3, trunk)
+        g_trunk = THREE_Utils.cylinder(0.2, height/3, trunk)
         colors = g_trunk.attributes.position.clone()
         for i in range(0, len(colors.array), 3):
             colors.array[i] = 0.54
@@ -189,7 +184,7 @@ class Evergreen(Scenery):
             colors.array[i + 2] = 0.0
         g_foliage.addAttribute('color', colors)  # per mesh translation
 
-        geometry = THREE.InstancedBufferGeometry()
+        geometry = THREE.BufferGeometry()
         mergeGeometries([g_trunk, g_foliage], geometry)
 
         return THREE.Mesh(geometry, None)
@@ -202,11 +197,11 @@ class Evergreen(Scenery):
         """
         # height = self.height
         # radius = self.radius
-        height = 10
-        radius = 5
+        height = 1
+        radius = 0.5
 
         if level == 0:
-            mesh = None
+            return None
         elif level == 1:
             mesh = self._build(radius, height, 3, 3, level)
         elif level == 2:
@@ -218,6 +213,8 @@ class Evergreen(Scenery):
         else: # maximum details
             mesh = self._build(radius, height, 16, 48, level)
             self.mesh = mesh
+
+        self.instantiate_mesh(mesh)
 
         return mesh
 

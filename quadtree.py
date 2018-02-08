@@ -22,32 +22,6 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
 
 _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load('img/evergreen.png')})
 
-loader = THREE.FileLoader()
-
-uniforms = {
-    'light': {'type': "v3", 'value': None},
-    'ambientLightColor': {'type': "v3", 'value': None},
-}
-
-if Config["shadow"]["enabled"]:
-    uniforms['directionalShadowMap'] = {'type': 'v', 'value': None}
-    uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': None}
-    uniforms['directionalShadowSize'] = {'type': 'v2', 'value': None}
-
-instance_material = THREE.ShaderMaterial({
-    'uniforms': uniforms,
-    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
-    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
-    'wireframe': False,
-    'vertexColors': THREE.Constants.VertexColors
-})
-
-instance_depth_material = THREE.ShaderMaterial({
-    'uniforms': {},
-    'vertexShader': loader.load('shaders/instances/depth_vertex.glsl'),
-    'fragmentShader': loader.load('shaders/instances/depth_fragment.glsl')
-})
-
 
 def _loadMeshIO(name):
     """
@@ -59,13 +33,14 @@ def _loadMeshIO(name):
         mesh = pickle.load(f)
         mesh.rebuild_id()
 
-    with open("bin/" + name + ".scenary.pkl", "rb") as f:
-        scenary_meshes = pickle.load(f)
-        for obj in scenary_meshes.values():
-            if obj is not None:
-                obj.rebuild_id()
+    return mesh
 
-    return (mesh, scenary_meshes)
+
+class _instance:
+    def __init__(self, name):
+        self.name = name
+        self.offset = []
+        self.scale = []
 
 
 class Quadtree:
@@ -80,7 +55,7 @@ class Quadtree:
         self.visibility_radius = 0  # frustrum visibility radius
         self.size = size
         self.objects = []         # // scenary objects
-        self.scenary_meshes = {}  # // scenary meshes
+        self.assets = {}       # // scenary meshes
         self.mesh = None          # // terrain mesh
         self.traversed = False    # was the node traversed during a recursive pass
         self.visible = False      # display or not the tile
@@ -125,20 +100,8 @@ class Quadtree:
                 q.dump(t)
 
     def dump_mesh(self):
-        # remove the  parameters from the PlaneBufferGeometry to force THREE to dump all the vertices
-        # otherwise it will only dump the meta data
-        # self.mesh.geometry.type = 'BufferGeometry'
-        # self.mesh.geometry.parameters = None
-        # m = self.mesh.toJSON(None)
-        # j = json.dumps(m)
-        # with open("../public_html/json/" + self.name + ".json", "w") as f:
-        #    f.write(j)
-
         with open("bin/" + self.name + ".terrain.pkl", "wb") as f:
             pickle.dump(self.mesh, f)
-
-        with open("bin/" + self.name + ".scenary.pkl", "wb") as f:
-            pickle.dump(self.scenary_meshes, f)
 
         if not self.sub[0] is None:
             for q in self.sub:
@@ -178,7 +141,7 @@ class Quadtree:
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
 
-    def _record_mesh(self, scene, terrain_mesh, scenary_mesh):
+    def _record_mesh(self, scene, terrain_mesh):
         """
         @param {type} name
         @param {type} scene
@@ -193,6 +156,7 @@ class Quadtree:
             self.mesh.material = self.material
 
         # load the scenary mesh and display
+        """
         if Config['terrain']['display_scenary'] and scenary_mesh is not None:
             for obj in scenary_mesh.values():
                 if obj is not None:
@@ -202,7 +166,7 @@ class Quadtree:
                     obj.geometry.maxInstancedCount = obj.geometry.attributes.offset.meshPerAttribute * obj.geometry.attributes.offset.count
 
                     self.mesh.add(obj)
-
+        """
         # if Config['terrain']['debug']['boundingsphere']:
         # TODO : how do you draw the bounding spheres of an instance ?
         #    radius = self.merged_mesh.geometry.boundingSphere.radius
@@ -247,35 +211,28 @@ class Quadtree:
         Use the footprint of the object to insert it mesh on all quads it covers
         """
 
-        # create and register the mesh for the instance
-        if object.type not in self.scenary_meshes:
-            mesh = object.build_mesh(level)
-            if mesh is not None:
-                mesh.instances = []
-                mesh.scales = []
-                mesh.castShadow = True
-                mesh.receiveShadow = True
-                mesh.customDepthMaterial = instance_depth_material
+        key = "%s%d" % (object.name, level)
 
-            self.scenary_meshes[object.type] = mesh
+        # create and register the mesh for the instance
+        if key not in self.assets:
+            self.assets[key] = _instance(key)
 
         # translate the object position
         # register the instance
-        if self.scenary_meshes[object.type] is not None:
-            self.scenary_meshes[object.type].instances.extend([
-                object.position.x - self.center.x,
-                object.position.y - self.center.y,
-                object.position.z
-            ])
-            self.scenary_meshes[object.type].scales.extend([
-                object.radius/5,
-                object.height/10
-            ])
-            # register the 2D footprint
-            self.objects.append(object)
+        self.assets[key].offset.extend([
+            object.position.x ,
+            object.position.y,
+            object.position.z
+        ])
+        self.assets[key].scale.extend([
+            object.scale,
+            object.scale
+        ])
+        # register the 2D footprint
+        self.objects.append(object)
 
+        # reached the deepest level
         if self.sub[0] is None:
-            # reached the deepest level
             return
 
         # use the footprints of the object
@@ -375,9 +332,8 @@ class QuadtreeReader(multiprocessing.Process):
             if quadtree_msg is None:
                 # Poison pill means shutdown
                 break
-            (terrain_mesh, scenary_mesh) = _loadMeshIO(quadtree_msg.name)
+            terrain_mesh = _loadMeshIO(quadtree_msg.name)
             quadtree_msg.terrain_mesh = terrain_mesh
-            quadtree_msg.scenary_mesh = scenary_mesh
             self.result_queue.put(quadtree_msg)
         return
 
@@ -402,15 +358,15 @@ class QuadtreeProcess:
 
         self.callbacks[quadtree.name] = quadtree
         # self.tasks.put(quadtreeMessage(quadtree.name))
-        (terrain_mesh, scenary_mesh) = _loadMeshIO(quadtree.name)
-        quadtree._record_mesh(self.scene, terrain_mesh, scenary_mesh)
+        terrain_mesh = _loadMeshIO(quadtree.name)
+        quadtree._record_mesh(self.scene, terrain_mesh)
 
     def check(self):
         return
         while not self.results.empty():
             quadtree_msg = self.results.get()
             quadtree = self.callbacks[quadtree_msg.name]
-            quadtree._record_mesh(self.scene, quadtree_msg.terrain_mesh, quadtree_msg.scenary_mesh)
+            quadtree._record_mesh(self.scene, quadtree_msg.terrain_mesh)
 
     def terminate(self):
         # self.process.terminate()

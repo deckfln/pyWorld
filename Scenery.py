@@ -2,27 +2,49 @@
  @class Scenary: Upper class for all scenary objects
  @returns {Scenery}
 """
+from Config import*
+
+from THREE.Loader import *
 from THREE.Group import *
+from THREE.javascriparray import *
+
+loader = THREE.FileLoader()
+
+uniforms = {
+    'light': {'type': "v3", 'value': None},
+    'ambientLightColor': {'type': "v3", 'value': None},
+}
+
+if Config["shadow"]["enabled"]:
+    uniforms['directionalShadowMap'] = {'type': 'v', 'value': None}
+    uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': None}
+    uniforms['directionalShadowSize'] = {'type': 'v2', 'value': None}
+
+instance_material = THREE.ShaderMaterial({
+    'uniforms': uniforms,
+    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
+    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
+    'wireframe': False,
+    'vertexColors': THREE.Constants.VertexColors
+})
+
+instance_depth_material = THREE.ShaderMaterial({
+    'uniforms': {},
+    'vertexShader': loader.load('shaders/instances/depth_vertex.glsl'),
+    'fragmentShader': loader.load('shaders/instances/depth_fragment.glsl')
+})
 
 
 class Scenery:
     Forest = 3
     Grass = 0
     
-    def __init__(self, position, radius):
-        # @property {TREE.Vector3} position
+    def __init__(self, position, scale, name):
         self.position = position
-        
-        # @property {double} radius
-        self.radius = radius
-
-        # @property {THREE.Mesh} name description
-        self.mesh = None
-        
-        # @property {Array of FootPrint} name description
+        self.scale = scale
         self.footprints = []
-
         self.type = None
+        self.name = name
 
     def rotateZ(self, r):
         self.mesh.geometry.rotateZ(r)    
@@ -41,3 +63,22 @@ class Scenery:
             aabbs.add(footprint.AxisAlignedBoundingBox(center))
 
         return aabbs
+
+    def instantiate_mesh(self, mesh):
+        instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
+
+        # we can display up to 1000 instances
+        offsets = THREE.InstancedBufferAttribute(Float32Array(1000), 3, 1).setDynamic( True )
+        scales = THREE.InstancedBufferAttribute(Float32Array(1000), 2, 1).setDynamic( True )
+        instancedBufferGeometry.addAttribute('offset', offsets)  # per mesh translation
+        instancedBufferGeometry.addAttribute('scale', scales)  # per mesh scale
+
+        instancedBufferGeometry.maxInstancedCount = 0
+
+        mesh.geometry = instancedBufferGeometry
+
+        mesh.castShadow = True
+        mesh.receiveShadow = True
+        mesh.customDepthMaterial = instance_depth_material
+        mesh.material = instance_material
+        mesh.frustumCulled = False

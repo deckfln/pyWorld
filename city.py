@@ -223,9 +223,13 @@ def city_paint_indexmap(terrain, center):
 
 class House(Scenery):
     def __init__(self, width, len, height, alpha, position):
-        radius = math.sqrt(width*width + len*len)/2
-        super().__init__(position, radius)
+        if width is None:
+            return
 
+        radius = math.sqrt(width*width + len*len)/2
+        super().__init__(position, width, "house")
+
+        self.radius = radius
         self.type = 0
         self.width = width
         self.height = height
@@ -245,21 +249,21 @@ class House(Scenery):
         self.footprints.append(footprint)
 
     def build_mesh(self, level):
-        w = 10
+        w = 1
         geometry = THREE.BoxBufferGeometry(w, w, w)
         geometry.setDrawRange(0, 32)         # do not draw the bottom of the box
         geometry.translate(0, 0, w/2)
         # geometry.rotateZ(self.rotation)
 
-        instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(geometry)
-
-        colors = instancedBufferGeometry.attributes.position.clone()
+        colors = geometry.attributes.position.clone()
         for i in range(0, len(colors.array), 3):
             colors.array[i] = 0.84
             colors.array[i + 1] = 0.27
             colors.array[i + 2] = 0.37
-            instancedBufferGeometry.addAttribute('color', colors)  # per mesh translation
+            geometry.addAttribute('color', colors)  # per mesh color
 
-        mesh = THREE.Mesh(instancedBufferGeometry, None)
+        mesh = THREE.Mesh(geometry, None)
+
+        self.instantiate_mesh(mesh)
 
         return mesh

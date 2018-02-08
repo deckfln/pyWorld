@@ -12,7 +12,6 @@ attribute vec2 scale;
 
 void main() {
     #include <begin_vertex>
-    transformed * vec3(scale.x, scale.x,  scale.y);
-    transformed += offset;
+    transformed = transformed * vec3(scale.x, scale.x,  scale.y) + offset;
     #include <project_vertex>
 }

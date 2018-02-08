@@ -15,6 +15,11 @@ from Config import *
 from PlayerCamera import *
 from quadtree import *
 
+from city import House
+from Forest import Evergreen
+from Forest import Tree
+from Scenery import instance_material
+
 
 class Params:
     def __init__(self):
@@ -40,6 +45,7 @@ class Params:
         self.free_camera = False
         self.debug = None
         self.helper = None
+        self.assets = {}
 
 
 def init(p):
@@ -132,6 +138,28 @@ def init(p):
         instance_material.uniforms.directionalShadowMatrix.value = p.sun.shadow.matrix
         instance_material.uniforms.directionalShadowSize.value = p.sun.shadow.mapSize
 
+    # init the asset instanced models
+    a = House(None, None, None, 0, None)
+    p.assets['house'] = a.build_mesh(0)
+    a = Tree(None, None, None)
+    p.assets['tree1'] = a.build_mesh(1)
+    p.assets['tree2'] = a.build_mesh(2)
+    p.assets['tree3'] = a.build_mesh(3)
+    p.assets['tree4'] = a.build_mesh(4)
+    p.assets['tree5'] = a.build_mesh(5)
+    p.assets['tree6'] = a.build_mesh(6)
+    a = Evergreen(None, None, None)
+    p.assets['evergreen1'] = a.build_mesh(1)
+    p.assets['evergreen2'] = a.build_mesh(2)
+    p.assets['evergreen3'] = a.build_mesh(3)
+    p.assets['evergreen4'] = a.build_mesh(4)
+    p.assets['evergreen5'] = a.build_mesh(5)
+    p.assets['evergreen6'] = a.build_mesh(6)
+
+    # add them to the scene, as each asset as a instancecount=0, none will be displayed
+    for mesh in p.assets.values():
+        p.scene.add(mesh)
+
     # init the terrain
     p.terrain = Terrain(512, 25, 512)
     p.terrain.load(p.sun)
@@ -216,7 +244,32 @@ def animate(p):
     if not p.free_camera:
         p.player.vcamera.display(p.camera)
 
+    # display the terrain tiles
     p.terrain.draw(p.player)
+
+    # extract the assets from each visible tiles and build the instances
+    for asset in p.assets.values():
+        asset.geometry.maxInstancedCount = 0
+
+    for quad in p.terrain.tiles_onscreen:
+        if quad.mesh.visible:
+            for asset in quad.assets.values():
+                if len(asset.offset) > 0:
+                    key = asset.name
+                    if key == "house1" or key == "house2" or key == 'house3' or key == 'house4' or key == 'house5':
+                        key = "house"
+
+                    geometry = p.assets[key].geometry
+                    l = geometry.maxInstancedCount
+                    m = len(asset.offset)
+                    geometry.attributes.offset.array[l*3:l*3+m] = asset.offset[0:m]
+                    m = len(asset.scale)
+                    geometry.attributes.scale.array[l*2:l*2+m] = asset.scale[0:m]
+
+                    geometry.maxInstancedCount += int(m/2)
+
+                    geometry.attributes.offset.needsUpdate = True
+                    geometry.attributes.scale.needsUpdate = True
 
     # t = time.time()
     render(p)
