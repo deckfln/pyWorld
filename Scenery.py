@@ -13,6 +13,8 @@ loader = THREE.FileLoader()
 uniforms = {
     'light': {'type': "v3", 'value': None},
     'ambientLightColor': {'type': "v3", 'value': None},
+    'map': {'type': "t", 'value': None},
+    'normalMap': {'type': "t", 'value': None},
 }
 
 if Config["shadow"]["enabled"]:
@@ -25,7 +27,8 @@ instance_material = THREE.ShaderMaterial({
     'vertexShader': loader.load('shaders/instances/vertex.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
     'wireframe': False,
-    'vertexColors': THREE.Constants.VertexColors
+    'vertexColors': THREE.Constants.VertexColors,
+    'transparent': True
 })
 
 instance_depth_material = THREE.ShaderMaterial({
@@ -65,6 +68,15 @@ class Scenery:
         return aabbs
 
     def instantiate_mesh(self, mesh):
+        normalMap = None
+        map = None
+
+        if mesh.material is not None:
+            if hasattr(mesh.material, 'map'):
+                map = mesh.material.map
+            if hasattr(mesh.material, 'normalMap'):
+                normalMap = mesh.material.normalMap
+
         instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
 
         # we can display up to 1000 instances
@@ -80,5 +92,10 @@ class Scenery:
         mesh.castShadow = True
         mesh.receiveShadow = True
         mesh.customDepthMaterial = instance_depth_material
-        mesh.material = instance_material
+        mesh.material = instance_material.clone()
+        mesh.material.map = map
+        mesh.material.normalMap = normalMap
+        mesh.material.uniforms.map.value = map
+        mesh.material.uniforms.normalMap.value = normalMap
+
         mesh.frustumCulled = False

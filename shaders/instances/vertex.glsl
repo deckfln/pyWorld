@@ -12,20 +12,26 @@ varying vec4 vDirectionalShadowCoord;
 // for the fragment
 varying vec3 vColor;
 varying vec3 vNormal;
+varying vec2 vUv;
+varying vec3 vViewPosition;
 
 void main() {
+    vUv = uv;
     vColor.xyz = color.xyz;
     vNormal = normal;
 
-    vec3 vPosition = position * vec3(scale.x, scale.x,  scale.y) + offset;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
+    vec3 iPosition = position * vec3(scale.x, scale.x,  scale.y) + offset;
+    vec4 mvPosition = modelViewMatrix * vec4( iPosition, 1.0 );
+
+    gl_Position = projectionMatrix * mvPosition;
 
     //chunk(worldPosition_vertex)
-    vec4 worldPosition = modelMatrix * vec4( vPosition, 1.0 );
+    vec4 worldPosition = modelMatrix * vec4( iPosition, 1.0 );
     //chunk(worldPosition_vertex)
 
     // chunk(shadowmap_vertex);
     vDirectionalShadowCoord = directionalShadowMatrix * worldPosition;
     // chunk(shadowmap_vertex);
 
+    vViewPosition = mvPosition.xyz;
 }

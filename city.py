@@ -8,6 +8,7 @@ from Heightmap import *
 from Scenery import *
 from Footprint import *
 from Utils import *
+from Asset import *
 
 
 def city_create(terrain):
@@ -249,20 +250,17 @@ class House(Scenery):
         self.footprints.append(footprint)
 
     def build_mesh(self, level):
-        w = 1
-        geometry = THREE.BoxBufferGeometry(w, w, w)
-        geometry.setDrawRange(0, 32)         # do not draw the bottom of the box
-        geometry.translate(0, 0, w/2)
-        # geometry.rotateZ(self.rotation)
+        asset = Asset("tree", "models/wooden_house/wooden_house")
+        mesh = asset.mesh.children[0]
+        mesh.geometry.computeBoundingBox()
+        mesh.material.normalMap = mesh.material.bumpMap
+        mesh.material.bumpMap = None
+        dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+        dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+        dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
 
-        colors = geometry.attributes.position.clone()
-        for i in range(0, len(colors.array), 3):
-            colors.array[i] = 0.84
-            colors.array[i + 1] = 0.27
-            colors.array[i + 2] = 0.37
-            geometry.addAttribute('color', colors)  # per mesh color
-
-        mesh = THREE.Mesh(geometry, None)
+        mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
+        mesh.geometry.rotateX(math.pi / 2)
 
         self.instantiate_mesh(mesh)
 

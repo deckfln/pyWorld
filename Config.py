@@ -51,7 +51,7 @@ Config = {
     },
 
     'shadow': {
-        'enabled': True,
+        'enabled': False,
         'size': 1024,
         'debug': False
     }

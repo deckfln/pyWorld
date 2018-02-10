@@ -24,8 +24,12 @@ void main() {
     #include <alphatest_fragment>
     #include <logdepthbuf_fragment>
     #if DEPTH_PACKING == 3200
-      gl_FragColor = vec4( vec3( gl_FragCoord.z ), opacity );
+      vec4 diffuse = vec4( vec3( gl_FragCoord.z ), opacity );
     #elif DEPTH_PACKING == 3201
-      gl_FragColor = packDepthToRGBA( gl_FragCoord.z );
+      vec4 diffuse = packDepthToRGBA( gl_FragCoord.z );
     #endif
+    // handle transparency
+    if(diffuse.a < 0.5)
+        discard;
+    gl_FragColor = diffuse;
 }

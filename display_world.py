@@ -142,19 +142,17 @@ def init(p):
     a = House(None, None, None, 0, None)
     p.assets['house'] = a.build_mesh(0)
     a = Tree(None, None, None)
-    p.assets['tree1'] = a.build_mesh(1)
-    p.assets['tree2'] = a.build_mesh(2)
-    p.assets['tree3'] = a.build_mesh(3)
-    p.assets['tree4'] = a.build_mesh(4)
+    p.assets['tree1'] = a.build_mesh(5)
+    p.assets['tree2'] = p.assets['tree1']
+    p.assets['tree3'] = p.assets['tree1']
+    p.assets['tree4'] = p.assets['tree1']
     p.assets['tree5'] = a.build_mesh(5)
-    p.assets['tree6'] = a.build_mesh(6)
     a = Evergreen(None, None, None)
-    p.assets['evergreen1'] = a.build_mesh(1)
-    p.assets['evergreen2'] = a.build_mesh(2)
-    p.assets['evergreen3'] = a.build_mesh(3)
-    p.assets['evergreen4'] = a.build_mesh(4)
-    p.assets['evergreen5'] = a.build_mesh(5)
-    p.assets['evergreen6'] = a.build_mesh(6)
+    p.assets['evergreen1'] = a.build_mesh(4)
+    p.assets['evergreen2'] = p.assets['evergreen1']
+    p.assets['evergreen3'] = p.assets['evergreen1']
+    p.assets['evergreen4'] = p.assets['evergreen1']
+    p.assets['evergreen5'] = a.build_mesh(4)
 
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     for mesh in p.assets.values():
@@ -234,11 +232,13 @@ def animate(p):
     # time passes
     # complete half-circle in 5min = 9000 frames
     # 1 frame = pi/9000
-    p.hour += delta * (math.pi / 9000)
+    p.hour += delta * (math.pi / 900)
     if p.hour > math.pi:
         p.hour = 0
 
-    p.terrain.update(p.hour)
+    p.terrain.update_light(p.hour)
+    for asset in p.assets.values():
+        asset.material.uniforms.light.value.copy(p.sun.position)
 
     # move the camera
     if not p.free_camera:

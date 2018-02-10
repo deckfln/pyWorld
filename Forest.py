@@ -14,6 +14,7 @@ import Utils as THREE_Utils
 import Terrain
 from Utils import *
 import city
+from Asset import *
 
 
 tree_material_trunk= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
@@ -102,8 +103,17 @@ class Tree(Scenery):
         elif level == 4:
             mesh = self._build(radius, height, 8, 32, level)
         else:    # maximum details
-            mesh = self._build(radius, height, 16, 64, level)
-            self.mesh = mesh
+            asset = Asset("tree", "models/tree228/tree228")
+            mesh = asset.mesh.children[0]
+            mesh.geometry.computeBoundingBox()
+            mesh.material.normalMap = mesh.material.bumpMap
+            mesh.material.bumpMap = None
+            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+
+            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
+            mesh.geometry.rotateX(math.pi/2)
 
         self.instantiate_mesh(mesh)
 
@@ -209,10 +219,29 @@ class Evergreen(Scenery):
         elif level == 3:
             mesh = self._build(radius, height, 4, 12, level)
         elif level == 4:
-            mesh = self._build(radius, height, 8, 24, level)
+            asset = Asset("tree", "models/pine/4/pine")
+            mesh = asset.mesh.children[0]
+            mesh.geometry.computeBoundingBox()
+            mesh.material.normalMap = mesh.material.bumpMap
+            mesh.material.bumpMap = None
+            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+
+            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
+            mesh.geometry.rotateX(math.pi/2)
         else: # maximum details
-            mesh = self._build(radius, height, 16, 48, level)
-            self.mesh = mesh
+            asset = Asset("tree", "models/pine/pine")
+            mesh = asset.mesh.children[0]
+            mesh.geometry.computeBoundingBox()
+            mesh.material.normalMap = mesh.material.bumpMap
+            mesh.material.bumpMap = None
+            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+
+            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
+            mesh.geometry.rotateX(math.pi/2)
 
         self.instantiate_mesh(mesh)
 

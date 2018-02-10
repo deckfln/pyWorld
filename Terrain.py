@@ -1162,7 +1162,7 @@ class Terrain:
                 else:
                     quad.mesh.visible = False
 
-    def update(self, time):
+    def update_light(self, time):
         """
         @description: update the terrain
         @param {time} time current time
