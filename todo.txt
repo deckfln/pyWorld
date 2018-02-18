@@ -26,6 +26,7 @@
 08/02/18: 22/01/18  performance         merge instances of an object for all tiles on screen into a single drawcall, remove frustrum culling
 08/02/18: 04/02/18  instances           set source object to unit 1 so it's easier to rescale at display
 10/02/18: 24/01/18  scenery             use OBJ model do display scenery
+18/02/18: 06/02/18  scenery             add grass instances
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -40,8 +41,9 @@ TODO: 28/01/18  shadows             Cast shadows for scenery outside of the frus
 TODO: 28/01/18  lights              implement lights in the shaders following UniformsLibs implementation
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
-TODO: 06/02/18  scenery             add grass instances
 TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
+TODO: 18/02/18  scenery             use displacement map to distribute grass blades
+TODO: 18/02/18  scenery             add high grass and forest scenery to the instances
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -53,3 +55,4 @@ TODO: 03/02/18  shadows             if player is partily in the shadow of a tree
                                     the shadow of the tree fade with distance to none but the player is still in the shadow of the tree so doesn't cast shadow by itself
 TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 10/02/18  lightning           instances objects lightning is wrong
+TODO: 18/02/18  grass               grass instances are generated on road

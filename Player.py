@@ -24,7 +24,7 @@ class Player(Actor):
         super().__init__("models/marie-jane.dae")
 
         self.status = "drop"
-        self.direction = THREE.Vector3(0.6, 0, 0).normalize()     # direction face the player is moving to
+        self.direction = THREE.Vector3(0.3, 0, 0).normalize()     # direction face the player is moving to
         self.action = THREE.Vector2()                             # action the controler is given (forward, left, right, backward)
         self.rotation_speed = math.pi/128
         self.rotation = 0

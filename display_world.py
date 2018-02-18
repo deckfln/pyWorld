@@ -15,6 +15,8 @@ from Config import *
 from PlayerCamera import *
 from quadtree import *
 
+from Grass import *
+
 from city import House
 from Forest import Evergreen
 from Forest import Tree
@@ -46,6 +48,7 @@ class Params:
         self.debug = None
         self.helper = None
         self.assets = {}
+        self.grass = Grass()
 
 
 def init(p):
@@ -55,6 +58,7 @@ def init(p):
     :return:
     """
     # /// Global : renderer
+    print("Init pyOPenGL...")
     p.container = pyOpenGL(p)
     p.container.addEventListener('resize', onWindowResize, False)
 
@@ -81,6 +85,7 @@ def init(p):
         path + 'bottom' + format
     ]
 
+    print("Init CubeMap...")
     background = THREE.CubeTextureLoader().load(urls)
     background.format = THREE.RGBFormat
 
@@ -139,6 +144,7 @@ def init(p):
         instance_material.uniforms.directionalShadowSize.value = p.sun.shadow.mapSize
 
     # init the asset instanced models
+    print("Init Assets...")
     a = House(None, None, None, 0, None)
     p.assets['house'] = a.build_mesh(0)
     a = Tree(None, None, None)
@@ -153,22 +159,27 @@ def init(p):
     p.assets['evergreen3'] = p.assets['evergreen1']
     p.assets['evergreen4'] = p.assets['evergreen1']
     p.assets['evergreen5'] = a.build_mesh(4)
+    p.assets['grass'] = p.grass.build_mesh()
 
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     for mesh in p.assets.values():
         p.scene.add(mesh)
 
     # init the terrain
+    print("Init Terrain...")
     p.terrain = Terrain(512, 25, 512)
     p.terrain.load(p.sun)
     p.terrain.scene = p.scene
 
-    p.player = Player(THREE.Vector3(3,3,0), p.scene, p.terrain)
+    print("Init Player...")
+    p.player = Player(THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
     p.actors.append(p.player)
 
     initQuadtreeProcess()
 
     p.player.draw()
+
+    print("End Init")
 
 
 def onWindowResize(event, p):
@@ -232,7 +243,7 @@ def animate(p):
     # time passes
     # complete half-circle in 5min = 9000 frames
     # 1 frame = pi/9000
-    p.hour += delta * (math.pi / 900)
+    p.hour += delta * (math.pi / 9000)
     if p.hour > math.pi:
         p.hour = 0
 
@@ -250,6 +261,8 @@ def animate(p):
     # extract the assets from each visible tiles and build the instances
     for asset in p.assets.values():
         asset.geometry.maxInstancedCount = 0
+
+    p.grass.init(p.assets["grass"].geometry)
 
     for quad in p.terrain.tiles_onscreen:
         if quad.mesh.visible:
@@ -271,6 +284,10 @@ def animate(p):
                     geometry.attributes.offset.needsUpdate = True
                     geometry.attributes.scale.needsUpdate = True
 
+            # build grasses on the tile
+            if quad.level >= 4:
+                p.grass.instantiate(p.player.position, p.terrain, quad, p.assets["grass"].geometry)
+
     # t = time.time()
     render(p)
     # c = time.time() - t
@@ -291,10 +308,11 @@ def keyboard(event, p):
         p.shift = down
         p.player.run = down
 
-    if keyCode == 99:
+    if keyCode == 97:   # Q
+        p.container.quit()
+    elif keyCode == 99:   # C
         p.free_camera = not p.free_camera
-
-    if keyCode in p.keymap:
+    elif keyCode in p.keymap:
         p.keymap[keyCode] = down
 
         p.player.action.x = p.keymap[273] or -p.keymap[274]  # up / down

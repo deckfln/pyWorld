@@ -150,6 +150,7 @@ vec4 colorAt(vec2 dtile)
 
   vec2 rvv =  vUv*indexmap_repeat;
   vec4 tile = texture2D(indexmap, p);
+
   vec2 vv = fract(rvv);
 
   vec2 iuv = floor(rvv);
@@ -266,7 +267,13 @@ void main()
 
     // debug indexmap
     /*
-    gl_FragColor.r = texture2D(indexmap, vUv).r*50.0;
+    gl_FragColor.r = texture2D(indexmap, vUv).r;
+    if (int(gl_FragColor.r * 255.0)==grass_png) {
+        gl_FragColor.r = 1.0;
+    }
+    else {
+        gl_FragColor.r = 0.25;
+    }
     gl_FragColor.g = 0.0;
     gl_FragColor.b = 0.0;
     gl_FragColor.a = 1.0;

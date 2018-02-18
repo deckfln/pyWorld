@@ -87,6 +87,8 @@ class Terrain:
         """
         self.quadtree = Quadtree(-1, -1, -1, None)
 
+        self.vector2 = THREE.Vector2()
+
     def shaders(self, light):
         """
         Initialize the shader material
@@ -184,6 +186,8 @@ class Terrain:
             self.quadtree = quads[0]
             Quadtree.material = self.material
 
+        self.indexmap.load("img/indexmap.png")
+
     def get(self, x, y):
         """
         return the billinera Z value at position (x,y)
@@ -253,8 +257,8 @@ class Terrain:
         """
         # // convert from the heightmap coordinates to the blendmap coordinates
         # // and round to the nearest point
-        ip = self.heightmap2indexmap(v)
-        return self._getIndexMap(ip)
+        self.heightmap2indexmap(v, self.vector2)
+        return self._getIndexMap(self.vector2)
 
     def _getIndexMap(self, v):
         """
@@ -412,11 +416,13 @@ class Terrain:
         :param position:
         :return:
         """
-        p = THREE.Vector2(
-                position.x * self.onscreen / self.size - self.onscreen / 2,
-                position.y * self.onscreen / self.size - self.onscreen / 2
-        )
-        return p
+        if target is None:
+            target = THREE.Vector2()
+
+        target.x = position.x * self.onscreen / self.size - self.onscreen / 2
+        target.y = position.y * self.onscreen / self.size - self.onscreen / 2
+
+        return target
 
     def map2screenXY(self, x, y, target=None):
         """
@@ -445,6 +451,21 @@ class Terrain:
         target.set(
                 (position.x + self.onscreen/2)*(self.size-1)/self.onscreen,
                 (position.y + self.onscreen/2)*(self.size-1)/self.onscreen
+        )
+        return target
+
+    def screen2mapXY(self, x, y, target=None):
+        """
+         * @description convert screen coordinate to heightmap (max level) coord
+        """
+        # // The center if the onscreen grid is 0,0
+        # // so we have to move by the half of the grid size
+        if not target:
+            target = THREE.Vector2()
+
+        target.set(
+                (x + self.onscreen/2)*(self.size-1)/self.onscreen,
+                (y + self.onscreen/2)*(self.size-1)/self.onscreen
         )
         return target
 
@@ -493,17 +514,19 @@ class Terrain:
             (self.indexmap.size - y) * self.size / self.indexmap.size - 1)
         return p
 
-    def heightmap2indexmap(self, v):
+    def heightmap2indexmap(self, v, target=None):
         """
          * @desccription convert from heightlao coordinates to index coordinates
         :param v:
         :return:
         """
-        p = THREE.Vector2(
-            math.floor(v.x * self.indexmap.size / self.size),
-            math.floor(self.indexmap.size - v.y * self.indexmap.size / self.size - 1)
-            )
-        return p
+        if target is None:
+            target = THREE.Vector2()
+
+        target.x = v.x * self.indexmap.size / self.size
+        target.y = self.indexmap.size - v.y * self.indexmap.size / self.size
+
+        return target
 
     def build_normalmap(self):
         """

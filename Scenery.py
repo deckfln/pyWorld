@@ -80,8 +80,8 @@ class Scenery:
         instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
 
         # we can display up to 1000 instances
-        offsets = THREE.InstancedBufferAttribute(Float32Array(1000), 3, 1).setDynamic( True )
-        scales = THREE.InstancedBufferAttribute(Float32Array(1000), 2, 1).setDynamic( True )
+        offsets = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic( True )
+        scales = THREE.InstancedBufferAttribute(Float32Array(48000), 2, 1).setDynamic( True )
         instancedBufferGeometry.addAttribute('offset', offsets)  # per mesh translation
         instancedBufferGeometry.addAttribute('scale', scales)  # per mesh scale
 
