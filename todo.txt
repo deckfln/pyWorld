@@ -27,6 +27,7 @@
 08/02/18: 04/02/18  instances           set source object to unit 1 so it's easier to rescale at display
 10/02/18: 24/01/18  scenery             use OBJ model do display scenery
 18/02/18: 06/02/18  scenery             add grass instances
+18/20/18: 18/02/18  grass               BUG: grass instances are generated on road
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -55,4 +56,3 @@ TODO: 03/02/18  shadows             if player is partily in the shadow of a tree
                                     the shadow of the tree fade with distance to none but the player is still in the shadow of the tree so doesn't cast shadow by itself
 TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 10/02/18  lightning           instances objects lightning is wrong
-TODO: 18/02/18  grass               grass instances are generated on road

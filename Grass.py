@@ -72,9 +72,13 @@ class Grass(Scenery):
                     continue
 
                 terrain.screen2mapXY(x1, y, tm)
-                terrain.heightmap2indexmap(tm, im)
 
-                # get the density of each ground
+                # do not put scenery on roads or rivers
+                if terrain.isRiverOrRoad(tm):
+                    continue
+
+                # get the density of each ground type
+                terrain.heightmap2indexmap(tm, im)
                 s = terrain.indexmap.bilinear_density(im.x, im.y)
                 if s is None:
                     continue

@@ -25,6 +25,7 @@ class TextureMap:
         self.repeat = repeat
         self.data = array('B', [0] * (size * size * 4))  # unsigned char RGBA
         self.texture = None
+        self.vector4 = THREE.Vector4()
 
     def set(self, v, rgba):
         self.setXY(v.x, v.y, rgba)
@@ -43,12 +44,12 @@ class TextureMap:
     def getXY(self, x, y):
         d = int(x)*4 + int(y)*self.size*4
 
-        r = self.data[d]        # layer1
-        g = self.data[d + 1]    #
-        b = self.data[d + 2]    # layer2
-        a = self.data[d + 3]    # blending value
+        self.vector4.x = self.data[d]        # layer1
+        self.vector4.y = self.data[d + 1]    #
+        self.vector4.z = self.data[d + 2]    # layer2
+        self.vector4.w = self.data[d + 3]    # blending value
 
-        return THREE.Vector4(r, g, b, a)
+        return self.vector4
 
     def get_layer1(self, x, y):
         d = int(x)*4 + int(y)*self.size*4

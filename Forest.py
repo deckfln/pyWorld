@@ -308,7 +308,7 @@ def forest_create(trees, terrain):
         z = terrain.get(hm.x, hm.y)
 
         # ignore the tree if there is a road or a river on the heightmap
-        if terrain.isRiverOrRoad_heightmap(hm):
+        if terrain.isRiverOrRoad(hm):
             continue
 
         # // check the terrain is not too steep at that point

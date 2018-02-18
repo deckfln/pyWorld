@@ -187,6 +187,7 @@ class Terrain:
             Quadtree.material = self.material
 
         self.indexmap.load("img/indexmap.png")
+        self.blendmap.load("img/blendmap.png")
 
     def get(self, x, y):
         """
@@ -229,8 +230,8 @@ class Terrain:
         """
         # // convert from the heightmap coordinates to the blendmap coordinates
         # // and round to the nearest point
-        bp = self.heightmap2blendmap(v)
-        return self._getBlendMap(bp)
+        self.heightmap2blendmap(v, self.vector2)
+        return self._getBlendMap(self.vector2)
 
     def _getBlendMap(self, bp):
         """
@@ -469,18 +470,20 @@ class Terrain:
         )
         return target
 
-    def heightmap2blendmap(self, position):
+    def heightmap2blendmap(self, position, target=None):
         """
          * @desccription convert from heightmap coordinates to blendmap coordinates
         :param position:
         :return:
         """
+        if not target:
+            target = THREE.Vector2()
 
-        p = THREE.Vector2(
-            math.floor(position.x * self.blendmap.size / self.size),
-            math.floor(self.blendmap.size - position.y * self.blendmap.size / self.size)
+        target.set(
+            position.x * self.blendmap.size / self.size,
+            self.blendmap.size - position.y * self.blendmap.size / self.size
         )
-        return p
+        return target
 
     def indexmap2blendmap(self, position):
         """
@@ -924,15 +927,15 @@ class Terrain:
 
         return indexm
 
-    def isRiverOrRoad_heightmap(self, v):
+    def isRiverOrRoad(self, v):
         """
          * @description check if there is a river or a road cell from the heightmap coordinates
          :param v
         """
         # // convert from the heightmap coordinates to the blendmap coordinates
         # // and round to the nearest point
-        bm = self.heightmap2blendmap(v)
-        c = self.blendmap.get(bm)
+        self.heightmap2blendmap(v, self.vector2)
+        c = self.blendmap.get(self.vector2)
 
         return c.x > 128 or c.z > 128
 
