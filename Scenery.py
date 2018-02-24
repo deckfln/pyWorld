@@ -7,6 +7,8 @@ from Config import*
 from THREE.Loader import *
 from THREE.Group import *
 from THREE.javascriparray import *
+from Asset import *
+
 
 loader = THREE.FileLoader()
 
@@ -48,6 +50,7 @@ class Scenery:
         self.footprints = []
         self.type = None
         self.name = name
+        self.mesh = None
 
     def rotateZ(self, r):
         self.mesh.geometry.rotateZ(r)    
@@ -66,6 +69,28 @@ class Scenery:
             aabbs.add(footprint.AxisAlignedBoundingBox(center))
 
         return aabbs
+
+    def build_mesh(self, level, model):
+        asset = Asset(self.name, model)
+        mesh = asset.mesh.children[0]
+        mesh.geometry.computeBoundingBox()
+        mesh.material.normalMap = mesh.material.bumpMap
+        mesh.material.bumpMap = None
+        dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+        dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+        dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+
+        mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
+        mesh.geometry.rotateX(math.pi / 2)
+
+        self.instantiate_mesh(mesh)
+
+        scale = mesh.geometry.attributes.scale
+        for i in range(0, len(scale.array), 2):
+            scale.array[i] = self.scale.x
+            scale.array[i + 1] = self.scale.y
+
+        return mesh
 
     def instantiate_mesh(self, mesh):
         normalMap = None

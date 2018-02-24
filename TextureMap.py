@@ -10,7 +10,6 @@ import math
 
 import THREE
 
-
 class TextureMap:
     """
     Image storage for textures

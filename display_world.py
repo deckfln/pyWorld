@@ -15,12 +15,12 @@ from Config import *
 from PlayerCamera import *
 from quadtree import *
 
-from Grass import *
+from ProceduralScenery import *
+from Scenery import *
 
 from city import House
 from Forest import Evergreen
 from Forest import Tree
-from Scenery import instance_material
 
 
 class Params:
@@ -48,7 +48,8 @@ class Params:
         self.debug = None
         self.helper = None
         self.assets = {}
-        self.grass = Grass()
+
+        self.procedural_scenery = ProceduralScenery()
 
 
 def init(p):
@@ -159,7 +160,17 @@ def init(p):
     p.assets['evergreen3'] = p.assets['evergreen1']
     p.assets['evergreen4'] = p.assets['evergreen1']
     p.assets['evergreen5'] = a.build_mesh(4)
-    p.assets['grass'] = p.grass.build_mesh()
+
+    a = Scenery(None, THREE.Vector2(1, 1), "grass")
+    p.assets['grass'] = a.build_mesh(0, "models/grass/grass")
+    a = Scenery(None, THREE.Vector2(1, 2), "grass")
+    p.assets['high grass'] = a.build_mesh(0, "models/grass/grass")
+    a = Scenery(None, THREE.Vector2(1, 1), "prairie")
+    p.assets['prairie'] = a.build_mesh(0, "models/flower/obj__flow2")
+    a = Scenery(None, THREE.Vector2(1, 1), "ferm")
+    p.assets['fern'] = a.build_mesh(0, "models/ferm/obj__fern3")
+    a = Scenery(None, THREE.Vector2(1, 1), "shrub")
+    p.assets['shrub'] = a.build_mesh(0, "models/shrub/obj__shr3")
 
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     for mesh in p.assets.values():
@@ -262,8 +273,6 @@ def animate(p):
     for asset in p.assets.values():
         asset.geometry.maxInstancedCount = 0
 
-    p.grass.init(p.assets["grass"].geometry)
-
     for quad in p.terrain.tiles_onscreen:
         if quad.mesh.visible:
             for asset in quad.assets.values():
@@ -286,7 +295,7 @@ def animate(p):
 
             # build grasses on the tile
             if quad.level >= 4:
-                p.grass.instantiate(p.player.position, p.terrain, quad, p.assets["grass"].geometry)
+                p.procedural_scenery.instantiate(p.player.position, p.terrain, quad, p.assets)
 
     # t = time.time()
     render(p)

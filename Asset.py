@@ -32,3 +32,6 @@ class Asset:
             asset.rebuild_id()
 
         self.mesh = asset
+
+    def reset_instances(self):
+        self.mesh.geometry.maxInstancedCount = 0
