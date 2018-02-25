@@ -139,15 +139,15 @@ class TextureMap:
             return (1-offsetx) * pleft + offsetx * pright
 
         # test each ground
-        grounds = [0, 0, 0, 0, 0, 0]
-        grounds[z1-4] = 1
-        grounds[z2-4] = 1
-        grounds[z3-4] = 1
-        grounds[z4-4] = 1
+        grounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        grounds[z1-3] = 1
+        grounds[z2-3] = 1
+        grounds[z3-3] = 1
+        grounds[z4-3] = 1
 
         for g in range(6):
             if grounds[g]:
                 # only run a bilinear computation on grounds that are actually present in the quadrant
-                grounds[g] = bilinear_ground(g+4)
+                grounds[g] = bilinear_ground(g+3)
 
         return grounds

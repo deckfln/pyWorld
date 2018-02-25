@@ -5,11 +5,33 @@
 from Asset import *
 from Terrain import*
 from Scenery import *
+from Array2D import *
+from prng import *
 
 
 class ProceduralScenery:
     def __init__(self):
         self.name = "procedural_scenery"
+
+        rand = Random(5489671)
+
+        def init_prn():
+            return THREE.Vector2((rand.random() - 0.5) * 2, (rand.random() - 0.5) * 2)
+
+        self.displacement_map = Array2D(64, init_prn)
+
+    def displace(self, x, y):
+        # absolute position
+        x1 = x + 256
+        y1 = y + 256
+
+        x2 = math.floor(x1)
+        y2 = math.floor(y1)
+
+        fx = (x1 - x2) * 32
+        fy = (y1 - y2) * 32
+
+        return self.displacement_map.get(int(x2/16 + fx), int(y2/16 + fy))
 
     def instantiate(self, player_position, terrain, quad, assets):
         tm = THREE.Vector2()
@@ -31,7 +53,6 @@ class ProceduralScenery:
 
             geometry = assets[asset_name].geometry
             offset = geometry.attributes.offset
-            scale = geometry.attributes.scale
             nb = geometry.maxInstancedCount
 
             i = nb * 3
@@ -39,10 +60,13 @@ class ProceduralScenery:
             if density < 0.25:
                 pass
             elif density < 0.50:
+                displacement = self.displace(x, y)
+
+                terrain.screen2mapXY(x + displacement.x * 2, y + displacement.y * 2, tm)
                 z = terrain.getV(tm)
 
-                offset.array[i] = x1
-                offset.array[i + 1] = y
+                offset.array[i] = x + displacement.x
+                offset.array[i + 1] = y + displacement.y
                 offset.array[i + 2] = z
                 i += 3
 
@@ -51,17 +75,18 @@ class ProceduralScenery:
                 # the higher the desity, the smaller the step to generate instances
                 if density < 0.75:
                     step = 2
+                    dstep = 0.5
                 else:
                     step = 1
+                    dstep = 0.25
 
                 # map the step on the upper loop -6 -> 6  <=> -1 -> 1
                 for tx in range(-2, 3, step):
-                    checkboard1 = 0
                     for ty in range(-2, 3, step):
-                        checkboard1 = 0 if checkboard1 else step / 2
+                        displacement = self.displace(p1.x, p1.y)
 
-                        p1.x = x1 + (tx + checkboard1) / 2
-                        p1.y = y + ty / 2
+                        p1.x = x + tx / 2 + displacement.x * dstep
+                        p1.y = y + ty / 2 + displacement.y * dstep
 
                         terrain.screen2map(p1, tm)
                         z = terrain.getV(tm)
@@ -77,22 +102,17 @@ class ProceduralScenery:
             geometry.attributes.offset.needsUpdate = True
 
         for x in range(p.x, p2.x, 2):
-            checkboard = 0
             for y in range(p.y, p2.y, 2):
 
-                x1 = x + checkboard
-
-                checkboard = 0 if checkboard else 1
-
                 # only sample points inside the player 16 radius
-                dx = player_position.x - x1
+                dx = player_position.x - x
                 dy = player_position.y - y
                 d = dx * dx + dy * dy
 
                 if d > 256:
                     continue
 
-                terrain.screen2mapXY(x1, y, tm)
+                terrain.screen2mapXY(x, y, tm)
 
                 # do not put scenery on roads or rivers
                 if terrain.isRiverOrRoad(tm):

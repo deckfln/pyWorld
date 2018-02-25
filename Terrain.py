@@ -18,13 +18,13 @@ myrandom = Random(5454334)
 TILE_blend_png = 0
 TILE_water_png = 1
 TILE_riverbed_png = 2
-TILE_paving_png = 3
-TILE_grass_png = 4
-TILE_grass1_png = 5
-TILE_grass2_png = 6
-TILE_forest_png = 7
-TILE_forest1_png = 8
-TILE_forest2_png = 9
+TILE_grass_png = 3
+TILE_grass1_png = 4
+TILE_grass2_png = 5
+TILE_forest_png = 6
+TILE_forest1_png = 7
+TILE_forest2_png = 8
+TILE_paving_png = 9
 TILE_rock_png = 10
 TILE_dirt_png = 11
 TILE_dirt1_png = 12
@@ -120,13 +120,13 @@ class Terrain:
                 "img/blendmap.png",
                 "img/water.png",
                 "img/riverbed.png",
-                "img/paving.png",
                 "img/grass.png",
                 "img/grass1.png",
                 "img/grass2.png",
                 "img/forest.png",
                 "img/forest1.png",
                 "img/forest2.png",
+                "img/paving.png",
                 "img/rock.png",
                 "img/dirt.png",
                 "img/dirt1.png",

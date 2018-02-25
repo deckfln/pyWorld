@@ -70,8 +70,8 @@ class Mask:
         """
         # // convert heightmap coordinates to blendmap coordinates
         bm = terrain.heightmap2blendmap(position)
-        x = bm.x
-        y = bm.y
+        x = int(bm.x)
+        y = int(bm.y)
 
         blend = terrain.blendmap
         radius = self.radius
