@@ -30,6 +30,7 @@
 18/20/18: 18/02/18  grass               BUG: grass instances are generated on road
 24/02/18: 18/02/18  scenery             add high grass and forest scenery to the instances
 25/02/18: 18/02/18  scenery             use displacement map to distribute grass blades
+26/02/18: 25/02/18  OO                  refactor indexmap class
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -45,7 +46,6 @@ TODO: 28/01/18  lights              implement lights in the shaders following Un
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
-TODO: 25/02/18  OO                  refactor indexmap class
 TODO: 25/02/18  OO                  refactor Asset class
 
 

@@ -19,7 +19,7 @@ def build():
         terrain.perl_generate()
         terrain.build_normalmap()
 
-    terrain.buildIndexMap()
+    terrain.build()
 
     if Config['terrain']['roads']:
         terrain.build_roads()

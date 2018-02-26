@@ -11,6 +11,7 @@ from progress import *
 from quadtree import *
 from TextureMap import *
 from VectorMap import *
+from IndexMap import *
 
 myrandom = Random(5454334)
 
@@ -49,7 +50,7 @@ class Terrain:
         self.quad_lod = [None]*self.nb_levels
         self.tiles = [None]*self.nb_levels
         self.normalMap = VectorMap(size)
-        self.indexmap = TextureMap(32, 128)
+        self.indexmap = IndexMap(32, 128)
         self.blendmap = TextureMap(256, 1)
         self.scenery = []
         self.roads = None
@@ -165,6 +166,9 @@ class Terrain:
                 'fragmentShader': loader.load('shaders/fragment.gl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
+
+    def build(self):
+        self.indexmap.build()
 
     def load(self, sun):
         """
@@ -866,34 +870,6 @@ class Terrain:
         """
         self._build_lod_mesh(self.quadtree, 0, 0, 0, self.size, None, 1)
         progress(0, 0)
-
-    def buildIndexMap(self):
-        """
-        generate an index map texture of width size
-        :return:
-        """
-        global myrandom
-        perlin = SimplexNoise(myrandom)
-
-        size = self.indexmap.size
-        data = self.indexmap.data
-
-        i = 0
-        for y in range(size):
-            for x in range(size):
-                rand = perlin.noise(x/8,y/8)
-                diversity = int((perlin.noise(x/16,y/16) + 1)*1.5)
-                if rand > 0:
-                    first = TILE_grass_png + diversity
-                else:
-                    first = TILE_forest_png + diversity
-
-                data[i] = first # // first layer texture index
-                data[i+1] = 255 # // second layer texture index
-                data[i+2] = 255 # // not in use
-                data[i+3] = 255 # // blending value of the 2 layers
-
-                i += 4
 
     def flat_areas(self):
         """
