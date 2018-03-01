@@ -18,10 +18,6 @@ from quadtree import *
 from ProceduralScenery import *
 from Scenery import *
 
-from city import House
-from Forest import Evergreen
-from Forest import Tree
-
 
 class Params:
     def __init__(self):
@@ -47,7 +43,7 @@ class Params:
         self.free_camera = False
         self.debug = None
         self.helper = None
-        self.assets = {}
+        self.assets = Assets()
 
         self.procedural_scenery = ProceduralScenery()
 
@@ -146,35 +142,32 @@ def init(p):
 
     # init the asset instanced models
     print("Init Assets...")
-    a = House(None, None, None, 0, None)
-    p.assets['house'] = a.build_mesh(0)
-    a = Tree(None, None, None)
-    p.assets['tree1'] = a.build_mesh(5)
-    p.assets['tree2'] = p.assets['tree1']
-    p.assets['tree3'] = p.assets['tree1']
-    p.assets['tree4'] = p.assets['tree1']
-    p.assets['tree5'] = a.build_mesh(5)
-    a = Evergreen(None, None, None)
-    p.assets['evergreen1'] = a.build_mesh(4)
-    p.assets['evergreen2'] = p.assets['evergreen1']
-    p.assets['evergreen3'] = p.assets['evergreen1']
-    p.assets['evergreen4'] = p.assets['evergreen1']
-    p.assets['evergreen5'] = a.build_mesh(4)
+    p.assets.load('evergreen', 5,  "models/pine/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 4,  "models/pine/4/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 3,  "models/pine/3/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 2,  "models/pine/4/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 1,  "models/pine/4/pine", THREE.Vector2(1, 1))
 
-    a = Scenery(None, THREE.Vector2(1, 1), "grass")
-    p.assets['grass'] = a.build_mesh(0, "models/grass/grass")
-    a = Scenery(None, THREE.Vector2(1, 2), "grass")
-    p.assets['high grass'] = a.build_mesh(0, "models/grass/grass")
-    a = Scenery(None, THREE.Vector2(1, 1), "prairie")
-    p.assets['prairie'] = a.build_mesh(0, "models/flower/obj__flow2")
-    a = Scenery(None, THREE.Vector2(1, 1), "ferm")
-    p.assets['fern'] = a.build_mesh(0, "models/ferm/obj__fern3")
-    a = Scenery(None, THREE.Vector2(1, 1), "shrub")
-    p.assets['shrub'] = a.build_mesh(0, "models/shrub/obj__shr3")
+    p.assets.load('tree', 5,  "models/tree228/tree228", THREE.Vector2(1, 1))
+    p.assets.load('tree', 4,  "models/tree228/tree228", THREE.Vector2(1, 1))
+    p.assets.load('tree', 3,  "models/tree228/tree228", THREE.Vector2(1, 1))
+    p.assets.load('tree', 2,  "models/tree228/tree228", THREE.Vector2(1, 1))
+    p.assets.load('tree', 1,  "models/tree228/tree228", THREE.Vector2(1, 1))
+
+    p.assets.load('house', 1,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+    p.assets.load('house', 2,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+    p.assets.load('house', 3,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+    p.assets.load('house', 4,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+    p.assets.load('house', 5,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+
+    p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1))
+    p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3))
+    p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1))
+    p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1))
+    p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1))
 
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
-    for mesh in p.assets.values():
-        p.scene.add(mesh)
+    p.assets.add_2_scene(p.scene)
 
     # init the terrain
     print("Init Terrain...")
@@ -259,8 +252,7 @@ def animate(p):
         p.hour = 0
 
     p.terrain.update_light(p.hour)
-    for asset in p.assets.values():
-        asset.material.uniforms.light.value.copy(p.sun.position)
+    p.assets.set_light_uniform(p.sun.position)
 
     # move the camera
     if not p.free_camera:
@@ -270,30 +262,16 @@ def animate(p):
     p.terrain.draw(p.player)
 
     # extract the assets from each visible tiles and build the instances
-    for asset in p.assets.values():
-        asset.geometry.maxInstancedCount = 0
+    p.assets.reset_instances()
 
     for quad in p.terrain.tiles_onscreen:
         if quad.mesh.visible:
+            # build instances from teh tiles
             for asset in quad.assets.values():
                 if len(asset.offset) > 0:
-                    key = asset.name
-                    if key == "house1" or key == "house2" or key == 'house3' or key == 'house4' or key == 'house5':
-                        key = "house"
+                    p.assets.instantiate(asset)
 
-                    geometry = p.assets[key].geometry
-                    l = geometry.maxInstancedCount
-                    m = len(asset.offset)
-                    geometry.attributes.offset.array[l*3:l*3+m] = asset.offset[0:m]
-                    m = len(asset.scale)
-                    geometry.attributes.scale.array[l*2:l*2+m] = asset.scale[0:m]
-
-                    geometry.maxInstancedCount += int(m/2)
-
-                    geometry.attributes.offset.needsUpdate = True
-                    geometry.attributes.scale.needsUpdate = True
-
-            # build grasses on the tile
+            # build procedural scenery on the higher tiles
             if quad.level >= 4:
                 p.procedural_scenery.instantiate(p.player.position, p.terrain, quad, p.assets)
 

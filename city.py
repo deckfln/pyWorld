@@ -8,7 +8,37 @@ from Heightmap import *
 from Scenery import *
 from Footprint import *
 from Utils import *
-from Asset import *
+
+
+class House(Scenery):
+    """
+
+    """
+    def __init__(self, width, len, height, alpha, position):
+        if width is None:
+            return
+
+        radius = math.sqrt(width*width + len*len)/2
+        super().__init__(position, width, "house")
+
+        self.radius = radius
+        self.type = 0
+        self.width = width
+        self.height = height
+        self.len = len
+        self.rotation = alpha
+
+        footprint = FootPrint(
+                THREE.Vector2(-width/2, -len/2),
+                THREE.Vector2(width, len),
+                radius,
+                position,
+                10,
+                self
+                )
+
+        footprint.rotate(alpha)
+        self.footprints.append(footprint)
 
 
 def city_create(terrain):
@@ -220,48 +250,3 @@ def city_paint_indexmap(terrain, center):
             ok = done.getV(center)
             if ok < 0:
                 terrain.setIndexMap(center, [terr.TILE_stone_path_png, 255, 255, 255])
-
-
-class House(Scenery):
-    def __init__(self, width, len, height, alpha, position):
-        if width is None:
-            return
-
-        radius = math.sqrt(width*width + len*len)/2
-        super().__init__(position, width, "house")
-
-        self.radius = radius
-        self.type = 0
-        self.width = width
-        self.height = height
-        self.len = len
-        self.rotation = alpha
-
-        footprint = FootPrint(
-                THREE.Vector2(-width/2, -len/2),
-                THREE.Vector2(width, len),
-                radius,
-                position,
-                10,
-                self
-                )
-
-        footprint.rotate(alpha)
-        self.footprints.append(footprint)
-
-    def build_mesh(self, level):
-        asset = Asset("tree", "models/wooden_house/wooden_house")
-        mesh = asset.mesh.children[0]
-        mesh.geometry.computeBoundingBox()
-        mesh.material.normalMap = mesh.material.bumpMap
-        mesh.material.bumpMap = None
-        dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-        dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-        dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
-
-        mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
-        mesh.geometry.rotateX(math.pi / 2)
-
-        self.instantiate_mesh(mesh)
-
-        return mesh

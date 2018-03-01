@@ -8,9 +8,12 @@ from datetime import datetime
 from THREE import *
 from THREE.pyOpenGL.pyOpenGL import *
 from THREE.loaders.BinaryLoader import *
+
+from Scenery import *
+from city import *
+
 from Terrain import *
 from Forest import *
-from city import *
 
 
 def build():

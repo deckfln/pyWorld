@@ -2,7 +2,7 @@
 
 """
 
-from Asset import *
+from Assets import *
 from Terrain import*
 from Scenery import *
 from Array2D import *
@@ -51,7 +51,7 @@ class ProceduralScenery:
         def instantiate_ground(s, ground_type, asset_name):
             density = s[ground_type]  # 0 => TILE_grass_png
 
-            geometry = assets[asset_name].geometry
+            geometry = assets.get(asset_name).geometry
             offset = geometry.attributes.offset
             nb = geometry.maxInstancedCount
 

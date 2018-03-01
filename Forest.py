@@ -13,29 +13,6 @@ from progress import *
 import Utils as THREE_Utils
 import Terrain
 from Utils import *
-import city
-from Asset import *
-
-
-tree_material_trunk= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
-            'color': 0x8B4513,
-            'wireframe': False,
-            'name': "tree_material_trunk"}))
-
-tree_material_foliage= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
-            'color': 0x00ff00,
-            'wireframe': False,
-            'name':"tree_material_foliage"} ))
-tree_texture = Material2InstancedMaterial(THREE.MeshBasicMaterial({
-    'side': THREE.DoubleSide,
-    'transparent': True,
-    'depthWrite': True,
-    'depthTest': True,
-    'wireframe': False,
-    'alphaTest': 0.1,
-    'map': THREE.ImageUtils.loadTexture('img/tree.png'),
-    'name':"tree_texture"
-}))
 
 
 class Tree(Scenery):
@@ -86,55 +63,6 @@ class Tree(Scenery):
 
         return THREE.Mesh(geometry, None)
 
-    def build_mesh(self, level):
-        """
-        """
-        height = 1
-        radius = 0.5
-
-        if level == 0:
-            return None
-        elif level == 1:
-            mesh = self._build(radius, height, 3, 4, level)
-        elif level == 2:
-            mesh = self._build(radius, height, 3, 8, level)
-        elif level == 3:
-            mesh = self._build(radius, height, 4, 16, level)
-        elif level == 4:
-            mesh = self._build(radius, height, 8, 32, level)
-        else:    # maximum details
-            asset = Asset("tree", "models/tree228/tree228")
-            mesh = asset.mesh.children[0]
-            mesh.geometry.computeBoundingBox()
-            mesh.material.normalMap = mesh.material.bumpMap
-            mesh.material.bumpMap = None
-            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
-
-            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
-            mesh.geometry.rotateX(math.pi/2)
-
-        self.instantiate_mesh(mesh)
-
-        return mesh
-
-
-evergreen_material_foliage= Material2InstancedMaterial(THREE.MeshLambertMaterial( {
-            'color': 0x008800,
-            'wireframe': False,
-            'name':"evergreen_material_foliage"} ))
-
-evergreen_texture = Material2InstancedMaterial(THREE.MeshBasicMaterial({
-    'side': THREE.DoubleSide,
-    'transparent': True,
-    'depthWrite': True,
-    'depthTest': True,
-    'wireframe': False,
-    'alphaTest': 0.1,
-    'map': THREE.ImageUtils.loadTexture('img/evergreen.png'),
-    'name':"evergreen_texture"} ))
-
 
 class Evergreen(Scenery):
     """
@@ -148,7 +76,7 @@ class Evergreen(Scenery):
             return
 
         # the width of the tree is actually twice the radius
-        super().__init__(position, radius*2, "evergreen")
+        super().__init__(position, radius *2, "evergreen")
 
         self.radius = radius
         self.height = height
@@ -198,55 +126,6 @@ class Evergreen(Scenery):
         mergeGeometries([g_trunk, g_foliage], geometry)
 
         return THREE.Mesh(geometry, None)
-
-    def build_mesh(self, level):
-        """
-         * 
-         * @param {type} level
-         * @returns {Evergreen.prototype.build_mesh.mesh|THREE.Group|THREE.Mesh|.Object@call;create.build_mesh.mesh}
-        """
-        # height = self.height
-        # radius = self.radius
-        height = 1
-        radius = 0.5
-
-        if level == 0:
-            return None
-        elif level == 1:
-            mesh = self._build(radius, height, 3, 3, level)
-        elif level == 2:
-            mesh = self._build(radius, height, 3, 6, level)
-        elif level == 3:
-            mesh = self._build(radius, height, 4, 12, level)
-        elif level == 4:
-            asset = Asset("tree", "models/pine/4/pine")
-            mesh = asset.mesh.children[0]
-            mesh.geometry.computeBoundingBox()
-            mesh.material.normalMap = mesh.material.bumpMap
-            mesh.material.bumpMap = None
-            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
-
-            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
-            mesh.geometry.rotateX(math.pi/2)
-        else: # maximum details
-            asset = Asset("tree", "models/pine/pine")
-            mesh = asset.mesh.children[0]
-            mesh.geometry.computeBoundingBox()
-            mesh.material.normalMap = mesh.material.bumpMap
-            mesh.material.bumpMap = None
-            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
-
-            mesh.geometry.scale(1/dx, 1/dy, 1/dz)
-            mesh.geometry.rotateX(math.pi/2)
-
-        self.instantiate_mesh(mesh)
-
-        return mesh
-
 
 """
  * 

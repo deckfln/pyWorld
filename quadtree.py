@@ -37,8 +37,9 @@ def _loadMeshIO(name):
 
 
 class _instance:
-    def __init__(self, name):
+    def __init__(self, name, level):
         self.name = name
+        self.level = level
         self.offset = []
         self.scale = []
 
@@ -211,20 +212,18 @@ class Quadtree:
         Use the footprint of the object to insert it mesh on all quads it covers
         """
 
-        key = "%s%d" % (object.name, level)
-
         # create and register the mesh for the instance
-        if key not in self.assets:
-            self.assets[key] = _instance(key)
+        if object.name not in self.assets:
+            self.assets[object.name] = _instance(object.name, level)
 
         # translate the object position
         # register the instance
-        self.assets[key].offset.extend([
-            object.position.x ,
+        self.assets[object.name].offset.extend([
+            object.position.x,
             object.position.y,
             object.position.z
         ])
-        self.assets[key].scale.extend([
+        self.assets[object.name].scale.extend([
             object.scale,
             object.scale
         ])
