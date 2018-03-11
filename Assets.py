@@ -1,11 +1,9 @@
 """
 3D Asset
 """
-import os
-
 from THREE.loaders.OBJLoader2 import *
 from THREE.loaders.MTLLoader import *
-from pyOpenGL.pyCache import *
+from THREE.pyOpenGL.pyCache import *
 from Config import *
 
 loader = THREE.FileLoader()
@@ -41,6 +39,7 @@ instance_depth_material = THREE.ShaderMaterial({
 class Assets:
     def __init__(self):
         self.assets = {}
+        self.cache = {}
 
     def _load(self, file):
         cache = pyCache("%s.obj" % file)
@@ -102,17 +101,22 @@ class Assets:
         mesh.frustumCulled = False
 
     def load(self, name, level, model, vscale):
-        asset = self._load(model)
-        mesh = asset.children[0]
-        mesh.geometry.computeBoundingBox()
-        mesh.material.normalMap = mesh.material.bumpMap
-        mesh.material.bumpMap = None
-        dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-        dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-        dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+        if model in self.cache:
+            mesh = self.cache[model].clone()
+        else:
+            asset = self._load(model)
 
-        mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
-        mesh.geometry.rotateX(math.pi / 2)
+            mesh = asset.children[0]
+            mesh.geometry.computeBoundingBox()
+            mesh.material.normalMap = mesh.material.bumpMap
+            mesh.material.bumpMap = None
+            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+
+            mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
+            mesh.geometry.rotateX(math.pi / 2)
+            self.cache[model] = mesh
 
         self._instantiate_mesh(mesh)
 

@@ -3,6 +3,8 @@
 import sys
 sys.path.append('../THREEpy')
 
+import pickle
+
 from datetime import datetime
 
 from THREE import *
@@ -21,10 +23,10 @@ from Scenery import *
 
 class Params:
     def __init__(self):
+        self.container = None
         self.camera = None
         self.scene = None
         self.renderer = None
-        self.container = None
         self.mesh = None
         self.terrain = None
         self.quads = None
@@ -44,7 +46,31 @@ class Params:
         self.debug = None
         self.helper = None
         self.assets = Assets()
-
+        self.waypoints = [
+            [27.851066, -11.072675],
+            [82.691207, -7.590076],
+            [101.407703, 13.839407],
+            [163.939700, 17.976922],
+            [140.623194, 190.161045],
+            [80.165049, 219.885517],
+            [39.678931, 168.043069],
+            [45.278453, 173.812005],
+            [5.467293, 195.812008],
+            [-83.311626, 199.816100],
+            [-126.860680, 109.217034],
+            [-138.746920, 101.351219],
+            [-142.627914, 88.164670],
+            [-149.326163, 45.132085],
+            [-140.465237, 13.597540],
+            [-85.459352, -22.551980],
+            [-151.262829, -118.220122],
+            [-83.218297, -93.002215],
+            [-38.293321, -33.974625],
+            [-1.120154, -51.350403],
+            [31.228154, -114.540116],
+            [80.523751, -77.058823]
+        ]
+        self.waypoint = 0
         self.procedural_scenery = ProceduralScenery()
 
 
@@ -142,9 +168,10 @@ def init(p):
 
     # init the asset instanced models
     print("Init Assets...")
+
     p.assets.load('evergreen', 5,  "models/pine/pine", THREE.Vector2(1, 1))
     p.assets.load('evergreen', 4,  "models/pine/4/pine", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 3,  "models/pine/3/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 3,  "models/pine/4/pine", THREE.Vector2(1, 1))
     p.assets.load('evergreen', 2,  "models/pine/4/pine", THREE.Vector2(1, 1))
     p.assets.load('evergreen', 1,  "models/pine/4/pine", THREE.Vector2(1, 1))
 
@@ -165,9 +192,10 @@ def init(p):
     p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1))
     p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1))
     p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1))
-
+    
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     p.assets.add_2_scene(p.scene)
+
 
     # init the terrain
     print("Init Terrain...")
@@ -203,10 +231,37 @@ def onWindowResize(event, p):
 
 
 def animate(p):
+    # direction toward the next waypoint
+    x = p.waypoints[p.waypoint + 1][0]
+    y = p.waypoints[p.waypoint + 1][1]
+    d = THREE.Vector2(x, y)
+    d = d.sub(p.player.position)
+    dst = d.length()
+
+    # angle with the current direction
+    a = math.atan2(d.y, d.x) - math.atan2(p.player.direction.y, p.player.direction.x)
+
+    if dst > 1:
+        if a < -0.1:
+            p.player.action.y = 1
+            p.player.action.x = 0
+        elif a > 0.1:
+            p.player.action.y = -1
+            p.player.action.x = 0
+        else:
+            p.player.action.y = 0
+            p.player.action.x = 1
+    else:
+        p.player.action.x = 0
+        p.waypoint += 1
+
+    # print(a, dst, p.player.action.x, p.player.action.y)
+
     checkQuadtreeProcess()
 
     # target 30 FPS, if time since last animate is exactly 0.033ms, delta=1
     delta = (p.clock.getDelta() * 30)
+    delta = 1
 
     p.controls.update()
 
@@ -299,21 +354,26 @@ def keyboard(event, p):
         p.container.quit()
     elif keyCode == 99:   # C
         p.free_camera = not p.free_camera
+    elif keyCode == 116:  # T
+        if down:
+            print("[%f, %f]," %(p.player.position.x, p.player.position.y))
     elif keyCode in p.keymap:
         p.keymap[keyCode] = down
 
         p.player.action.x = p.keymap[273] or -p.keymap[274]  # up / down
         p.player.action.y = p.keymap[275] or -p.keymap[276]  # left / right
-
+    else:
+        print(keyCode)
 
 def main(argv=None):
     p = Params()
 
     init(p)
+
     p.container.addEventListener('animationRequest', animate)
     p.container.addEventListener('keydown', keyboard)
     p.container.addEventListener('keyup', keyboard)
-    return p.container.loop()
+    p.container.loop()
 
 
 if __name__ == "__main__":

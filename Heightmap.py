@@ -62,18 +62,18 @@ class Heightmap:
         gridy = math.floor(y)
         offsety = y - gridy
 
-        z1 = self.get(gridx, gridy)
+        z1 = self.map[gridx + gridy * self.size]
         if gridx < self.size - 1:
-            z2 = self.get(gridx + 1, gridy)
+            z2 = self.map[gridx + 1 + gridy * self.size]
             if gridy < self.size - 1:
-                z3 = self.get(gridx + 1, gridy + 1)
+                z3 = self.map[gridx + 1 + (gridy + 1) * self.size]
             else:
                 z3 = z1
         else:
             z2 = z1
             z3 = z1
         if gridy < self.size - 1:
-            z4 = self.get(gridx, gridy + 1)
+            z4 = self.map[gridx + (gridy + 1) * self.size]
         else:
             z4 = z1
 
