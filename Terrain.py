@@ -453,10 +453,8 @@ class Terrain:
         if not target:
             target = THREE.Vector2()
 
-        target.set(
-                (position.x + self.onscreen/2)*(self.size-1)/self.onscreen,
-                (position.y + self.onscreen/2)*(self.size-1)/self.onscreen
-        )
+        target.x = (position.x + self.onscreen/2)*(self.size-1)/self.onscreen
+        target.y = (position.y + self.onscreen/2)*(self.size-1)/self.onscreen
         return target
 
     def screen2mapXY(self, x, y, target=None):
@@ -468,10 +466,9 @@ class Terrain:
         if not target:
             target = THREE.Vector2()
 
-        target.set(
-                (x + self.onscreen/2)*(self.size-1)/self.onscreen,
-                (y + self.onscreen/2)*(self.size-1)/self.onscreen
-        )
+        target.x = (x + self.onscreen/2)*(self.size-1)/self.onscreen
+        target.y = (y + self.onscreen/2)*(self.size-1)/self.onscreen
+
         return target
 
     def heightmap2blendmap(self, position, target=None):

@@ -1,7 +1,9 @@
 """
 """
-import sys
-sys.path.append('../THREEpy')
+import sys, os.path
+mango_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
++ '/THREEpy/')
+sys.path.append(mango_dir)
 
 import pickle
 
@@ -209,8 +211,10 @@ def init(p):
 
     initQuadtreeProcess()
 
-    p.player.draw()
+    print("Init meshes...")
+    p.terrain.quadtree.loadChildren()
 
+    p.player.draw()
     print("End Init")
 
 
@@ -328,7 +332,7 @@ def animate(p):
 
             # build procedural scenery on the higher tiles
             if quad.level >= 4:
-                p.procedural_scenery.instantiate(p.player.position, p.terrain, quad, p.assets)
+               p.procedural_scenery.instantiate(p.player.position, p.terrain, quad, p.assets)
 
     # t = time.time()
     render(p)
@@ -364,6 +368,7 @@ def keyboard(event, p):
         p.player.action.y = p.keymap[275] or -p.keymap[276]  # left / right
     else:
         print(keyCode)
+
 
 def main(argv=None):
     p = Params()

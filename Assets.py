@@ -79,7 +79,7 @@ class Assets:
 
         instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
 
-        # we can display up to 1000 instances
+        # we can display up to 16000 instances
         offsets = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic( True )
         scales = THREE.InstancedBufferAttribute(Float32Array(48000), 2, 1).setDynamic( True )
         instancedBufferGeometry.addAttribute('offset', offsets)  # per mesh translation
@@ -117,6 +117,7 @@ class Assets:
             mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
             mesh.geometry.rotateX(math.pi / 2)
             self.cache[model] = mesh
+            mesh.name = model
 
         self._instantiate_mesh(mesh)
 
@@ -135,7 +136,7 @@ class Assets:
     def add_2_scene(self, scene):
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
         for mesh in self.assets.values():
-           scene.add(mesh)
+           scene.add_instance(mesh)
 
     def reset_instances(self):
         for asset in self.assets.values():

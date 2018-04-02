@@ -101,6 +101,7 @@ class Quadtree:
                 q.dump(t)
 
     def dump_mesh(self):
+        self.mesh.geometry.computeBoundingSphere()
         with open("bin/" + self.name + ".terrain.pkl", "wb") as f:
             pickle.dump(self.mesh, f)
 
@@ -118,6 +119,16 @@ class Quadtree:
         # Add to scene if not yet there
         if not self.mesh:
             AsyncIO.read(self)
+
+    def loadChildren(self):
+        """
+        @param {type} scene
+        @returns {undefined}
+        """
+        self.load()
+        if self.sub[0] is not None:
+            for child in self.sub:
+                child.loadChildren()
 
     def display(self):
         """

@@ -23,7 +23,7 @@ class TextureMap:
         """
         self.size = size
         self.repeat = repeat
-        self.data = array('B', [0] * (size * size * 4))  # unsigned char RGBA
+        self.data = np.zeros(size * size * 4, 'b')  # unsigned char RGBA
         self.texture = None
         self.vector4 = THREE.Vector4()
 

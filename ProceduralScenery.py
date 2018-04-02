@@ -2,12 +2,95 @@
 
 """
 
+from THREE.Vector3 import *
 from Assets import *
 from Terrain import*
 from Scenery import *
 from Array2D import *
 from prng import *
 import numpy as np
+
+import sys, os.path
+mango_dir = os.path.dirname(__file__) + '/cython/'
+sys.path.append(mango_dir)
+
+from cScenery import *
+
+
+_tm = THREE.Vector2()
+_im = THREE.Vector2()
+_p = THREE.Vector2()
+_p1 = THREE.Vector2()
+_p2 = THREE.Vector2()
+
+
+def _concatenate_spots(spot, geometry):
+    le = len(spot)
+
+    offset = geometry.attributes.offset
+    nb = geometry.maxInstancedCount
+
+    i = nb * 3
+    offset.array[i:le + i] = spot[:]
+
+    nb += int(le / 3)
+    geometry.maxInstancedCount = nb
+
+
+def _instantiate_for_spot(x, y, density, terrain, self):
+    """
+    instantiate one ground type at the current spot
+    :param s:
+    :param ground_type:
+    :param asset_name:
+    :return:
+    """
+    if density < 0.25:
+        return None
+
+    if density < 0.50:
+        displacement = self.displace(x, y)
+        _p1x = x + displacement.x * 2
+        _p1y = y + displacement.x * 2
+
+        terrain.screen2mapXY(_p1x, _p1y, _tm)
+        z = terrain.heightmap.bilinear(_tm.x, _tm.y)
+
+        return np.array([_p1x, _p1y, z], 'f')
+
+    # the higher the desity, the smaller the step to generate instances
+    if density < 0.75:
+        step = 2
+        dstep = 0.5
+        mx = 9*3
+    else:
+        step = 1
+        dstep = 0.25
+        mx = 25*3
+
+    # map the step on the upper loop -6 -> 6  <=> -1 -> 1
+    instances = np.zeros(mx, 'f')
+    i = 0
+    for tx in range(-2, 3, step):
+        _p1x = x + tx / 2
+        for ty in range(-2, 3, step):
+            _p1y = y + ty / 2
+
+            displacement = self.displace(_p1x, _p1y)
+
+            _p1x += displacement.x * dstep
+            _p1y += displacement.y * dstep
+
+            terrain.screen2mapXY(_p1x, _p1y, _tm)
+            z = terrain.heightmap.bilinear(_tm.x, _tm.y)
+
+            instances[i] = _p1x
+            instances[i + 1] = _p1y
+            instances[i + 2] = z
+
+            i += 3
+
+    return instances
 
 
 class ProceduralScenery:
@@ -50,148 +133,72 @@ class ProceduralScenery:
         # return self.displacement_map.get(self.np[0], self.np[1])
 
     def instantiate(self, player_position, terrain, quad, assets):
-        tm = THREE.Vector2()
-        im = THREE.Vector2()
-        p = THREE.Vector2()
-        p1 = THREE.Vector2()
-        p2 = THREE.Vector2()
+        c_instantiate(self, player_position.np, terrain, quad, assets)
+
+    def pinstantiate(self, player_position, terrain, quad, assets):
 
         # parse the quad
-        size = int(quad.size / 2 )
-        p.x = int(quad.center.x-size)
-        p.y = int(quad.center.y-size)
+        size = int(quad.size / 2)
+        _p.x = int(quad.center.x - size)
+        _p.y = int(quad.center.y - size)
 
-        p2.x = int(quad.center.x+size)
-        p2.y = int(quad.center.y+size)
+        _p2.x = int(quad.center.x + size)
+        _p2.y = int(quad.center.y + size)
 
-        def instantiate_for_spot(s, ground_type):
-            """
-            instantiate one ground type at the current spot
-            :param s:
-            :param ground_type:
-            :param asset_name:
-            :return:
-            """
-            instances = []
-            density = s[ground_type]  # 0 => TILE_grass_png
+        px = player_position.np[0]
+        py = player_position.np[1]
 
-            if density < 0.25:
-                pass
-            elif density < 0.50:
-                displacement = self.displace(x, y)
-                p1.x = x + displacement.x * 2
-                p1.y = y + displacement.x * 2
+        geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
 
-                terrain.screen2mapXY(p1.x, p1.y, tm)
-                z = terrain.heightmap.bilinear(tm.x, tm.y)
+        cache = self.cache
 
-                instances.extend([p1.x, p1.y, z])
-
-            else:
-                # the higher the desity, the smaller the step to generate instances
-                if density < 0.75:
-                    step = 2
-                    dstep = 0.5
-                else:
-                    step = 1
-                    dstep = 0.25
-
-                # map the step on the upper loop -6 -> 6  <=> -1 -> 1
-                for tx in range(-2, 3, step):
-                    for ty in range(-2, 3, step):
-                        displacement = self.displace(p1.x, p1.y)
-
-                        p1.x = x + tx / 2 + displacement.x * dstep
-                        p1.y = y + ty / 2 + displacement.y * dstep
-
-                        terrain.screen2map(p1, tm)
-                        z = terrain.heightmap.bilinear(tm.x, tm.y)
-
-                        instances.extend([p1.x, p1.y, z])
-
-            return instances
-
-        def concatenate_spots(spot, asset_name):
-            le = len(spot)
-
-            if le > 0:
-                geometry = assets.get(asset_name).geometry
-                offset = geometry.attributes.offset
-                nb = geometry.maxInstancedCount
-
-                i = nb * 3
-                offset.array[i:len(spot) + i] = spot[:]
-
-                nb += int(len(spot)/3)
-                geometry.maxInstancedCount = nb
-                geometry.attributes.offset.needsUpdate = True
-
-        spots = []
-        for x in range(p.x, p2.x, 2):
-            for y in range(p.y, p2.y, 2):
+        for x in range(_p.x, _p2.x, 2):
+            dx = px - x
+            dx2 = dx * dx
+            for y in range(_p.y, _p2.y, 2):
 
                 # only sample points inside the player 16 radius
-                dx = player_position.x - x
-                dy = player_position.y - y
-                d = dx * dx + dy * dy
+                dy = py - y
+                d = dx2 + dy * dy
 
                 if d > 256:
                     continue
 
-                k = "%f:%d" % (x, y)
-                if k not in self.cache:
-                    terrain.screen2mapXY(x, y, tm)
+                k = "%d:%d" % (x, y)
+                if k not in cache:
+                    terrain.screen2mapXY(x, y, _tm)
 
                     # do not put scenery on roads or rivers
-                    if terrain.isRiverOrRoad(tm):
+                    if terrain.isRiverOrRoad(_tm):
                         continue
 
                     # get the density of each ground type
-                    terrain.heightmap2indexmap(tm, im)
-                    s = terrain.indexmap.bilinear_density(im.x, im.y)
+                    terrain.heightmap2indexmap(_tm, _im)
+                    s = terrain.indexmap.bilinear_density(_im.x, _im.y)
                     if s is None:
                         continue
 
                     # now pick the density of grass
-                    self.cache[k] = [
-                        instantiate_for_spot(s, 0),
-                        instantiate_for_spot(s, 1),
-                        instantiate_for_spot(s, 2),
-                        instantiate_for_spot(s, 3),
-                        instantiate_for_spot(s, 4)
+                    cache[k] = [
+                        _instantiate_for_spot(x, y, s[0], terrain, self),
+                        _instantiate_for_spot(x, y, s[1], terrain, self),
+                        _instantiate_for_spot(x, y, s[2], terrain, self),
+                        _instantiate_for_spot(x, y, s[3], terrain, self),
+                        _instantiate_for_spot(x, y, s[4], terrain, self)
                         ]
 
                     self.fifo.append(k)
 
-                    if len(self.cache) > 1024:
+                    if len(cache) > 1024:
                         k1 = self.fifo.pop(0)
-                        del self.cache[k1]
+                        del cache[k1]
 
-                spots.append(k)
+                cached = cache[k]
 
-        """
-        a = 0
-        for asset in ('grass', 'high grass', 'prairie', 'fern', 'shrub'):
-            geometry = assets.get(asset).geometry
-            offset = geometry.attributes.offset
-            i = 0
+                for i in range(5):
+                    if cached[i] is not None:
+                        _concatenate_spots(cached[i], geometries[i])
 
-            for spot in spots:
-                cached = self.cache[spot][a]
-                le = len(cached)
-                if le > 0:
-                    offset.array[i:i + le] = cached[:]
-                    i += int(le/3)
-
-            geometry.maxInstancedCount = int(i/3)
-            geometry.attributes.offset.needsUpdate = True
-            a += 1
-        """
-        for spot in spots:
-            cached = self.cache[spot]
-
-            concatenate_spots(cached[0], 'grass')
-            concatenate_spots(cached[1], 'high grass')
-            concatenate_spots(cached[2], 'prairie')
-            concatenate_spots(cached[3], 'fern')
-            concatenate_spots(cached[4], 'shrub')
+        for i in range(5):
+            if geometries[i].maxInstancedCount > 0:
+                geometries[i].attributes.offset.needsUpdate = True

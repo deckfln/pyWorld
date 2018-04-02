@@ -1,9 +1,19 @@
+"""
+
+"""
+import numpy as np
 from array import *
 import math
 import json
 import THREE
 import PIL
 from PIL import Image
+
+import sys, os.path
+mango_dir = os.path.dirname(__file__) + '/cython/'
+sys.path.append(mango_dir)
+
+from cHeightmap import *
 
 
 class Heightmap:
@@ -12,7 +22,7 @@ class Heightmap:
     """
     def __init__(self, size, onscreen=0):
         self.size = size = int(size)
-        self.map = array('f', [0] * (size * size))  # float
+        self.map = np.zeros(size * size, 'f')  # float
         self.onscreen = onscreen
         self.normalMap = None
 
@@ -20,7 +30,7 @@ class Heightmap:
         if x < 0 or y < 0 or x >= self.size or y >= self.size:
             return
 
-        self.map[int( x) + int(y) * self.size] = h
+        self.map[int(x) + int(y) * self.size] = h
 
     def setV(self, v, h):
         self.map[round(v.x) + round(v.y) * self.size] = h
@@ -46,6 +56,9 @@ class Heightmap:
         return self.map[p]
 
     def bilinear(self, x, y):
+        return c_bilinear(self.map, self.size, x, y)
+
+    def _bilinear(self, x, y):
         if not (0 <= x < self.size and 0 <= y < self.size):
             return None
 
