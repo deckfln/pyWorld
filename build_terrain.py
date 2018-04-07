@@ -20,6 +20,8 @@ from Forest import *
 
 def build():
     terrain = Terrain.Terrain(512, 25, 512)
+    terrain.init()
+
     if not Config['terrain']['flat']:
         terrain.perl_generate()
         terrain.build_normalmap()

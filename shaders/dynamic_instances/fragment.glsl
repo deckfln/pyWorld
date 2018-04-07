@@ -1,7 +1,8 @@
+// coming from vertexshader
 varying vec3 vColor;
-varying vec3 vNormal;
 varying vec2 vUv;
 varying vec3 vViewPosition;
+varying vec3 vNormal;
 
 // chunk(packing)
 const float PackUpscale = 256. / 255.;
@@ -111,11 +112,11 @@ void main()
     #endif
 
     // Add directional light
-    vec3 nlight = normalize(light);
+    vec3 nlight = normalize(-light);
     float nDotl = dot(normal, nlight);
     float brightness = max(nDotl, 0.1);
 
-    diffuse.rgb = clamp(diffuse.rgb * brightness, 0.0, 1.0);
+    //diffuse.rgb = clamp(diffuse.rgb * brightness, 0.0, 1.0);
 
     // specular
     float specularStrength;

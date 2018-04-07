@@ -49,7 +49,7 @@ class Terrain:
         self.heightmaps = [None]*self.nb_levels
         self.quad_lod = [None]*self.nb_levels
         self.tiles = [None]*self.nb_levels
-        self.normalMap = VectorMap(size)
+        self.normalMap = None
         self.indexmap = IndexMap(32, 128)
         self.blendmap = TextureMap(256, 1)
         self.scenery = []
@@ -89,6 +89,9 @@ class Terrain:
         self.quadtree = Quadtree(-1, -1, -1, None)
 
         self.vector2 = THREE.Vector2()
+
+    def init(self):
+        self.normalMap = VectorMap(self.size)
 
     def shaders(self, light):
         """

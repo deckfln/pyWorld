@@ -22,7 +22,7 @@ class Heightmap:
     """
     def __init__(self, size, onscreen=0):
         self.size = size = int(size)
-        self.map = np.zeros(size * size, 'f')  # float
+        self.map = np.zeros(size * size, dtype=np.float32)  # float
         self.onscreen = onscreen
         self.normalMap = None
 

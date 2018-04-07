@@ -16,6 +16,7 @@ sys.path.append(mango_dir)
 
 from cScenery import *
 
+_cython = False
 
 _tm = THREE.Vector2()
 _im = THREE.Vector2()
@@ -24,14 +25,26 @@ _p1 = THREE.Vector2()
 _p2 = THREE.Vector2()
 
 
+class _spot:
+    def __init__(self, size):
+        self.instances = np.zeros(size*3, dtype=np.float32)
+        self.normals = np.zeros(size*3, dtype=np.float32)
+
+
 def _concatenate_spots(spot, geometry):
-    le = len(spot)
+    instances = spot.instances
+    normals = spot.normals
+
+    le = len(instances)
 
     offset = geometry.attributes.offset
+    normal = geometry.attributes.normals
+
     nb = geometry.maxInstancedCount
 
     i = nb * 3
-    offset.array[i:le + i] = spot[:]
+    offset.array[i:le + i] = instances[0:le]
+    normal.array[i:le + i] = normals[0:le]
 
     nb += int(le / 3)
     geometry.maxInstancedCount = nb
@@ -55,8 +68,21 @@ def _instantiate_for_spot(x, y, density, terrain, self):
 
         terrain.screen2mapXY(_p1x, _p1y, _tm)
         z = terrain.heightmap.bilinear(_tm.x, _tm.y)
+        n = terrain.normalMap.nearest(_tm.x, _tm.y)
 
-        return np.array([_p1x, _p1y, z], 'f')
+        spot = _spot(1)
+        instances = spot.instances
+        normals = spot.normals
+
+        instances[0] = _p1x
+        instances[1] = _p1y
+        instances[2] = z
+
+        normals[0] = n.np[0]
+        normals[1] = n.np[1]
+        normals[2] = n.np[2]
+
+        return spot
 
     # the higher the desity, the smaller the step to generate instances
     if density < 0.75:
@@ -69,7 +95,10 @@ def _instantiate_for_spot(x, y, density, terrain, self):
         mx = 25*3
 
     # map the step on the upper loop -6 -> 6  <=> -1 -> 1
-    instances = np.zeros(mx, 'f')
+    spot = _spot(mx)
+    instances = spot.instances
+    normals = spot.normals
+
     i = 0
     for tx in range(-2, 3, step):
         _p1x = x + tx / 2
@@ -83,14 +112,19 @@ def _instantiate_for_spot(x, y, density, terrain, self):
 
             terrain.screen2mapXY(_p1x, _p1y, _tm)
             z = terrain.heightmap.bilinear(_tm.x, _tm.y)
+            n = terrain.normalMap.nearest(_tm.x, _tm.y)
 
             instances[i] = _p1x
             instances[i + 1] = _p1y
             instances[i + 2] = z
 
+            normals[i] = n.np[0]
+            normals[i + 1] = n.np[1]
+            normals[i + 2] = n.np[2]
+
             i += 3
 
-    return instances
+    return spot
 
 
 class ProceduralScenery:
@@ -132,10 +166,17 @@ class ProceduralScenery:
         return self.displacement_map.get(x2 / 16 + fx, y2 / 16 + fy)
         # return self.displacement_map.get(self.np[0], self.np[1])
 
-    def instantiate(self, player_position, terrain, quad, assets):
-        c_instantiate(self, player_position.np, terrain, quad, assets)
+    def instantiate(self, player, terrain, quad, assets):
+        _p.copy(player.position)
+        _p1.copy(player.direction).multiplyScalar(8)
+        _p.add(_p1)
 
-    def pinstantiate(self, player_position, terrain, quad, assets):
+        if _cython:
+            c_instantiate(self, _p.x, _p.y, terrain, quad, assets)
+        else:
+            self.p_instantiate(_p.x, _p.y, terrain, quad, assets)
+
+    def p_instantiate(self, px, py, terrain, quad, assets):
 
         # parse the quad
         size = int(quad.size / 2)
@@ -145,8 +186,8 @@ class ProceduralScenery:
         _p2.x = int(quad.center.x + size)
         _p2.y = int(quad.center.y + size)
 
-        px = player_position.np[0]
-        py = player_position.np[1]
+        px = int(px)
+        py = int(py)
 
         geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
 
@@ -202,3 +243,4 @@ class ProceduralScenery:
         for i in range(5):
             if geometries[i].maxInstancedCount > 0:
                 geometries[i].attributes.offset.needsUpdate = True
+                geometries[i].attributes.normals.needsUpdate = True

@@ -189,11 +189,12 @@ def init(p):
     p.assets.load('house', 4,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
     p.assets.load('house', 5,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
 
-    p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1))
-    p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3))
-    p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1))
-    p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1))
-    p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1))
+    # dynamic assets
+    p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1), True)
+    p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3), True)
+    p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1), True)
+    p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1), True)
+    p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1), True)
     
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     p.assets.add_2_scene(p.scene)
@@ -215,6 +216,9 @@ def init(p):
     p.terrain.quadtree.loadChildren()
 
     p.player.draw()
+
+    # do a first render to initialize as much as possible
+    render(p)
     print("End Init")
 
 
@@ -332,7 +336,7 @@ def animate(p):
 
             # build procedural scenery on the higher tiles
             if quad.level >= 4:
-               p.procedural_scenery.instantiate(p.player.position, p.terrain, quad, p.assets)
+               p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
 
     # t = time.time()
     render(p)

@@ -1,20 +1,22 @@
 """
 
 """
+import numpy as np
+
 from THREE.Vector3 import *
 from Array2D import *
-
+from THREE.DataTexture import *
 
 # reusable vectors
-v1_static = THREE.Vector3()
-v2_static = THREE.Vector3()
+_v1_static = THREE.Vector3()
+_v2_static = THREE.Vector3()
 
 
 def _bilinear(v1, v2, v3, v4, offsetx, offsety):
     # https://forum.unity.com/threads/vector-bilinear-interpolation-of-a-square-grid.205644/
-    v1_static.copy(v1).lerp(v2, offsetx)
-    v2_static.copy(v3).lerp(v4, offsetx)
-    return v1_static.lerp(v2_static, offsety)
+    _v1_static.copy(v1).lerp(v2, offsetx)
+    _v2_static.copy(v3).lerp(v4, offsetx)
+    return _v1_static.lerp(_v2_static, offsety)
 
 
 def _newvector():
@@ -42,3 +44,18 @@ class VectorMap(Array2D):
 
     def normalize(self):
         super().forEach(_normamlize)
+
+    def export2texture(self):
+        data = np.zeros(self.size * self.size * 3, np.float32)
+
+        i = 0
+        for x in range(self.size):
+            for y in range(self.size):
+                v = self.get(x,y)
+                data[i] = v.np[0]
+                data[i + 1] = v.np[1]
+                data[i + 2] = v.np[2]
+
+                i += 3
+
+        return THREE.DataTexture(data, self.size, self.size, RGBAFormat, FloatType)

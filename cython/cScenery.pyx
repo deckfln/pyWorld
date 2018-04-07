@@ -15,20 +15,24 @@ from libc.math cimport sqrt, floor
 _tm = Vector2()
 _im = Vector2()
 
-cpdef void _concatenate_spots(np.ndarray[float, ndim=1] spot, geometry):
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+cpdef void _concatenate_spots(np.ndarray[float, ndim=1] spot, object geometry):
     cdef int le = len(spot)
-    cdef int nb
     cdef int i
+    cdef int t
 
-    offset = geometry.attributes.offset
-    nb = geometry.maxInstancedCount
+    cdef np.ndarray[float, ndim=1] offset = geometry.attributes.offset.array
+    cdef int nb = geometry.maxInstancedCount
 
     i = nb * 3
-    offset.array[i:le + i] = spot[:]
+    offset[i:i+le] = spot[:]
 
-    nb += le / 3
-    geometry.maxInstancedCount = nb
+    geometry.maxInstancedCount += le/3
 
+@cython.cdivision(True)
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
 def _instantiate_for_spot(double x, double y, double density, terrain, self):
     """
     instantiate one ground type at the current spot
@@ -55,7 +59,7 @@ def _instantiate_for_spot(double x, double y, double density, terrain, self):
         terrain.screen2mapXY(_p1x, _p1y, _tm)
         z = terrain.heightmap.bilinear(_tm.x, _tm.y)
 
-        return np.array([_p1x, _p1y, z], 'f')
+        return np.array([_p1x, _p1y, z], dtype=np.float32)
 
     # the higher the desity, the smaller the step to generate instances
     cdef int mx
@@ -74,7 +78,7 @@ def _instantiate_for_spot(double x, double y, double density, terrain, self):
         mx = 25*3
 
     # map the step on the upper loop -6 -> 6  <=> -1 -> 1
-    instances = np.zeros(mx, 'f')
+    instances = np.zeros(mx, dtype=np.float32)
     i = 0
 
     # map the step on the upper loop -6 -> 6  <=> -1 -> 1
@@ -102,7 +106,7 @@ def _instantiate_for_spot(double x, double y, double density, terrain, self):
 """
 
 """
-def c_instantiate(self, player_position, terrain, quad, assets):
+def c_instantiate(object self, int px, int py, object terrain, object quad, object assets):
 
     # parse the quad
     cdef int size = quad.size / 2
@@ -113,8 +117,6 @@ def c_instantiate(self, player_position, terrain, quad, assets):
     cdef int _p2y = quad.center.y + size
 
     cdef int nbspots = 0
-    cdef px = int(player_position[0])
-    cdef py = int(player_position[1])
 
     cdef list geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
     cdef dict cache = self.cache

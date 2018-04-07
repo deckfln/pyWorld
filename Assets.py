@@ -22,7 +22,7 @@ if Config["shadow"]["enabled"]:
 
 instance_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
-    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
+    'vertexShader': loader.load('shaders/dynamic_instances/vertex.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
@@ -42,24 +42,18 @@ class Assets:
         self.cache = {}
 
     def _load(self, file):
-        cache = pyCache("%s.obj" % file)
-        asset = cache.load()
-        if asset is None:
-            f = os.path.basename(file)
-            dir = os.path.dirname(file)
+        f = os.path.basename(file)
+        dir = os.path.dirname(file)
 
-            mtlLoader = MTLLoader()
-            mtlLoader.setPath(dir)
-            materials = mtlLoader.load( "%s.mtl" % f)
-            materials.preload()
+        mtlLoader = MTLLoader()
+        mtlLoader.setPath(dir)
+        materials = mtlLoader.load( "%s.mtl" % f)
+        materials.preload()
 
-            loader = OBJLoader2()
-            loader.setPath(dir)
-            loader.setMaterials(materials.materials)
-            asset = loader.load("%s.obj" % f)
-            cache.save(asset)
-        else:
-            asset.rebuild_id()
+        loader = OBJLoader2()
+        loader.setPath(dir)
+        loader.setMaterials(materials.materials)
+        asset = loader.load("%s.obj" % f)
 
         return asset
 
@@ -67,7 +61,7 @@ class Assets:
         for asset in self.assets.values():
             asset.material.uniforms.light.value.copy(position)
 
-    def _instantiate_mesh(self, mesh):
+    def _instantiate_mesh(self, mesh, dynamic):
         normalMap = None
         map = None
 
@@ -80,10 +74,16 @@ class Assets:
         instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
 
         # we can display up to 16000 instances
-        offsets = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic( True )
-        scales = THREE.InstancedBufferAttribute(Float32Array(48000), 2, 1).setDynamic( True )
+        offsets = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic(True)
+        scales = THREE.InstancedBufferAttribute(Float32Array(48000), 2, 1).setDynamic(True)
+
         instancedBufferGeometry.addAttribute('offset', offsets)  # per mesh translation
         instancedBufferGeometry.addAttribute('scale', scales)  # per mesh scale
+
+        if dynamic:
+            normals = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic(True)
+            instancedBufferGeometry.addAttribute('normals', normals)
+            instancedBufferGeometry.removeAttribute('normal')
 
         instancedBufferGeometry.maxInstancedCount = 0
 
@@ -100,26 +100,32 @@ class Assets:
 
         mesh.frustumCulled = False
 
-    def load(self, name, level, model, vscale):
+    def load(self, name, level, model, vscale, dynamic=False):
         if model in self.cache:
             mesh = self.cache[model].clone()
         else:
-            asset = self._load(model)
+            cache = pyCache("%s.obj" % model)
+            mesh = cache.load()
+            if mesh is None:
+                asset = self._load(model)
 
-            mesh = asset.children[0]
-            mesh.geometry.computeBoundingBox()
-            mesh.material.normalMap = mesh.material.bumpMap
-            mesh.material.bumpMap = None
-            dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
-            dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
-            dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
+                mesh = asset.children[0]
+                mesh.geometry.computeBoundingBox()
+                mesh.material.normalMap = mesh.material.bumpMap
+                mesh.material.bumpMap = None
+                dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
+                dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
+                dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
 
-            mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
-            mesh.geometry.rotateX(math.pi / 2)
-            self.cache[model] = mesh
-            mesh.name = model
+                mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
+                mesh.geometry.rotateX(math.pi / 2)
+                self.cache[model] = mesh
+                mesh.name = model
+                cache.save(mesh)
+            else:
+                mesh.rebuild_id()
 
-        self._instantiate_mesh(mesh)
+        self._instantiate_mesh(mesh, dynamic)
 
         scale = mesh.geometry.attributes.scale
         for i in range(0, len(scale.array), 2):
