@@ -8,6 +8,10 @@ import Terrain
 
 
 class IndexMap(TextureMap):
+    def __init__(self, size, repeat):
+        super().__init__(size, repeat)
+        self.grounds = np.zeros(11, np.float32)
+
     def build(self):
         """
         generate an index map texture of width size
@@ -98,7 +102,8 @@ class IndexMap(TextureMap):
             return (1-offsetx) * pleft + offsetx * pright
 
         # test each ground
-        grounds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        grounds = self.grounds
+        grounds.fill(0)
         grounds[z1 - Terrain.TILE_grass_png] = 1
         grounds[z2 - Terrain.TILE_grass_png] = 1
         grounds[z3 - Terrain.TILE_grass_png] = 1

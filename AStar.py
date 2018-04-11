@@ -69,7 +69,10 @@ class AStar:
         self.heightmap = heightmap
         self.size = size
         
-        self.came_from = Array2D(size, nonimy)
+        self.came_from = Array2D(size, THREE.Vector2)
+        for i in range(size*size):
+            self.came_from.map[i] = None
+
         self.cost_so_far = Heightmap(size)
         self.done = Heightmap(size)
         self.done.setV(source, True)

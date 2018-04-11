@@ -8,8 +8,7 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport sqrt, floor
 
-def c_bilinear(np.ndarray[float, ndim=1] map, int size, double x, double y):
-
+cpdef cHeightmap_bilinear(np.ndarray[float, ndim=1] map, int size, float x, float y):
     cdef int gridx = int(x)
     cdef int gridy = int(y)
 
@@ -17,13 +16,13 @@ def c_bilinear(np.ndarray[float, ndim=1] map, int size, double x, double y):
         return map[gridx + size * gridy]
 
     # bilinear interpolation
-    cdef double offsetx = x - gridx
-    cdef double offsety = y - gridy
+    cdef float offsetx = x - gridx
+    cdef float offsety = y - gridy
 
-    cdef double z1 = map[gridx + gridy * size]
-    cdef double z2
-    cdef double z3
-    cdef double z4
+    cdef float z1 = map[gridx + gridy * size]
+    cdef float z2
+    cdef float z3
+    cdef float z4
 
     if gridx < size - 1:
         z2 = map[gridx + 1 + gridy * size]

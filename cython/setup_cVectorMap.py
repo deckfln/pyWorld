@@ -5,8 +5,8 @@ import numpy
 
 setup(
     ext_modules = [
-        Extension("cScenery",
-                sources=["cScenery.pyx"],
+        Extension("cVectorMap",
+                sources=["cVectorMap.pyx"],
                 extra_compile_args=["/openmp"],
                 include_dirs=[numpy.get_include()]
                   )

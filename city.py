@@ -57,6 +57,7 @@ def city_create(terrain):
     city_paint_indexmap(terrain, center)
 
     v = THREE.Vector2()
+    normal = THREE.Vector3()
 
     screen2hm = terrain.size / terrain.onscreen
 
@@ -79,7 +80,7 @@ def city_create(terrain):
             hm = terrain.indexmap2heighmap(v)
 
             # // check the terrain is not too vertical at that point
-            normal = terrain.normalMap.bilinear(hm.x, hm.y)
+            terrain.normalMap.bilinear(hm.x, hm.y, normal)
             if normal.z < 0.95:
                 continue
 

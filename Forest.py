@@ -143,6 +143,7 @@ def forest_create(trees, terrain):
     # check the indexmap for cell with code
     list = []
     v = THREE.Vector2()
+    normal = THREE.Vector3()
 
     for y in range(size):
         for x in range(size):
@@ -191,7 +192,7 @@ def forest_create(trees, terrain):
             continue
 
         # // check the terrain is not too steep at that point
-        normal = terrain.normalMap.bilinear(hm.x, hm.y)
+        terrain.normalMap.bilinear(hm.x, hm.y, normal)
         if normal.z < 0.75:
             continue
 

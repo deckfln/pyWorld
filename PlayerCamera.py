@@ -5,6 +5,10 @@ from THREE.Camera import *
 
 from Config import *
 
+_p = THREE.Vector3()
+_p1 = THREE.Vector3()
+_hm = THREE.Vector2()
+
 
 class PlayerCamera:
     def __init__(self):
@@ -38,40 +42,42 @@ class PlayerCamera:
         self.controls = controls
 
     def move(self, player, terrain):
-        self.shoulder.copy(player.position)
-        self.behind.copy(self.shoulder)
-        self.distance.copy(player.direction)
-        self.distance.multiplyScalar(10)
-        l1 = self.distance.length()
-        self.behind.sub(self.distance)
-        self.behind.z += 2    # over the shoulder
+        shoulder = self.shoulder
+        behind = self.behind
+        distance = self.distance
+
+        shoulder.copy(player.position)
+        behind.copy(shoulder)
+        distance.copy(player.direction)
+        distance.multiplyScalar(10)
+        l1 = distance.length()
+        behind.sub(distance)
+        behind.z += 2    # over the shoulder
         
         # check if there is an obstacle on our line of sight
-        # move the camera near the player 
-        d = self.behind.clone().sub(self.shoulder)
-        p = THREE.Vector3()
-        p1 = THREE.Vector3()
-        
+        # move the camera near the player
+        d = behind.clone().sub(shoulder)
+
         i = 0.05
         while i < 1.05:
-            p1.copy(d)
-            p1.multiplyScalar(i)
-            p.copy(self.shoulder)
-            p.add(p1)
+            _p1.copy(d)
+            _p1.multiplyScalar(i)
+            _p.copy(shoulder)
+            _p.add(_p1)
 
-            hm = terrain.screen2map(p)
-            ground = terrain.getV(hm)
-            if p.z - ground < i:    # the nearest to the camera the more over the ground
-                p.z = ground + i    # to avoid clipping of the terrain
+            terrain.screen2map(_p, _hm)
+            ground = terrain.getV(_hm)
+            if _p.z - ground < i:    # the nearest to the camera the more over the ground
+                _p.z = ground + i    # to avoid clipping of the terrain
                 
                 # compute a line of sight
-                p.sub(self.shoulder)
-                l = p.length()
+                _p.sub(shoulder)
+                l = _p.length()
                 l = l1 / l
-                p.multiplyScalar(l)
+                _p.multiplyScalar(l)
                 
-                self.behind.copy(self.shoulder).add(p)
-                d.copy(p)
+                behind.copy(shoulder).add(_p)
+                d.copy(_p)
                 
             i += 0.05
 

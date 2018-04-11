@@ -9,12 +9,12 @@ class Array2D:
     """
 
     """
-    def __init__(self, size, initObject):
+    def __init__(self, size, obj):
         self.size = size
-        self.map = np.zeros(size * size, np.object)
+        self.map = np.zeros(size * size, object)
 
         for i in range(size*size):
-            self.map[i] = initObject()
+            self.map[i] = obj()
 
     def set(self, x, y, obj):
         if x < 0 or y < 0 or x > self.size or y > self.size:

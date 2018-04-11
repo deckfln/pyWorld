@@ -56,10 +56,11 @@ class Heightmap:
         return self.map[p]
 
     def bilinear(self, x, y):
-        return c_bilinear(self.map, self.size, x, y)
+        return cHeightmap_bilinear(self.map, self.size, x, y)
 
     def _bilinear(self, x, y):
         if not (0 <= x < self.size and 0 <= y < self.size):
+            print("out of bound", x, y)
             return None
 
         if isinstance(x, int) and isinstance(y, int):

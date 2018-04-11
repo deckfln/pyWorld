@@ -31,6 +31,8 @@ TILE_dirt_png = 11
 TILE_dirt1_png = 12
 TILE_stone_path_png = 13
 
+_vector3 = THREE.Vector3()
+
 
 class Terrain:
     def __init__(self, size, height, onscreen):
@@ -55,6 +57,9 @@ class Terrain:
         self.scenery = []
         self.roads = None
         self.radiuses = [0] * self.nb_levels
+
+        self.ratio = (self.size-1)/self.onscreen
+        self.half = self.onscreen/2
 
         self.tiles_onscreen = []
 
@@ -227,7 +232,7 @@ class Terrain:
         self.set(v.x, v.y, z)
 
     def get_normalV(self, v):
-        return self.normalMap.bilinear(v.x, v.y)
+        return self.normalMap.bilinear(v.x, v.y, _vector3)
 
     def getBlendMap(self, v):
         """
@@ -456,8 +461,10 @@ class Terrain:
         if not target:
             target = THREE.Vector2()
 
-        target.x = (position.x + self.onscreen/2)*(self.size-1)/self.onscreen
-        target.y = (position.y + self.onscreen/2)*(self.size-1)/self.onscreen
+        ratio = self.ratio
+        half = self.half
+        target.x = (position.x + half) * ratio
+        target.y = (position.y + half) * ratio
         return target
 
     def screen2mapXY(self, x, y, target=None):
@@ -564,16 +571,9 @@ class Terrain:
         mB = THREE.Vector2()
         mC = THREE.Vector2()
 
-        """
-        m = Array2D(heightmap.size, _initVector)
-        for y in range(heightmap.size-1):
-            for x in range(heightmap.size-1):
-                v = m.get(x, y)
-                self.map2screenXY(x, y - 1, v)
-        """
-
-        for y in range(heightmap.size-1):
-            for x in range(heightmap.size-1):
+        size = heightmap.size
+        for y in range(size-1):
+            for x in range(size-1):
                 if y > 0:
                     # // normalize Z againt the heightmap size
                     zA = heightmap.get(x, y-1)
@@ -621,6 +621,7 @@ class Terrain:
 
         # // normalize the normals
         normalMap.normalize()
+
         progress(0, 0)
 
     def _build_lod_mesh(self, quad, level, x, y, size, material, count):
@@ -638,28 +639,30 @@ class Terrain:
         normals = geometry.attributes.normal.array
 
         screen = THREE.Vector2()
+        normal = THREE.Vector3()
+        hm = THREE.Vector2()
+
         uv_index = 0
         normal_index = 0
 
-        def _bilinear(v1, v2, v3, v4, offsetx, offsety):
-            # https://forum.unity.com/threads/vector-bilinear-interpolation-of-a-square-grid.205644/
-            abu = v1.clone().lerp(v2, offsetx)
-            dcu = v3.clone().lerp(v4, offsetx)
-            return abu.lerp(dcu, offsety)
+        heightmap = self.heightmap
+        normalMap = self.normalMap
+        map_size = self.size
 
         for p in range(0, len(positions), 3):
             screen.x = positions[p] + x
             screen.y = positions[p + 1] + y
 
-            hm = self.screen2map(screen)
-            z = self.heightmap.bilinear(hm.x, hm.y)
+            self.screen2map(screen, hm)
+            z = heightmap.bilinear(hm.x, hm.y)
             positions[p + 2] = z
 
-            uvs[uv_index] = hm.x / (self.size - 1)
-            uvs[uv_index + 1] = hm.y / (self.size - 1)
+            uvs[uv_index] = hm.x / (map_size - 1)
+            uvs[uv_index + 1] = hm.y / (map_size - 1)
             uv_index += 2
 
-            normal = self.normalMap.bilinear(hm.x, hm.y)
+            normalMap.bilinear(hm.x, hm.y, normal)
+
             normals[p] = normal.x
             normals[p+1] = normal.y
             normals[p+2] = normal.z
@@ -885,13 +888,12 @@ class Terrain:
         indexm = Heightmap(flatten_size)
         ratio = size / flatten_size
         normalmap = self.normalMap
-        normal_data = normalmap.map
+        normal = THREE.Vector3()
 
         p = 0
         for y in range(size):
             for x in range(size):
-                # // z = delta_data[p];
-                normal = normal_data[p]
+                normalmap.get(x, y, normal)
                 z = normal.z
 
                 p2 = int(math.floor(x / ratio) + math.floor(y / ratio)*flatten_size)

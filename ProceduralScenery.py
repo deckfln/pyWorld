@@ -16,7 +16,7 @@ sys.path.append(mango_dir)
 
 from cScenery import *
 
-_cython = False
+_cython = True
 
 _tm = THREE.Vector2()
 _im = THREE.Vector2()
@@ -25,106 +25,165 @@ _p1 = THREE.Vector2()
 _p2 = THREE.Vector2()
 
 
+_buffer = np.zeros(65536*3, dtype=np.float32)
+_first1 = -1
+_first9 = -1
+_first25 = -1
+_buffer_size = 0
+
+
+class _scenery:
+    def __init__(self, density, x, y, terrain, heightmap, normalMap, displacement_map):
+        global _buffer, _buffer_size, _first1, _first9, _first25
+
+        # self.instances = np.zeros(size*3, dtype=np.float32)
+        # self.normals = np.zeros(size*3, dtype=np.float32)
+        if density < 0.25:
+            self.size = 0
+            return
+        elif density < 0.5:
+            first = _first1
+            size = 1
+        elif density < 0.75:
+            first = _first9
+            size = 9
+        else:
+            first = _first25
+            size = 25
+
+        if first < 0:
+            first = _buffer_size
+            _buffer_size += size*2*3
+            # print(_buffer_size)
+        else:
+            if size == 1:
+                _first1 = int(_buffer[first])
+            elif size == 9:
+                _first9 = int(_buffer[first])
+            else:
+                _first25 = int(_buffer[first])
+
+        self.instances = int(first)
+        self.normals = int(first + size*3)
+        self.size = size
+
+        instances = self.instances
+        normals = self.normals
+
+        if size == 1:
+            step = 4
+            dstep = 2
+        elif size == 9:
+            step = 2
+            dstep = 1
+        else:
+            step = 1
+            dstep = 0.5
+
+        for tx in range(-2, 3, step):
+            _p1x = x + tx / 2
+            for ty in range(-2, 3, step):
+                _p1y = y + ty / 2
+
+                displacement = _displace(_p1x, _p1y)
+
+                _p1x += displacement_map[displacement] * dstep
+                _p1y += displacement_map[displacement + 1] * dstep
+
+                terrain.screen2mapXY(_p1x, _p1y, _tm)
+                z = heightmap.bilinear(_tm.x, _tm.y)
+                n = normalMap.nearest(_tm.x, _tm.y)
+                vec3 = n.np
+
+                _buffer[instances] = _p1x
+                _buffer[instances + 1] = _p1y
+                _buffer[instances + 2] = z
+
+                _buffer[normals] = vec3[0]
+                _buffer[normals + 1] = vec3[1]
+                _buffer[normals + 2] = vec3[2]
+
+                normals += 3
+                instances += 3
+
+    def free(self):
+        global _buffer, _buffer_size, _first1, _first9, _first25
+        if not self.size:
+            return
+
+        if self.size == 1:
+            first = _first1
+        elif self.size == 9:
+            first = _first9
+        else:
+            first = _first25
+
+        _buffer[self.instances] = first
+
+        if self.size == 1:
+            _first1 = self.instances
+        elif self.size == 9:
+            _first9 = self.instances
+        else:
+            _first25 = self.instances
+
+    def concatenate(self, geometry):
+        global _buffer
+        if not self.size:
+            return
+
+        instances = self.instances
+        normals = self.normals
+
+        le = self.size*3
+
+        offset = geometry.attributes.offset.array
+        normal = geometry.attributes.normals.array
+
+        nb = geometry.maxInstancedCount
+
+        i = nb * 3
+        offset[i:i + le] = _buffer[instances:instances + le]
+        normal[i:i + le] = _buffer[normals:normals + le]
+
+        nb += int(le / 3)
+        geometry.maxInstancedCount = nb
+
+
+def _displace(x, y):
+    x1 = x + 256
+    y1 = y + 256
+
+    x2 = int(x1)
+    y2 = int(y1)
+
+    fx = (x1 - x2) * 32
+    fy = (y1 - y2) * 32
+
+    return int((x2 / 16 + fx) * 2 + (y2 / 16 + fy)*128)
+
+
 class _spot:
-    def __init__(self, size):
-        self.instances = np.zeros(size*3, dtype=np.float32)
-        self.normals = np.zeros(size*3, dtype=np.float32)
+    def __init__(self, grass, high_grass, prairie, fern, shrub):
+        self.grass = grass
+        self.high_grass = high_grass
+        self.prairie = prairie
+        self.fern = fern
+        self.shrub = shrub
 
+    def free(self):
+        self.grass.free()
+        self.high_grass.free()
+        self.prairie.free()
+        self.fern.free()
+        self.shrub.free()
 
-def _concatenate_spots(spot, geometry):
-    instances = spot.instances
-    normals = spot.normals
-
-    le = len(instances)
-
-    offset = geometry.attributes.offset
-    normal = geometry.attributes.normals
-
-    nb = geometry.maxInstancedCount
-
-    i = nb * 3
-    offset.array[i:le + i] = instances[0:le]
-    normal.array[i:le + i] = normals[0:le]
-
-    nb += int(le / 3)
-    geometry.maxInstancedCount = nb
-
-
-def _instantiate_for_spot(x, y, density, terrain, self):
-    """
-    instantiate one ground type at the current spot
-    :param s:
-    :param ground_type:
-    :param asset_name:
-    :return:
-    """
-    if density < 0.25:
-        return None
-
-    if density < 0.50:
-        displacement = self.displace(x, y)
-        _p1x = x + displacement.x * 2
-        _p1y = y + displacement.x * 2
-
-        terrain.screen2mapXY(_p1x, _p1y, _tm)
-        z = terrain.heightmap.bilinear(_tm.x, _tm.y)
-        n = terrain.normalMap.nearest(_tm.x, _tm.y)
-
-        spot = _spot(1)
-        instances = spot.instances
-        normals = spot.normals
-
-        instances[0] = _p1x
-        instances[1] = _p1y
-        instances[2] = z
-
-        normals[0] = n.np[0]
-        normals[1] = n.np[1]
-        normals[2] = n.np[2]
-
-        return spot
-
-    # the higher the desity, the smaller the step to generate instances
-    if density < 0.75:
-        step = 2
-        dstep = 0.5
-        mx = 9*3
-    else:
-        step = 1
-        dstep = 0.25
-        mx = 25*3
-
-    # map the step on the upper loop -6 -> 6  <=> -1 -> 1
-    spot = _spot(mx)
-    instances = spot.instances
-    normals = spot.normals
-
-    i = 0
-    for tx in range(-2, 3, step):
-        _p1x = x + tx / 2
-        for ty in range(-2, 3, step):
-            _p1y = y + ty / 2
-
-            displacement = self.displace(_p1x, _p1y)
-
-            _p1x += displacement.x * dstep
-            _p1y += displacement.y * dstep
-
-            terrain.screen2mapXY(_p1x, _p1y, _tm)
-            z = terrain.heightmap.bilinear(_tm.x, _tm.y)
-            n = terrain.normalMap.nearest(_tm.x, _tm.y)
-
-            instances[i] = _p1x
-            instances[i + 1] = _p1y
-            instances[i + 2] = z
-
-            normals[i] = n.np[0]
-            normals[i + 1] = n.np[1]
-            normals[i + 2] = n.np[2]
-
-            i += 3
-
-    return spot
+    def concatenate(self, geometries):
+        self.grass.concatenate(geometries[0])
+        self.high_grass.concatenate(geometries[1])
+        self.prairie.concatenate(geometries[2])
+        self.fern.concatenate(geometries[3])
+        self.shrub.concatenate(geometries[4])
 
 
 class ProceduralScenery:
@@ -133,38 +192,15 @@ class ProceduralScenery:
         self.np = np.zeros(2)
         rand = Random(5489671)
 
-        def init_prn():
-            return THREE.Vector2((rand.random() - 0.5) * 2, (rand.random() - 0.5) * 2)
+        self.displacement = np.zeros(64*64*2, np.float32)
+        p = 0
+        for i in range(64*64):
+            self.displacement[p] = (rand.random() - 0.5) * 2
+            self.displacement[p + 1] = (rand.random() - 0.5) * 2
+            p += 2
 
-        self.displacement_map = Array2D(64, init_prn)
         self.cache = {}
         self.fifo = []
-
-    def displace(self, x, y):
-        # absolute position
-        """
-        self.np[0] = x
-        self.np[1] = y
-
-        self.np += 256
-        b = np.floor(self.np)
-        self.np -= b
-        self.np *= 32
-        b /= 16
-
-        self.np += b
-        """
-        x1 = x + 256
-        y1 = y + 256
-
-        x2 = int(x1)
-        y2 = int(y1)
-
-        fx = (x1 - x2) * 32
-        fy = (y1 - y2) * 32
-
-        return self.displacement_map.get(x2 / 16 + fx, y2 / 16 + fy)
-        # return self.displacement_map.get(self.np[0], self.np[1])
 
     def instantiate(self, player, terrain, quad, assets):
         _p.copy(player.position)
@@ -192,6 +228,10 @@ class ProceduralScenery:
         geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
 
         cache = self.cache
+        indexmap = terrain.indexmap
+        normalMap = terrain.normalMap
+        heightmap = terrain.heightmap
+        displacement_map = self.displacement
 
         for x in range(_p.x, _p2.x, 2):
             dx = px - x
@@ -215,32 +255,29 @@ class ProceduralScenery:
 
                     # get the density of each ground type
                     terrain.heightmap2indexmap(_tm, _im)
-                    s = terrain.indexmap.bilinear_density(_im.x, _im.y)
+                    s = indexmap.bilinear_density(_im.x, _im.y)
                     if s is None:
                         continue
 
                     # now pick the density of grass
-                    cache[k] = [
-                        _instantiate_for_spot(x, y, s[0], terrain, self),
-                        _instantiate_for_spot(x, y, s[1], terrain, self),
-                        _instantiate_for_spot(x, y, s[2], terrain, self),
-                        _instantiate_for_spot(x, y, s[3], terrain, self),
-                        _instantiate_for_spot(x, y, s[4], terrain, self)
-                        ]
+                    cache[k] = _spot(
+                        _scenery(s[0], x, y, terrain, heightmap, normalMap, displacement_map),
+                        _scenery(s[1], x, y, terrain, heightmap, normalMap, displacement_map),
+                        _scenery(s[2], x, y, terrain, heightmap, normalMap, displacement_map),
+                        _scenery(s[3], x, y, terrain, heightmap, normalMap, displacement_map),
+                        _scenery(s[4], x, y, terrain, heightmap, normalMap, displacement_map)
+                        )
 
                     self.fifo.append(k)
 
                     if len(cache) > 1024:
                         k1 = self.fifo.pop(0)
+                        cache[k1].free()
                         del cache[k1]
 
-                cached = cache[k]
+                cache[k].concatenate(geometries)
 
-                for i in range(5):
-                    if cached[i] is not None:
-                        _concatenate_spots(cached[i], geometries[i])
-
-        for i in range(5):
-            if geometries[i].maxInstancedCount > 0:
-                geometries[i].attributes.offset.needsUpdate = True
-                geometries[i].attributes.normals.needsUpdate = True
+        for geometry in geometries:
+            if geometry.maxInstancedCount > 0:
+                geometry.attributes.offset.needsUpdate = True
+                geometry.attributes.normals.needsUpdate = True
