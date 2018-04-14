@@ -59,3 +59,5 @@ TODO: 03/02/18  shadows             if player is partily in the shadow of a tree
 TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 10/02/18  lightning           instances objects lightning is wrong
 TODO: 24/02/18  terrain             frustrum culling is visible on the edge
+TODO: 11/04/18  procedural scenery  normal lighting is bad on some instances
+

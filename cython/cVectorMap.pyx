@@ -40,7 +40,8 @@ cpdef void cVectorMap_bilinear(np.ndarray[float, ndim=1] map , int size, float x
     cdef float offsety = y - gridy
 
     if x == gridx and y == gridy:
-        self.get(x, y, vec3)
+        cVectorMap_get(map, size, x, y, vec3)
+        return
 
     # bilinear interpolation
 
@@ -63,7 +64,7 @@ cpdef void cVectorMap_bilinear(np.ndarray[float, ndim=1] map , int size, float x
     cVector3_lerp(_z1.np, _z2.np, offsetx)
     cVector3_lerp(_z3.np, _z4.np, offsetx)
     cVector3_lerp(_z1.np, _z3.np, offsety)
-    cVector3_copy(vec3.np, _z1.np)
+    cVector3_copy(vec3, _z1.np)
 
 cpdef void cVectorMap_nearest(np.ndarray[float, ndim=1] map , int size, float x, float y, np.ndarray[float, ndim=1] vec3 ):
     cdef float gridx = floor(x)

@@ -2,10 +2,18 @@
 
 """
 import numpy as np
+import os, sys
 
 from THREE.Vector3 import *
 from THREE.DataTexture import *
 from Array2D import *
+
+mango_dir = os.path.dirname(__file__) + '/cython/'
+sys.path.append(mango_dir)
+
+from cVectorMap import *
+
+cython = False
 
 # reusable vectors
 _v1_static = THREE.Vector3()
@@ -52,7 +60,14 @@ class VectorMap:
 
         return vec3
 
-    def get(self, x, y, v):
+    def get(self, x, y , v):
+        if cython:
+            cVectorMap_get(self.map, self.size, x, y, v.np)
+        else:
+            return self.p_get(x, y, v)
+        return v
+
+    def p_get(self, x, y, v):
         if x < 0 or y < 0 or x > self.size or y > self.size:
             return None
 
@@ -76,6 +91,13 @@ class VectorMap:
             map[i + 2] = 1
 
     def bilinear(self, x, y, vec3):
+        if cython:
+            cVectorMap_bilinear(self.map, self. size, x, y, vec3.np)
+        else:
+            self.p_bilinear(x, y, vec3)
+        return vec3
+
+    def p_bilinear(self, x, y, vec3):
         global _z1, _z2, _z3, _z4
 
         if not (0 <= x < self.size and 0 <= y < self.size):
@@ -84,14 +106,14 @@ class VectorMap:
         if isinstance(x, int) and isinstance(y, int):
             return self.get(x, y, vec3)
 
-        if x.is_integer() and y.is_integer():
-            return self.get(x, y, vec3)
-
         # bilinear interpolation
         gridx = math.floor(x)
         offsetx = x - gridx
         gridy = math.floor(y)
         offsety = y - gridy
+
+        if offsetx == 0 and offsety == 0:
+            return self.get(x, y, vec3)
 
         self.get(gridx, gridy, _z1)
         if gridx < self.size - 1:
@@ -116,6 +138,13 @@ class VectorMap:
         return vec3
 
     def nearest(self, x, y, vec3):
+        if cython:
+            cVectorMap_nearest(self.map, self.size, x, y, vec3.np)
+        else:
+            self.p_nearest(x, y, vec3)
+        return vec3
+
+    def p_nearest(self, x, y, vec3):
         if not (0 <= x < self.size and 0 <= y < self.size):
             return None
         if isinstance(x, int) and isinstance(y, int):

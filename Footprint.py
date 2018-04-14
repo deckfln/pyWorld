@@ -265,11 +265,11 @@ class FootPrint:
          * @returns {FootPrint|def clone.n}
         """
         n = FootPrint()
-        
+        t = THREE.Vector2(translation.x, translation.y)
         for i in range(4):
-            n.p[i].copy(self.p[i]).add(translation)
+            n.p[i].copy(self.p[i]).add(t)
         
-        n.center.copy(self.center).add(translation)
+        n.center.copy(self.center).add(t)
         n.radius = self.radius
         n.height = self.height
 

@@ -125,8 +125,8 @@ class Road:
             pmax.x = int(pmax.x)
             pmax.y = int(pmax.y)
 
-            for y in range(pmin.y, pmax.y + 1):
-                for x in range(pmin.x, pmax.x + 1):
+            for y in range(int(pmin.y), int(pmax.y) + 1):
+                for x in range(int(pmin.x), int(pmax.x) + 1):
                     if x < 0 or x >= size or y < 0 or y >= size:
                         continue
 

@@ -15,6 +15,7 @@ sys.path.append(mango_dir)
 
 from cHeightmap import *
 
+cython = False
 
 class Heightmap:
     """
@@ -33,7 +34,7 @@ class Heightmap:
         self.map[int(x) + int(y) * self.size] = h
 
     def setV(self, v, h):
-        self.map[round(v.x) + round(v.y) * self.size] = h
+        self.map[int(v.x) + int(v.y) * self.size] = h
 
     def add(self, x, y, h):
         if x < 0 or y < 0 or x >= self.size or y >= self.size:
@@ -45,18 +46,21 @@ class Heightmap:
         if x < 0 or y < 0 or x >= self.size or y >= self.size:
             return None
 
-        p = int(round(x) + round(y) * self.size)
+        p = int(int(x) + int(y) * self.size)
         return self.map[p]
 
     def getNormalize(self, x, y):
         return self.get(x, y) / self.size
 
     def getV(self, v):
-        p = round(v.x) + round(v.y) * self.size
+        p = int(v.x) + int(v.y) * self.size
         return self.map[p]
 
     def bilinear(self, x, y):
-        return cHeightmap_bilinear(self.map, self.size, x, y)
+        if cython:
+            return cHeightmap_bilinear(self.map, self.size, x, y)
+        else:
+            return self._bilinear(x, y)
 
     def _bilinear(self, x, y):
         if not (0 <= x < self.size and 0 <= y < self.size):
@@ -66,15 +70,15 @@ class Heightmap:
         if isinstance(x, int) and isinstance(y, int):
             return self.map[x + self.size * y]
 
-        if x.is_integer() and y.is_integer():
-            p = int(x + self.size * y)
-            return self.map[p]
-
         # bilinear interpolation
         gridx = math.floor(x)
         offsetx = x - gridx
         gridy = math.floor(y)
         offsety = y - gridy
+
+        if offsetx == 0 and offsety == 0:
+            p = int(x + self.size * y)
+            return self.map[p]
 
         z1 = self.map[gridx + gridy * self.size]
         if gridx < self.size - 1:

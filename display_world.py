@@ -243,7 +243,8 @@ def animate(p):
     x = p.waypoints[p.waypoint + 1][0]
     y = p.waypoints[p.waypoint + 1][1]
     d = THREE.Vector2(x, y)
-    d = d.sub(p.player.position)
+    dp = THREE.Vector2(p.player.position.x, p.player.position.y)
+    d = d.sub(dp)
     dst = d.length()
 
     # angle with the current direction

@@ -476,8 +476,10 @@ class Terrain:
         if not target:
             target = THREE.Vector2()
 
-        target.x = (x + self.onscreen/2)*(self.size-1)/self.onscreen
-        target.y = (y + self.onscreen/2)*(self.size-1)/self.onscreen
+        ratio = self.ratio
+        half = self.half
+        target.x = (x + half) * ratio
+        target.y = (y + half) * ratio
 
         return target
 
