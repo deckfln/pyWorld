@@ -32,6 +32,9 @@
 25/02/18: 18/02/18  scenery             use displacement map to distribute grass blades
 26/02/18: 25/02/18  OO                  refactor indexmap class
 01/03/18: 25/02/18  OO                  refactor Asset class
+17/01/18: 15/04/18  camera              engine crash if camera if outside of the heightmap
+14/04/18: 15/04/18  procedural scenery  engine crashes when reaching the heightmap border
+14/04/18: 15/04/18  player              engine crashed when player outside of the heightmap
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -50,7 +53,6 @@ TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if 
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
-TODO: 17/01/18  camera              engine crash if camera if outside of the heightmap
 TODO: 24/01/18  scenery             if the footprint of scenery is over multiple tiles, multiple meshes will be displayed. Meshes should only be displayed if center of the mesh is on the tile
 TODO: 25/01/18  lod                 tiles on the edge of the screen are not displayed. scenery also disapear too often
 TODO: 28/01/18  shadows             when the terrain cast AND receive shadows, sometime you see triangles or stripes
@@ -60,4 +62,4 @@ TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 10/02/18  lightning           instances objects lightning is wrong
 TODO: 24/02/18  terrain             frustrum culling is visible on the edge
 TODO: 11/04/18  procedural scenery  normal lighting is bad on some instances
-
+TODO: 15/04/18  procedural scenery  memory management can freeze the app

@@ -61,6 +61,8 @@ cdef class _scenery:
         cdef int size
 
         if density < 0.25:
+            self.instances = -1
+            self.normals = -1
             self.size = 0
             return
         elif density < 0.5:
@@ -97,7 +99,7 @@ cdef class _scenery:
         cdef float dstep
 
         if size == 1:
-            step = 4
+            step = 5
             dstep = 4
         elif size == 9:
             step = 2
@@ -247,11 +249,23 @@ def c_instantiate(object self, int px, int py, object terrain, object quad, obje
 
     # parse the quad
     cdef int size = quad.size / 2
+    cdef int terrain_size = terrain.size / 2
+
     cdef int _px = quad.center.x - size
+    if _px < -terrain_size:
+        _px = -terrain_size + 1
+
     cdef int _py = quad.center.y - size
+    if _py < -terrain_size:
+        _py = -terrain_size + 1
 
     cdef int _p2x = quad.center.x + size
+    if _p2x > terrain_size:
+        _p2x = terrain_size - 1
+
     cdef int _p2y = quad.center.y + size
+    if _p2y > terrain_size:
+        _p2y = terrain_size - 1
 
     cdef int nbspots = 0
 

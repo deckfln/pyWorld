@@ -79,10 +79,25 @@ class IndexMap(TextureMap):
             top = 1
             offsety = offsety - 0.5
 
+        size = self.size
+
         z1 = self.get_layer1(gridx, gridy)
-        z2 = self.get_layer1(gridx, gridy + top)
-        z3 = self.get_layer1(gridx + left, gridy)
-        z4 = self.get_layer1(gridx + left, gridy + top)
+        if 0 <= gridy + top < size:
+            z2 = self.get_layer1(gridx, gridy + top)
+            if 0 <= gridx + left < size:
+                z3 = self.get_layer1(gridx + left, gridy)
+                z4 = self.get_layer1(gridx + left, gridy + top)
+            else:
+                z3 = 0
+                z4 = 0
+        else:
+            z2 = 0
+            if 0 <= gridx + left < size:
+                z3 = self.get_layer1(gridx + left, gridy)
+                z4 = 0
+            else:
+                z3 = 0
+                z4 = 0
 
         def bilinear_ground(ground):
             if z1 != ground and z2 != ground and z3 != ground and z4 != ground:

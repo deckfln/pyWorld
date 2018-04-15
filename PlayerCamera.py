@@ -66,7 +66,13 @@ class PlayerCamera:
             _p.add(_p1)
 
             terrain.screen2map(_p, _hm)
+
+            # reached heightmap limit
+            if _hm.x < 0 or _hm.y < 0 or _hm.x >= terrain.size or _hm.y >= terrain.size:
+                break
+
             ground = terrain.getV(_hm)
+
             if _p.z - ground < i:    # the nearest to the camera the more over the ground
                 _p.z = ground + i    # to avoid clipping of the terrain
                 

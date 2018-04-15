@@ -99,8 +99,14 @@ class Player(Actor):
         if position is None:
             position = self.position
 
+        terrain = self.terrain
+
         # force the player to stick to the surface
-        self.terrain.screen2map(position, _v2d_static)
+        terrain.screen2map(position, _v2d_static)
+
+        if _v2d_static.x < 0 or _v2d_static.y < 0 or _v2d_static.x >= terrain.size or _v2d_static.y >= terrain.size:
+            return None
+
         return self.terrain.get(_v2d_static.x, _v2d_static.y)
     
     def setZ(self):
@@ -152,11 +158,11 @@ class Player(Actor):
                 self.turn_left(delta, run)
 
             if direction.x == 1:
-                self.move_forward(delta, run)
-                self.setZ()
+                if self.move_forward(delta, run):
+                    self.setZ()
             elif direction.x == -1:
-                self.move_back(delta, run)
-                self.setZ()
+                if self.move_back(delta, run):
+                    self.setZ()
 
         # TODO: get the players camera from smehwere
         self.vcamera.move(self, terrain)
@@ -172,6 +178,9 @@ class Player(Actor):
         
         # forward speed depend of the steep and the run param
         z = self.getZ()
+        if z is None:
+            return False        # reached the heightmap limits
+
         p = _v3d_static.copy(self.position)
         d = _v3d1_static.copy(self.direction)
         d.multiplyScalar(delta)    # handle time
@@ -181,9 +190,12 @@ class Player(Actor):
             d.multiplyScalar(2)
             delta *= 2
         p.add(d)
-        z1 = self.getZ(p)
 
-        if z1 -z > 0.8*delta:
+        z1 = self.getZ(p)
+        if z1 is None:
+            return False        # reached the heightmap limits
+
+        if z1 - z > 0.8*delta:
             # stop in front of a cliff
             self.stop()
             return
@@ -197,7 +209,11 @@ class Player(Actor):
             p.copy(self.position)
             d.multiplyScalar(1.5)
             p.add(d)
-        
+
+        size = self.terrain.size
+        if p.x < -size or p.x < -size or p.x >= size or p.y >= size:
+            return False
+
         self.position.copy(p)
         
         if Config['player']['debug']['direction']:
@@ -226,9 +242,12 @@ class Player(Actor):
             d.multiplyScalar(2)
             delta *= 2
         p.sub(d)
-        z1 = self.getZ(p)
 
-        if z1 -z > 0.8*delta:
+        z1 = self.getZ(p)
+        if z1 is None:
+            return False        # reached the heightmap limits
+
+        if z1 - z > 0.8*delta:
             # stop in front of a cliff
             self.stop()
             return

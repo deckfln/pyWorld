@@ -239,30 +239,31 @@ def onWindowResize(event, p):
 
 
 def animate(p):
-    # direction toward the next waypoint
-    x = p.waypoints[p.waypoint + 1][0]
-    y = p.waypoints[p.waypoint + 1][1]
-    d = THREE.Vector2(x, y)
-    dp = THREE.Vector2(p.player.position.x, p.player.position.y)
-    d = d.sub(dp)
-    dst = d.length()
+    if p.waypoint:
+        # direction toward the next waypoint
+        x = p.waypoints[p.waypoint + 1][0]
+        y = p.waypoints[p.waypoint + 1][1]
+        d = THREE.Vector2(x, y)
+        dp = THREE.Vector2(p.player.position.x, p.player.position.y)
+        d = d.sub(dp)
+        dst = d.length()
 
-    # angle with the current direction
-    a = math.atan2(d.y, d.x) - math.atan2(p.player.direction.y, p.player.direction.x)
+        # angle with the current direction
+        a = math.atan2(d.y, d.x) - math.atan2(p.player.direction.y, p.player.direction.x)
 
-    if dst > 1:
-        if a < -0.1:
-            p.player.action.y = 1
-            p.player.action.x = 0
-        elif a > 0.1:
-            p.player.action.y = -1
-            p.player.action.x = 0
+        if dst > 1:
+            if a < -0.1:
+                p.player.action.y = 1
+                p.player.action.x = 0
+            elif a > 0.1:
+                p.player.action.y = -1
+                p.player.action.x = 0
+            else:
+                p.player.action.y = 0
+                p.player.action.x = 1
         else:
-            p.player.action.y = 0
-            p.player.action.x = 1
-    else:
-        p.player.action.x = 0
-        p.waypoint += 1
+            p.player.action.x = 0
+            p.waypoint += 1
 
     # print(a, dst, p.player.action.x, p.player.action.y)
 
