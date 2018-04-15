@@ -98,8 +98,8 @@ uniform sampler2D map;
 
 void main()
 {
-    // color
-    vec4 diffuse = texture2D(map, vUv);
+    // colorr
+    vec4 color = texture2D(map, vUv);
 
     // handle transparency
     float opacity = diffuse.a;
@@ -112,9 +112,9 @@ void main()
     #endif
 
     // Add directional light
-    vec3 nlight = normalize(-light);
+    vec3 nlight = normalize(light);
     float nDotl = dot(normal, nlight);
-    float brightness = max(nDotl, 0.1);
+    float brightness = max(nDotl, 0.0);
 
     //diffuse.rgb = clamp(diffuse.rgb * brightness, 0.0, 1.0);
 
@@ -131,8 +131,8 @@ void main()
 #ifdef USE_SHADOWMAP
     // extract the shadow
     float shadow = clamp(getShadowMap(), 0.5, 1.0);
-    gl_FragColor = shadow * diffuse;
+    gl_FragColor = shadow * (0.3 + brightness) * color;
 #else
-    gl_FragColor = diffuse;
+    gl_FragColor = (0.3 + brightness) * color;
 #endif
 }

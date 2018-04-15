@@ -245,11 +245,17 @@ void main()
     vec4 fromBlend = paving*blendIndex.x + red*blendIndex.y + riverbed*blendIndex.z;
     float blend_idx = clamp(blendIndex.x + blendIndex.z, 0.0, 1.0);
 
+    // blend blendmap + ground
+    vec4 color = mix(ground, fromBlend, blend_idx);
+
     // Add directional light
     vec3 nlight = normalize(light);
     float nDotl = dot(vertexNormal, nlight);
     float brightness = max(nDotl, 0.0);
-    vec4 diffuse = vec4(1.0) * brightness;
+    vec4 diffuse = color * brightness;
+
+    // and ambient light
+    vec4 ambient = color * 0.3;
 
 #ifdef USE_SHADOWMAP
     // extract the shadow
@@ -259,7 +265,7 @@ void main()
 
     gl_FragColor = shadow * diffuse*( mix(ground, fromBlend, blend_idx));
 #else
-    gl_FragColor = diffuse*( mix(ground, fromBlend, blend_idx));
+    gl_FragColor = (0.3 + brightness) * color;
 #endif
 
     // for debug, tint the pixel with the indexmap first value

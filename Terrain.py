@@ -170,8 +170,8 @@ class Terrain:
 
             self.material = THREE.ShaderMaterial( {
                 'uniforms': uniforms,
-                'vertexShader': loader.load('shaders/vertex.gl'),
-                'fragmentShader': loader.load('shaders/fragment.gl'),
+                'vertexShader': loader.load('shaders/vertex.glsl'),
+                'fragmentShader': loader.load('shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 

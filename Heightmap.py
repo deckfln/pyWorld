@@ -15,7 +15,7 @@ sys.path.append(mango_dir)
 
 from cHeightmap import *
 
-cython = False
+cython = True
 
 class Heightmap:
     """
