@@ -66,6 +66,9 @@ class Heightmap:
         if isinstance(x, int) and isinstance(y, int):
             return self.map[x + self.size * y]
 
+        if not (0 <= x < self.size and 0 <= y < self.size):
+            return 0
+
         # bilinear interpolation
         gridx = math.floor(x)
         offsetx = x - gridx

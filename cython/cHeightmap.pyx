@@ -15,6 +15,9 @@ cpdef cHeightmap_bilinear(np.ndarray[float, ndim=1] map, int size, float x, floa
     if x == gridx and y == gridy:
         return map[gridx + size * gridy]
 
+    if not (0 <= x < size and 0 <= y < size):
+        return 0
+
     # bilinear interpolation
     cdef float offsetx = x - gridx
     cdef float offsety = y - gridy

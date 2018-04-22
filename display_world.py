@@ -72,7 +72,7 @@ class Params:
             [31.228154, -114.540116],
             [80.523751, -77.058823]
         ]
-        self.waypoint = True
+        self.waypoint = False
         self.procedural_scenery = ProceduralScenery()
 
 
@@ -171,17 +171,17 @@ def init(p):
     # init the asset instanced models
     print("Init Assets...")
 
-    p.assets.load('evergreen', 5,  "models/pine/pine", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 4,  "models/pine/4/pine", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 3,  "models/pine/4/pine", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 2,  "models/pine/4/pine", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 1,  "models/pine/4/pine", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 5,  "models/anime_tree/D0406452B11", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 4,  "models/anime_tree/4/model", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 3,  "models/anime_tree/3/model", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 2,  "models/anime_tree/2/model", THREE.Vector2(1, 1))
+    p.assets.load('evergreen', 1,  "models/anime_tree/1/model", THREE.Vector2(1, 1))
 
-    p.assets.load('tree', 5,  "models/tree228/tree228", THREE.Vector2(1, 1))
-    p.assets.load('tree', 4,  "models/tree228/tree228", THREE.Vector2(1, 1))
-    p.assets.load('tree', 3,  "models/tree228/tree228", THREE.Vector2(1, 1))
-    p.assets.load('tree', 2,  "models/tree228/tree228", THREE.Vector2(1, 1))
-    p.assets.load('tree', 1,  "models/tree228/tree228", THREE.Vector2(1, 1))
+    p.assets.load('tree', 5,  "models/old-tree/model", THREE.Vector2(1, 1))
+    p.assets.load('tree', 4,  "models/old-tree/4/model", THREE.Vector2(1, 1))
+    p.assets.load('tree', 3,  "models/old-tree/3/model", THREE.Vector2(1, 1))
+    p.assets.load('tree', 2,  "models/old-tree/2/model", THREE.Vector2(1, 1))
+    p.assets.load('tree', 1,  "models/old-tree/1/model", THREE.Vector2(1, 1))
 
     p.assets.load('house', 1,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
     p.assets.load('house', 2,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))

@@ -5,6 +5,7 @@ from THREE.loaders.OBJLoader2 import *
 from THREE.loaders.MTLLoader import *
 from THREE.pyOpenGL.pyCache import *
 from Config import *
+from THREE.loaders.ColladaLoader2 import *
 
 loader = THREE.FileLoader()
 
@@ -45,15 +46,20 @@ class Assets:
         f = os.path.basename(file)
         dir = os.path.dirname(file)
 
-        mtlLoader = MTLLoader()
-        mtlLoader.setPath(dir)
-        materials = mtlLoader.load( "%s.mtl" % f)
-        materials.preload()
+        if ".dae" in file:
+            loader = ColladaLoader()
+            collada = loader.load(file)
+            asset = collada.scene
+        else:
+            mtlLoader = MTLLoader()
+            mtlLoader.setPath(dir)
+            materials = mtlLoader.load( "%s.mtl" % f)
+            materials.preload()
 
-        loader = OBJLoader2()
-        loader.setPath(dir)
-        loader.setMaterials(materials.materials)
-        asset = loader.load("%s.obj" % f)
+            loader = OBJLoader2()
+            loader.setPath(dir)
+            loader.setMaterials(materials.materials)
+            asset = loader.load("%s.obj" % f)
 
         return asset
 
@@ -111,8 +117,9 @@ class Assets:
 
                 mesh = asset.children[0]
                 mesh.geometry.computeBoundingBox()
-                mesh.material.normalMap = mesh.material.bumpMap
-                mesh.material.bumpMap = None
+                if not isinstance(mesh.material, list):
+                    mesh.material.normalMap = mesh.material.bumpMap
+                    mesh.material.bumpMap = None
                 dx = abs(mesh.geometry.boundingBox.min.x) + abs(mesh.geometry.boundingBox.max.x)
                 dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
                 dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
