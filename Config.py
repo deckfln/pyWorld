@@ -24,11 +24,11 @@ Config = {
         "debug": {
             "normals": False,        # display normals of terrain meshes
             "boundingsphere": False,
-            "wireframe": False,      # display terrain meshes as wireframe
+            "wireframe": True,      # display terrain meshes as wireframe
             "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
         },
-        'display_scenary': True
+        'display_scenary': False
     },
 
     "river": {

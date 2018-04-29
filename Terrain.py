@@ -12,6 +12,7 @@ from quadtree import *
 from TextureMap import *
 from VectorMap import *
 from IndexMap import *
+import numpy as np
 
 myrandom = Random(5454334)
 
@@ -68,6 +69,9 @@ class Terrain:
         self.material = None
         self.textures = []
         self.light = None
+
+        # index backup for tiles
+        self.quadtree_indexes = None
 
         # total number of tiles
         nb_tiles = 1
@@ -1040,6 +1044,46 @@ class Terrain:
             # add the tile on the display list if needed
             tiles_2_display.append(quad)
 
+    def build_quadtre_indexes(self):
+        """
+        Build an array of openGL indexes to tbe used be tiles titching
+        :return:
+        """
+        self.quadtree_indexes = [None for i in range(16)]
+        mesh = self.quadtree.mesh
+        geometry = mesh.geometry
+        index = geometry.index
+        row = int(geometry.parameters['widthSegments'] * 2 * 3)
+
+        for i in range(16):
+            self.quadtree_indexes[i] = index.clone()
+
+            array = self.quadtree_indexes[i].array
+
+            if i & 1:
+                for k in range(len(array) - row, len(array), 12):
+                    array[k + 4] = array[k + 10]
+                    array[k + 7] = array[k + 10]
+                    array[k + 9] = array[k + 10]
+
+            if i & 2:
+                for k in range(0, row, 12):
+                    array[k + 2] = array[k]
+                    array[k + 5] = array[k]
+                    array[k + 6] = array[k]
+
+            if i & 4:
+                for k in range(0, len(array), row * 2):
+                    array[k + 1] = array[k]
+                    array[k + 3] = array[k]
+                    array[k + row] = array[k]
+
+            if i & 8:
+                for k in range(row - 6, len(array), row * 2):
+                    array[k + 4] = array[k + row + 4]
+                    array[k + row + 2] = array[k + row + 4]
+                    array[k + row + 5] = array[k + row + 4]
+
     def draw(self, player):
         """
         @description Update the terrain mesh based on the pgiven position
@@ -1101,7 +1145,9 @@ class Terrain:
         for quad in to_load:
             quad.load()
 
+        #
         # check the frustrum culling
+        #
         def isInFront(a, b, c):
             return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) < 0
 
@@ -1167,6 +1213,89 @@ class Terrain:
                     quad.mesh.visible = True
                 else:
                     quad.mesh.visible = False
+
+        #
+        # build tiles neighbors
+        #
+
+        # build the tiles by size from smallest to biggest
+        self.tiles_onscreen.sort(key=lambda x: x.size)
+
+        # reset north, south, east, west neighbors
+        for tile in self.tiles_onscreen:
+            tile.east = tile.west = tile.north = tile.south = None
+
+        # parse all tiles to find the neighbors
+        north = THREE.Vector2()
+        south = THREE.Vector2()
+        east = THREE.Vector2()
+        west = THREE.Vector2()
+        l = len(self.tiles_onscreen)
+
+        for i in range(l):
+            tile = self.tiles_onscreen[i]
+            if not tile.mesh.visible:
+                continue
+
+            if not hasattr(tile, 'debug'):
+                tile.debug = None
+
+            size = tile.size * 0.75
+
+            north.copy(tile.center)
+            north.y -= size
+            south.copy(tile.center)
+            south.y += size
+            east.copy(tile.center)
+            east.x += size
+            west.copy(tile.center)
+            west.x -= size
+
+            code = 0
+
+            for j in range(i + 1, l):
+                tile_j = self.tiles_onscreen[j]
+                if not tile_j.mesh.visible:
+                    continue
+
+                if tile_j.is_point_inside(north):
+                    if tile_j.level < tile.level:
+                        code |= 1
+                    tile.north = tile_j
+                    tile_j.south = tile
+
+                if tile_j.is_point_inside(south):
+                    """
+                    if hasattr(tile.mesh, 'debug'):
+                        self.scene.remove(tile.mesh.debug)
+                    t = tile_j.mesh.position.clone()
+                    t.sub(tile.mesh.position)
+                    l1 = t.length()
+                    t.normalize()
+                    tile.mesh.debug = THREE.ArrowHelper(t, tile.mesh.position,
+                                                        l1, tile_j.mesh.material.color)
+                    self.scene.add(tile.mesh.debug)
+                    """
+                    if tile_j.level < tile.level:
+                        code |= 2
+                    tile.south = tile_j
+                    tile_j.north = tile
+
+                if tile_j.is_point_inside(west):
+                    if tile_j.level < tile.level:
+                        code |= 4
+                    tile.west = tile_j
+                    tile_j.east = tile
+
+                if tile_j.is_point_inside(east):
+                    if tile_j.level < tile.level:
+                        code |= 8
+                    tile.east = tile_j
+                    tile_j.west = tile
+
+            tile.mesh.geometry.index = self.quadtree_indexes[code]
+
+            tile.debug = code
 
     def update_light(self, time):
         """

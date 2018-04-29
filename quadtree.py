@@ -62,6 +62,10 @@ class Quadtree:
         self.visible = False      # display or not the tile
         self.parent = parent      #
         self.added = False        # is the tile added to the Scene ?
+        self.north = None         # neighbors on screen
+        self.south = None
+        self.west = None
+        self.east = None
 
         self.sub = [None]*4
 
@@ -163,7 +167,10 @@ class Quadtree:
         self.mesh = terrain_mesh
 
         if self.material is None:
-            self.mesh.material = THREE.MeshLambertMaterial({'color': random.random()*0xffffff})
+            self.mesh.material = THREE.MeshLambertMaterial({
+                'color': random.random()*0xffffff,
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
         else:
             self.mesh.material = self.material
 
@@ -318,6 +325,16 @@ class Quadtree:
         for sub in self.sub:
             if sub is not None:
                 count = sub.scenery_instance()
+
+    def is_point_inside(self, p):
+        """
+        """
+        size = self.size / 2
+        sx = self.center.x - size
+        ex = self.center.x + size
+        sy = self.center.y - size
+        ey = self.center.y + size
+        return sx <= p.x <= ex and sy <= p.y <= ey
 
 
 class quadtreeMessage:

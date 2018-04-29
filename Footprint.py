@@ -36,12 +36,14 @@ class FootPrint:
 
             return
 
+        p = THREE.Vector2(position.x, position.y)
+
         # * @property {array of Vector2} p Axis aligned bounding box of the footprint
         self.p = [
-            THREE.Vector2(topleft.x,topleft.y).add(position),
-            THREE.Vector2(topleft.x+heightwidth.x,topleft.y).add(position),
-            THREE.Vector2(topleft.x,topleft.y+heightwidth.y).add(position),
-            THREE.Vector2(topleft.x+heightwidth.x,topleft.y+heightwidth.y).add(position)
+            THREE.Vector2(topleft.x,topleft.y).add(p),
+            THREE.Vector2(topleft.x+heightwidth.x,topleft.y).add(p),
+            THREE.Vector2(topleft.x,topleft.y+heightwidth.y).add(p),
+            THREE.Vector2(topleft.x+heightwidth.x,topleft.y+heightwidth.y).add(p)
         ]
 
         # * @propery {array of Vector2} corners real corners of the box
@@ -62,7 +64,7 @@ class FootPrint:
         self.center = THREE.Vector2(
                 topleft.x+heightwidth.x/2,
                 topleft.y+heightwidth.y/2
-                ).add(position)
+                ).add(p)
                 
         # * @property {Scenary} scenary back pointer to the object
         self.scenery = scenery

@@ -36,6 +36,7 @@
 14/04/18: 15/04/18  procedural scenery  engine crashes when reaching the heightmap border
 14/04/18: 15/04/18  player              engine crashed when player outside of the heightmap
 22/04/18: 18/04/18  scenery             use better assets for trees, with LOD
+06/02/18: 29/04/18  terrain             stiching: use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -52,7 +53,7 @@ TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
 TODO: 18/04/18  terrain class       refactor the class to move the build part to a dedicated file
-TODO: 27/04/18  performance         move terrain drawing to a dedicated thread
+TODO: 29/04/18  terrain             enforce 1 level difference between 2 tiles next to each other. Ensure use only one vertex out of 2 on a border if a tile touch a tile with lower resolution.
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -66,3 +67,4 @@ TODO: 10/02/18  lightning           instances objects lightning is wrong
 TODO: 24/02/18  terrain             frustrum culling is visible on the edge
 TODO: 11/04/18  procedural scenery  normal lighting is bad on some instances
 TODO: 15/04/18  procedural scenery  memory management can freeze the app
+TODO: 22/04/18  procedural scenecy  cScenery: _buffer_size exceed limit after a bit of time

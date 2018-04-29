@@ -199,7 +199,6 @@ def init(p):
     # add them to the scene, as each asset as a instancecount=0, none will be displayed
     p.assets.add_2_scene(p.scene)
 
-
     # init the terrain
     print("Init Terrain...")
     p.terrain = Terrain(512, 25, 512)
@@ -214,6 +213,7 @@ def init(p):
 
     print("Init meshes...")
     p.terrain.quadtree.loadChildren()
+    p.terrain.build_quadtre_indexes()
 
     p.player.draw()
 
@@ -327,6 +327,7 @@ def animate(p):
     p.terrain.draw(p.player)
 
     # extract the assets from each visible tiles and build the instances
+    """
     p.assets.reset_instances()
 
     for quad in p.terrain.tiles_onscreen:
@@ -339,6 +340,7 @@ def animate(p):
             # build procedural scenery on the higher tiles
             if quad.level >= 4:
                p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
+    """
 
     # t = time.time()
     render(p)
