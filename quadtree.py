@@ -134,6 +134,16 @@ class Quadtree:
             for child in self.sub:
                 child.loadChildren()
 
+    def notTraversed(self):
+        """
+
+        :return:
+        """
+        self.traversed = False
+        if self.sub[0] is not None:
+            for child in self.sub:
+                child.notTraversed()
+
     def display(self):
         """
 
@@ -206,24 +216,24 @@ class Quadtree:
 
         return self
 
-    def around(self, p):
+    def around(self, p, max_depth: int = -1):
         """
         Find the deepest quad containing the provided point
         """
-        if not self.sub[0]:
+        if self.level == max_depth or not self.sub[0]:
             # reached the deepest level
             return self
 
         if p.x < self.center.x:
             if p.y < self.center.y:
-                return self.sub[0].around(p)
+                return self.sub[0].around(p, max_depth)
             else:
-                return self.sub[2].around(p)
+                return self.sub[2].around(p, max_depth)
         else:
             if p.y < self.center.y:
-                return self.sub[1].around(p)
+                return self.sub[1].around(p, max_depth)
             else:
-                return self.sub[3].around(p)
+                return self.sub[3].around(p, max_depth)
 
     def insert_object(self, object, level):
         """

@@ -1,6 +1,7 @@
 import math
-
 import pickle
+import numpy as np
+from collections import deque
 
 import THREE
 
@@ -12,7 +13,6 @@ from quadtree import *
 from TextureMap import *
 from VectorMap import *
 from IndexMap import *
-import numpy as np
 
 myrandom = Random(5454334)
 
@@ -1019,7 +1019,7 @@ class Terrain:
         self.indexmap.generate("img/indexmap.png")
         self.blendmap.generate("img/blendmap.png")
 
-    def _check_quad_lod(self, position, quad, tiles_2_display):
+    def _check_quad_lod(self, position: Vector2, quad: Quadtree, tiles_2_display: list):
         """
         @description Recursively check the tiles quadtree to find what is on scree,
         @param {type} position
@@ -1035,7 +1035,7 @@ class Terrain:
             return
 
         distance = position.distanceTo(quad.center)
-        if distance < quad.lod_radius:
+        if distance <= (math.sqrt(quad.size*quad.size + quad.size*quad.size)):    # lod_radius:
             # check the sub tiles
             for i in range(4):
                 self._check_quad_lod(position, quad.sub[i], tiles_2_display)
@@ -1043,6 +1043,92 @@ class Terrain:
             # The tile is far away, so display it
             # add the tile on the display list if needed
             tiles_2_display.append(quad)
+
+    def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth):
+        """
+
+        :param position:
+        :param tiles_2_display:
+        :return:
+        """
+        tile = self.quadtree.around(position, max_depth)
+        parent = tile.parent
+
+        quadrant = -1       # north/east, north/west ...
+
+        # add all direct neighbors
+        for i in range(4):
+            quad = parent.sub[i]
+            if quad == tile:
+                quadrant = i
+            if not quad.traversed:
+                quad.traversed = True
+                tiles_2_display.append(quad)
+
+        parent.traversed = True
+
+        return tile, quadrant
+
+    def _find_add_quadrant(self, position, x, y, tiles_2_display, queue, max_depth):
+        v = THREE.Vector2(position.x + x, position.y + y)
+        size = self.size / 2
+        if -size <= v.x < size and -size <= v.y < size:
+            tile, quadrant = self._add_full_quadrant(v, tiles_2_display, max_depth)
+            parent = tile.parent
+            queue.append([parent.center, parent.level])
+            return tile, quadrant
+
+        return None,None
+
+    def _build_view(self, position: Vector2, tiles_2_display: list,max_depth: int):
+        """
+
+        :return:
+        """
+        queue = deque()
+        queue.append([position, max_depth, True])
+
+        while len(queue) > 0:
+            e = queue.popleft()
+            position = e[0]
+            max_depth = e[1]
+
+            # reached root of tree ?
+            if max_depth == 0:
+                return -1
+
+            # outside of the heighmap ?
+            # half = self.size / 2
+            # if not (-half <= position.x < half and -half <= position.y < half):
+            #    return -1
+            tile, quadrant = self._find_add_quadrant(position, 0, 0, tiles_2_display, queue, max_depth)
+            if tile is None:
+                continue
+
+            size = tile.size
+
+            # add the neighbors quadrants
+            # based on tile the player is on
+            if quadrant == 0:
+                # north/west
+                self._find_add_quadrant(position, -size, 0, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, -size, -size, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, 0, -size, tiles_2_display, queue, max_depth)
+            elif quadrant == 1:
+                # north/east
+                self._find_add_quadrant(position, size, 0, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, size, -size, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, 0, -size, tiles_2_display, queue, max_depth)
+            elif quadrant == 2:
+                # south/west
+                self._find_add_quadrant(position, -size, 0, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, -size, size, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, 0, size, tiles_2_display, queue, max_depth)
+            else:
+                # south/east
+                self._find_add_quadrant(position, size, 0, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, size, size, tiles_2_display, queue, max_depth)
+                self._find_add_quadrant(position, 0, size, tiles_2_display, queue, max_depth)
 
     def build_quadtre_indexes(self):
         """
@@ -1084,140 +1170,11 @@ class Terrain:
                     array[k + row + 2] = array[k + row + 4]
                     array[k + row + 5] = array[k + row + 4]
 
-    def draw(self, player):
+    def _stich_neighbours(self):
         """
-        @description Update the terrain mesh based on the pgiven position
-        @param {type} position
-        @returns {undefined}
+        build tiles neighbors
+        and stich them
         """
-        position = player.vcamera.position
-        direction = player.direction
-
-        for quad in self.tiles_onscreen:
-            quad.traversed = False
-
-        tiles_2_display = []
-
-        position2D = THREE.Vector2(position.x, position.y)
-        self._check_quad_lod(position2D, self.quadtree, tiles_2_display)
-
-        # compare the list of tiles to display with the current list of tiles
-
-        # remove tiles no more on screen
-        for i in range(len(self.tiles_onscreen)-1, -1, -1):
-            quad = self.tiles_onscreen[i]
-            if quad not in tiles_2_display:
-                if quad.traversed:
-                    # hide tile => the sub-tiles need to be loaded first
-                    loaded = 0
-                    for sub in quad.sub:
-                        if sub.mesh is not None:
-                            loaded += 1
-                    if loaded == 4:
-                        del self.tiles_onscreen[i]
-                        quad.hide()
-                        # else keep the tile on screen until ALL sub tiles are loaded
-                else:
-                    del self.tiles_onscreen[i]
-                    quad.hide()
-
-        # add missing tiles
-        to_load = []
-        for quad in tiles_2_display:
-            if quad not in self.tiles_onscreen:
-                if quad.mesh and quad.parent.visible is False:
-                    if quad.added is False:
-                        quad.added = True
-                        self.scene.add(quad.mesh)
-
-                    self.tiles_onscreen.append(quad)
-                    quad.display()
-                else:
-                    to_load.append(quad)
-
-        # sort the loading priority by distance
-        def _sort(quad):
-            return quad.center.distanceToSquared(position2D)
-
-        to_load.sort(key = _sort)
-
-        # load the tile in background for next frame
-        for quad in to_load:
-            quad.load()
-
-        #
-        # check the frustrum culling
-        #
-        def isInFront(a, b, c):
-            return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) < 0
-
-        def distance2(a, b, c, distance):
-            a1 = abs((b.y - a.y) * c.x - (b.x - a.x) * c.y + b.x * a.y - b.y * a.x)
-            b1 = math.sqrt(math.pow(b.y - a.y, 2) + math.pow(b.x - a.x, 2))
-            d = a1 / b1
-
-            return d < distance
-
-        # convert player position and line of view to heightmap coordinates
-        hm = THREE.Vector2()
-        self.screen2map(position, hm)
-
-        # build the horizon line (90deg of direction)
-        horizon = THREE.Vector2(-direction.y, direction.x)
-        hm_behind = THREE.Vector2(hm.x + horizon.x, hm.y + horizon.y)
-
-        # build a simple frustrum (45deg left and right)
-        left = THREE.Vector2(direction.x + horizon.x + hm.x, direction.y + horizon.y + hm.y)
-        right= THREE.Vector2(direction.x - horizon.x + hm.x, direction.y - horizon.y + hm.y)
-
-        if Config["player"]["debug"]["frustrum"]:
-            if hasattr(player, "frustrum"):
-                player.scene.remove(player.frustrum)
-                player.scene.remove(player.frustrum1)
-
-            player.frustrum = THREE.ArrowHelper(THREE.Vector3(right.x - hm.x, right.y - hm.y, 0).normalize(), player.get_position(), 500, 0xff0000)
-            self.scene.add(player.frustrum)
-            player.frustrum1 = THREE.ArrowHelper(THREE.Vector3(left.x - hm.x, left.y - hm.y, 0).normalize(), player.get_position(), 500, 0x0000ff)
-            self.scene.add(player.frustrum1)
-
-        # check if the object is behind the player
-        hm_quad = THREE.Vector2()
-        hm_quad_radius = 0
-        p = THREE.Vector2(position.x, position.y)
-        for quad in self.tiles_onscreen:
-            # if p.distanceTo(quad.center) < quad.visibility_radius:
-            #    print("debug")
-            self.screen2map(quad.center, hm_quad)
-            hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
-            # if isLeft(hm, hm_behind, hm_quad) and isLeft(hm, left, hm_quad) and not isLeft(hm, right, hm_quad):
-            #    quad.mesh.visible = True
-            if isInFront(hm, hm_behind, hm_quad) :
-                quad.mesh.visible = True
-            elif distance2(hm, hm_behind, hm_quad, hm_quad_radius):
-                quad.mesh.visible = True
-            else:
-                quad.mesh.visible = False
-
-            if quad.mesh.visible:
-                if isInFront(hm, left, hm_quad):
-                    quad.mesh.visible = True
-                elif distance2(hm, left, hm_quad, hm_quad_radius):
-                    quad.mesh.visible = True
-                else:
-                   quad.mesh.visible = False
-
-            if quad.mesh.visible:
-                if not isInFront(hm, right, hm_quad):
-                    quad.mesh.visible = True
-                elif distance2(hm, right, hm_quad, hm_quad_radius):
-                    quad.mesh.visible = True
-                else:
-                    quad.mesh.visible = False
-
-        #
-        # build tiles neighbors
-        #
-
         # build the tiles by size from smallest to biggest
         self.tiles_onscreen.sort(key=lambda x: x.size)
 
@@ -1296,6 +1253,146 @@ class Terrain:
             tile.mesh.geometry.index = self.quadtree_indexes[code]
 
             tile.debug = code
+
+    def _frustrum_culling(self, player, position, direction):
+        """
+        check the frustrum culling
+        """
+        def isInFront(a, b, c):
+            return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) < 0
+
+        def distance2(a, b, c, distance):
+            a1 = abs((b.y - a.y) * c.x - (b.x - a.x) * c.y + b.x * a.y - b.y * a.x)
+            b1 = math.sqrt(math.pow(b.y - a.y, 2) + math.pow(b.x - a.x, 2))
+            d = a1 / b1
+
+            return d < distance
+
+        # convert player position and line of view to heightmap coordinates
+        hm = THREE.Vector2()
+        self.screen2map(position, hm)
+
+        # build the horizon line (90deg of direction)
+        horizon = THREE.Vector2(-direction.y, direction.x)
+        hm_behind = THREE.Vector2(hm.x + horizon.x, hm.y + horizon.y)
+
+        # build a simple frustrum (45deg left and right)
+        left = THREE.Vector2(direction.x + horizon.x + hm.x, direction.y + horizon.y + hm.y)
+        right= THREE.Vector2(direction.x - horizon.x + hm.x, direction.y - horizon.y + hm.y)
+
+        if Config["player"]["debug"]["frustrum"]:
+            if hasattr(player, "frustrum"):
+                player.scene.remove(player.frustrum)
+                player.scene.remove(player.frustrum1)
+
+            player.frustrum = THREE.ArrowHelper(THREE.Vector3(right.x - hm.x, right.y - hm.y, 0).normalize(), player.get_position(), 500, 0xff0000)
+            self.scene.add(player.frustrum)
+            player.frustrum1 = THREE.ArrowHelper(THREE.Vector3(left.x - hm.x, left.y - hm.y, 0).normalize(), player.get_position(), 500, 0x0000ff)
+            self.scene.add(player.frustrum1)
+
+        # check if the object is behind the player
+        hm_quad = THREE.Vector2()
+        hm_quad_radius = 0
+        p = THREE.Vector2(position.x, position.y)
+        for quad in self.tiles_onscreen:
+            # if p.distanceTo(quad.center) < quad.visibility_radius:
+            #    print("debug")
+            self.screen2map(quad.center, hm_quad)
+            hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
+            # if isLeft(hm, hm_behind, hm_quad) and isLeft(hm, left, hm_quad) and not isLeft(hm, right, hm_quad):
+            #    quad.mesh.visible = True
+            if isInFront(hm, hm_behind, hm_quad) :
+                quad.mesh.visible = True
+            elif distance2(hm, hm_behind, hm_quad, hm_quad_radius):
+                quad.mesh.visible = True
+            else:
+                quad.mesh.visible = False
+
+            if quad.mesh.visible:
+                if isInFront(hm, left, hm_quad):
+                    quad.mesh.visible = True
+                elif distance2(hm, left, hm_quad, hm_quad_radius):
+                    quad.mesh.visible = True
+                else:
+                   quad.mesh.visible = False
+
+            if quad.mesh.visible:
+                if not isInFront(hm, right, hm_quad):
+                    quad.mesh.visible = True
+                elif distance2(hm, right, hm_quad, hm_quad_radius):
+                    quad.mesh.visible = True
+                else:
+                    quad.mesh.visible = False
+
+    def _build_tiles_onscreen(self, position):
+        """
+
+        :param position:
+        :return:
+        """
+        self.quadtree.notTraversed()
+        tiles_2_display = []
+
+        position2D = THREE.Vector2(position.x, position.y)
+        # self._check_quad_lod(position2D, self.quadtree, tiles_2_display)
+        self._build_view(position2D, tiles_2_display, -1)
+
+        # compare the list of tiles to display with the current list of tiles
+
+        # remove tiles no more on screen
+        for i in range(len(self.tiles_onscreen)-1, -1, -1):
+            quad = self.tiles_onscreen[i]
+            if quad not in tiles_2_display:
+                if quad.traversed:
+                    # hide tile => the sub-tiles need to be loaded first
+                    loaded = 0
+                    for sub in quad.sub:
+                        if sub.mesh is not None:
+                            loaded += 1
+                    if loaded == 4:
+                        del self.tiles_onscreen[i]
+                        quad.hide()
+                        # else keep the tile on screen until ALL sub tiles are loaded
+                else:
+                    del self.tiles_onscreen[i]
+                    quad.hide()
+
+        # add missing tiles
+        to_load = []
+        for quad in tiles_2_display:
+            if quad not in self.tiles_onscreen:
+                if quad.mesh and quad.parent.visible is False:
+                    if quad.added is False:
+                        quad.added = True
+                        self.scene.add(quad.mesh)
+
+                    self.tiles_onscreen.append(quad)
+                    quad.display()
+                else:
+                    to_load.append(quad)
+
+        # sort the loading priority by distance
+        def _sort(quad):
+            return quad.center.distanceToSquared(position2D)
+
+        to_load.sort(key = _sort)
+
+        # load the tile in background for next frame
+        for quad in to_load:
+            quad.load()
+
+    def draw(self, player):
+        """
+        @description Update the terrain mesh based on the pgiven position
+        @param {type} position
+        @returns {undefined}
+        """
+        position = player.vcamera.position
+        direction = player.direction
+
+        self._build_tiles_onscreen(position)
+        # self._frustrum_culling(player, position, direction)
+        self._stich_neighbours()
 
     def update_light(self, time):
         """

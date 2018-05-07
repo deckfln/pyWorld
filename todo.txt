@@ -37,6 +37,7 @@
 14/04/18: 15/04/18  player              engine crashed when player outside of the heightmap
 22/04/18: 18/04/18  scenery             use better assets for trees, with LOD
 06/02/18: 29/04/18  terrain             stiching: use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
+29/04/18: 07/05/18  terrain             enforce 1 level difference between 2 tiles next to each other.
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -51,9 +52,11 @@ TODO: 28/01/18  shadows             Cast shadows for scenery outside of the frus
 TODO: 28/01/18  lights              implement lights in the shaders following UniformsLibs implementation
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
-TODO: 06/02/18  terrain             use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
 TODO: 18/04/18  terrain class       refactor the class to move the build part to a dedicated file
-TODO: 29/04/18  terrain             enforce 1 level difference between 2 tiles next to each other. Ensure use only one vertex out of 2 on a border if a tile touch a tile with lower resolution.
+TODO: 01/05/18  init                add a loading GUI
+TODO: 01/05/18  gui                 add a FPS widget
+TODO: 07/05/18  terrain quad        do not keep the tile grid square. Move the point inside the grid to the highest point in the sub-tile
+TODO: 07/05/18  terrain quad        spped up the new algo
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
