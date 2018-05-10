@@ -72,7 +72,7 @@ class Params:
             [31.228154, -114.540116],
             [80.523751, -77.058823]
         ]
-        self.waypoint = False
+        self.waypoint = True
         self.procedural_scenery = ProceduralScenery()
 
 
@@ -327,20 +327,19 @@ def animate(p):
     p.terrain.draw(p.player)
 
     # extract the assets from each visible tiles and build the instances
-    """
-    p.assets.reset_instances()
+    if Config['terrain']['display_scenary']:
+        p.assets.reset_instances()
 
-    for quad in p.terrain.tiles_onscreen:
-        if quad.mesh.visible:
-            # build instances from teh tiles
-            for asset in quad.assets.values():
-                if len(asset.offset) > 0:
-                    p.assets.instantiate(asset)
+        for quad in p.terrain.tiles_onscreen:
+            if quad.mesh.visible:
+                # build instances from teh tiles
+                for asset in quad.assets.values():
+                    if len(asset.offset) > 0:
+                        p.assets.instantiate(asset)
 
-            # build procedural scenery on the higher tiles
-            if quad.level >= 4:
-               p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
-    """
+                # build procedural scenery on the higher tiles
+                if quad.level >= 4:
+                   p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
 
     # t = time.time()
     render(p)

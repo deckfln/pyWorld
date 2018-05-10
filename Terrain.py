@@ -33,6 +33,7 @@ TILE_dirt1_png = 12
 TILE_stone_path_png = 13
 
 _vector3 = THREE.Vector3()
+_vector2 = THREE.Vector2()
 
 
 class Terrain:
@@ -71,7 +72,7 @@ class Terrain:
         self.light = None
 
         # index backup for tiles
-        self.quadtree_indexes = None
+        self.quadtree_mesh_indexes = None
 
         # total number of tiles
         nb_tiles = 1
@@ -96,8 +97,7 @@ class Terrain:
         initialize the quadtree
         """
         self.quadtree = Quadtree(-1, -1, -1, None)
-
-        self.vector2 = THREE.Vector2()
+        self.quadtree_index = {}
 
     def init(self):
         self.normalMap = VectorMap(self.size)
@@ -200,6 +200,7 @@ class Terrain:
         with open("bin/worldmap.pkl", "rb") as f:
             quads = pickle.load(f)
             self.quadtree = quads[0]
+            quads[0].build_index(self.quadtree_index)
             Quadtree.material = self.material
 
         self.indexmap.load("img/indexmap.png")
@@ -918,8 +919,8 @@ class Terrain:
         """
         # // convert from the heightmap coordinates to the blendmap coordinates
         # // and round to the nearest point
-        self.heightmap2blendmap(v, self.vector2)
-        c = self.blendmap.get(self.vector2)
+        self.heightmap2blendmap(v, _vector2)
+        c = self.blendmap.get(_vector2)
 
         return c.x > 128 or c.z > 128
 
@@ -1044,14 +1045,20 @@ class Terrain:
             # add the tile on the display list if needed
             tiles_2_display.append(quad)
 
-    def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth):
+    def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
         """
 
         :param position:
         :param tiles_2_display:
         :return:
         """
-        tile = self.quadtree.around(position, max_depth)
+        if tile is None:
+            tile = self.quadtree.around(position, max_depth)
+        else:
+            index = "%d-%d-%d" % (max_depth, position.np[0], position.np[1])
+            # tile = self.quadtree.around(position, max_depth)
+            tile = self.quadtree_index[index]
+
         parent = tile.parent
 
         quadrant = -1       # north/east, north/west ...
@@ -1069,13 +1076,29 @@ class Terrain:
 
         return tile, quadrant
 
-    def _find_add_quadrant(self, position, x, y, tiles_2_display, queue, max_depth):
-        v = THREE.Vector2(position.x + x, position.y + y)
-        size = self.size / 2
-        if -size <= v.x < size and -size <= v.y < size:
-            tile, quadrant = self._add_full_quadrant(v, tiles_2_display, max_depth)
+    def _find_add_quadrant(self, e, x, y, tiles_2_display, queue):
+        position = e[0]
+        max_depth = e[1]
+        tile1 = e[2]
+
+        if x == 0 and y == 0 and tile1 is not None:
+            _vector2.np[0] = tile1.center.np[0]
+            _vector2.np[1] = tile1.center.np[1]
+            tile, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
             parent = tile.parent
-            queue.append([parent.center, parent.level])
+            queue.append([parent.center, parent.level, parent])
+            return tile, quadrant
+
+        x += position.np[0]
+        y += position.np[1]
+
+        _vector2.np[0] = x
+        _vector2.np[1] = y
+        size = self.size / 2
+        if -size <= x < size and -size <= y < size:
+            tile, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
+            parent = tile.parent
+            queue.append([parent.center, parent.level, parent])
             return tile, quadrant
 
         return None,None
@@ -1085,23 +1108,44 @@ class Terrain:
 
         :return:
         """
+        neighbors = [
+            [
+                # north & west
+                [-1, 0],
+                [-1, -1],
+                [0, -1]
+            ],
+            [
+                # north & east
+                [1, 0],
+                [1, -1],
+                [0, -1]
+            ],
+            [
+                # south & west
+                [-1, 0],
+                [-1, 1],
+                [0, 1]
+            ],
+            [
+                # south & east
+                [1, 0],
+                [1, 1],
+                [0, 1]
+            ]
+        ]
         queue = deque()
-        queue.append([position, max_depth, True])
+        queue.append([position, max_depth, None])
 
         while len(queue) > 0:
             e = queue.popleft()
-            position = e[0]
             max_depth = e[1]
 
             # reached root of tree ?
             if max_depth == 0:
                 return -1
 
-            # outside of the heighmap ?
-            # half = self.size / 2
-            # if not (-half <= position.x < half and -half <= position.y < half):
-            #    return -1
-            tile, quadrant = self._find_add_quadrant(position, 0, 0, tiles_2_display, queue, max_depth)
+            tile, quadrant = self._find_add_quadrant(e, 0, 0, tiles_2_display, queue)
             if tile is None:
                 continue
 
@@ -1109,42 +1153,26 @@ class Terrain:
 
             # add the neighbors quadrants
             # based on tile the player is on
-            if quadrant == 0:
-                # north/west
-                self._find_add_quadrant(position, -size, 0, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, -size, -size, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, 0, -size, tiles_2_display, queue, max_depth)
-            elif quadrant == 1:
-                # north/east
-                self._find_add_quadrant(position, size, 0, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, size, -size, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, 0, -size, tiles_2_display, queue, max_depth)
-            elif quadrant == 2:
-                # south/west
-                self._find_add_quadrant(position, -size, 0, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, -size, size, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, 0, size, tiles_2_display, queue, max_depth)
-            else:
-                # south/east
-                self._find_add_quadrant(position, size, 0, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, size, size, tiles_2_display, queue, max_depth)
-                self._find_add_quadrant(position, 0, size, tiles_2_display, queue, max_depth)
+            neighbor = neighbors[quadrant]
+            for n in neighbor:
+                tilex, q = self._find_add_quadrant(e, n[0]*size, n[1]*size, tiles_2_display, queue)
+
 
     def build_quadtre_indexes(self):
         """
-        Build an array of openGL indexes to tbe used be tiles titching
+        Build an array of openGL indexes to tbe used be tiles stitching
         :return:
         """
-        self.quadtree_indexes = [None for i in range(16)]
+        self.quadtree_mesh_indexes = [None for i in range(16)]
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
         index = geometry.index
         row = int(geometry.parameters['widthSegments'] * 2 * 3)
 
         for i in range(16):
-            self.quadtree_indexes[i] = index.clone()
+            self.quadtree_mesh_indexes[i] = index.clone()
 
-            array = self.quadtree_indexes[i].array
+            array = self.quadtree_mesh_indexes[i].array
 
             if i & 1:
                 for k in range(len(array) - row, len(array), 12):
@@ -1198,21 +1226,25 @@ class Terrain:
                 tile.debug = None
 
             size = tile.size * 0.75
+            level = tile.level - 1
 
-            north.copy(tile.center)
-            north.y -= size
-            south.copy(tile.center)
-            south.y += size
-            east.copy(tile.center)
-            east.x += size
-            west.copy(tile.center)
-            west.x -= size
+            x = tile.center.x
+            y = tile.center.y
+
+            north.set(x, y - size)
+            south.set(x, y + size)
+            east.set(x + size, y)
+            west.set(x - size, y)
 
             code = 0
 
             for j in range(i + 1, l):
                 tile_j = self.tiles_onscreen[j]
                 if not tile_j.mesh.visible:
+                    continue
+
+                if tile_j.level < level:
+                    # there is no more than 1 level of difference between 2 tiles
                     continue
 
                 if tile_j.is_point_inside(north):
@@ -1250,7 +1282,7 @@ class Terrain:
                     tile.east = tile_j
                     tile_j.west = tile
 
-            tile.mesh.geometry.index = self.quadtree_indexes[code]
+            tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
 
             tile.debug = code
 
@@ -1259,11 +1291,11 @@ class Terrain:
         check the frustrum culling
         """
         def isInFront(a, b, c):
-            return ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) < 0
+            return ((b.np[0] - a.np[0]) * (c.np[1] - a.np[1]) - (b.np[1] - a.np[1]) * (c.np[0] - a.np[0])) < 0
 
         def distance2(a, b, c, distance):
-            a1 = abs((b.y - a.y) * c.x - (b.x - a.x) * c.y + b.x * a.y - b.y * a.x)
-            b1 = math.sqrt(math.pow(b.y - a.y, 2) + math.pow(b.x - a.x, 2))
+            a1 = abs((b.np[1] - a.np[1]) * c.np[0] - (b.np[0] - a.np[0]) * c.np[1] + b.np[0] * a.np[1] - b.np[1] * a.np[0])
+            b1 = math.sqrt(math.pow(b.np[1] - a.np[1], 2) + math.pow(b.np[0] - a.np[0], 2))
             d = a1 / b1
 
             return d < distance
@@ -1291,35 +1323,35 @@ class Terrain:
             self.scene.add(player.frustrum1)
 
         # check if the object is behind the player
-        hm_quad = THREE.Vector2()
+        _vector2 = THREE.Vector2()
         hm_quad_radius = 0
         p = THREE.Vector2(position.x, position.y)
         for quad in self.tiles_onscreen:
             # if p.distanceTo(quad.center) < quad.visibility_radius:
             #    print("debug")
-            self.screen2map(quad.center, hm_quad)
+            self.screen2map(quad.center, _vector2)
             hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
             # if isLeft(hm, hm_behind, hm_quad) and isLeft(hm, left, hm_quad) and not isLeft(hm, right, hm_quad):
             #    quad.mesh.visible = True
-            if isInFront(hm, hm_behind, hm_quad) :
+            if isInFront(hm, hm_behind, _vector2) :
                 quad.mesh.visible = True
-            elif distance2(hm, hm_behind, hm_quad, hm_quad_radius):
+            elif distance2(hm, hm_behind, _vector2, hm_quad_radius):
                 quad.mesh.visible = True
             else:
                 quad.mesh.visible = False
 
             if quad.mesh.visible:
-                if isInFront(hm, left, hm_quad):
+                if isInFront(hm, left, _vector2):
                     quad.mesh.visible = True
-                elif distance2(hm, left, hm_quad, hm_quad_radius):
+                elif distance2(hm, left, _vector2, hm_quad_radius):
                     quad.mesh.visible = True
                 else:
                    quad.mesh.visible = False
 
             if quad.mesh.visible:
-                if not isInFront(hm, right, hm_quad):
+                if not isInFront(hm, right, _vector2):
                     quad.mesh.visible = True
-                elif distance2(hm, right, hm_quad, hm_quad_radius):
+                elif distance2(hm, right, _vector2, hm_quad_radius):
                     quad.mesh.visible = True
                 else:
                     quad.mesh.visible = False
@@ -1391,7 +1423,7 @@ class Terrain:
         direction = player.direction
 
         self._build_tiles_onscreen(position)
-        # self._frustrum_culling(player, position, direction)
+        self._frustrum_culling(player, position, direction)
         self._stich_neighbours()
 
     def update_light(self, time):

@@ -56,7 +56,8 @@ TODO: 18/04/18  terrain class       refactor the class to move the build part to
 TODO: 01/05/18  init                add a loading GUI
 TODO: 01/05/18  gui                 add a FPS widget
 TODO: 07/05/18  terrain quad        do not keep the tile grid square. Move the point inside the grid to the highest point in the sub-tile
-TODO: 07/05/18  terrain quad        spped up the new algo
+TODO: 07/05/18  terrain quad        speed up the new algo
+TODO: 07/05/18  pyGame              force pyGame to use antialiasing
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

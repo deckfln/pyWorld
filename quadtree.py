@@ -142,7 +142,19 @@ class Quadtree:
         self.traversed = False
         if self.sub[0] is not None:
             for child in self.sub:
-                child.notTraversed()
+                if child.traversed:
+                    child.notTraversed()
+
+    def build_index(self, index):
+        """
+
+        :return:
+        """
+        idx = "%d-%d-%d" % (self.level, self.center.x, self.center.y)
+        index[idx] = self
+        if self.sub[0] is not None:
+            for child in self.sub:
+                child.build_index(index)
 
     def display(self):
         """
@@ -224,13 +236,17 @@ class Quadtree:
             # reached the deepest level
             return self
 
-        if p.x < self.center.x:
-            if p.y < self.center.y:
+        x = self.center.np[0]
+        y = self.center.np[1]
+        py = p.np[1]
+
+        if p.np[0] < x:
+            if py < y:
                 return self.sub[0].around(p, max_depth)
             else:
                 return self.sub[2].around(p, max_depth)
         else:
-            if p.y < self.center.y:
+            if py < y:
                 return self.sub[1].around(p, max_depth)
             else:
                 return self.sub[3].around(p, max_depth)
@@ -340,11 +356,14 @@ class Quadtree:
         """
         """
         size = self.size / 2
-        sx = self.center.x - size
-        ex = self.center.x + size
-        sy = self.center.y - size
-        ey = self.center.y + size
-        return sx <= p.x <= ex and sy <= p.y <= ey
+        x = self.center.np[0]
+        y = self.center.np[1]
+
+        sx = x - size
+        ex = x + size
+        sy = y - size
+        ey = y + size
+        return sx <= p.np[0] <= ex and sy <= p.np[1] <= ey
 
 
 class quadtreeMessage:
