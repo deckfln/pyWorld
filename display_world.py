@@ -72,7 +72,7 @@ class Params:
             [31.228154, -114.540116],
             [80.523751, -77.058823]
         ]
-        self.waypoint = True
+        self.waypoint = Config["benchmark"]
         self.procedural_scenery = ProceduralScenery()
 
 

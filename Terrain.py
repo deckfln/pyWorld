@@ -71,8 +71,8 @@ class Terrain:
         self.textures = []
         self.light = None
 
-        # index backup for tiles
-        self.quadtree_mesh_indexes = None
+        self.quadtree_mesh_indexes = None       # index backup for tiles
+        self.quadtree_current_tile = None       # cache the current tile the player is sitting on
 
         # total number of tiles
         nb_tiles = 1
@@ -468,8 +468,8 @@ class Terrain:
 
         ratio = self.ratio
         half = self.half
-        target.x = (position.x + half) * ratio
-        target.y = (position.y + half) * ratio
+        target.np[0] = (position.np[0] + half) * ratio
+        target.np[1] = (position.np[1] + half) * ratio
         return target
 
     def screen2mapXY(self, x, y, target=None):
@@ -1045,119 +1045,6 @@ class Terrain:
             # add the tile on the display list if needed
             tiles_2_display.append(quad)
 
-    def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
-        """
-
-        :param position:
-        :param tiles_2_display:
-        :return:
-        """
-        if tile is None:
-            tile = self.quadtree.around(position, max_depth)
-        else:
-            index = "%d-%d-%d" % (max_depth, position.np[0], position.np[1])
-            # tile = self.quadtree.around(position, max_depth)
-            tile = self.quadtree_index[index]
-
-        parent = tile.parent
-
-        quadrant = -1       # north/east, north/west ...
-
-        # add all direct neighbors
-        for i in range(4):
-            quad = parent.sub[i]
-            if quad == tile:
-                quadrant = i
-            if not quad.traversed:
-                quad.traversed = True
-                tiles_2_display.append(quad)
-
-        parent.traversed = True
-
-        return tile, quadrant
-
-    def _find_add_quadrant(self, e, x, y, tiles_2_display, queue):
-        position = e[0]
-        max_depth = e[1]
-        tile1 = e[2]
-
-        if x == 0 and y == 0 and tile1 is not None:
-            _vector2.np[0] = tile1.center.np[0]
-            _vector2.np[1] = tile1.center.np[1]
-            tile, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
-            parent = tile.parent
-            queue.append([parent.center, parent.level, parent])
-            return tile, quadrant
-
-        x += position.np[0]
-        y += position.np[1]
-
-        _vector2.np[0] = x
-        _vector2.np[1] = y
-        size = self.size / 2
-        if -size <= x < size and -size <= y < size:
-            tile, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
-            parent = tile.parent
-            queue.append([parent.center, parent.level, parent])
-            return tile, quadrant
-
-        return None,None
-
-    def _build_view(self, position: Vector2, tiles_2_display: list,max_depth: int):
-        """
-
-        :return:
-        """
-        neighbors = [
-            [
-                # north & west
-                [-1, 0],
-                [-1, -1],
-                [0, -1]
-            ],
-            [
-                # north & east
-                [1, 0],
-                [1, -1],
-                [0, -1]
-            ],
-            [
-                # south & west
-                [-1, 0],
-                [-1, 1],
-                [0, 1]
-            ],
-            [
-                # south & east
-                [1, 0],
-                [1, 1],
-                [0, 1]
-            ]
-        ]
-        queue = deque()
-        queue.append([position, max_depth, None])
-
-        while len(queue) > 0:
-            e = queue.popleft()
-            max_depth = e[1]
-
-            # reached root of tree ?
-            if max_depth == 0:
-                return -1
-
-            tile, quadrant = self._find_add_quadrant(e, 0, 0, tiles_2_display, queue)
-            if tile is None:
-                continue
-
-            size = tile.size
-
-            # add the neighbors quadrants
-            # based on tile the player is on
-            neighbor = neighbors[quadrant]
-            for n in neighbor:
-                tilex, q = self._find_add_quadrant(e, n[0]*size, n[1]*size, tiles_2_display, queue)
-
-
     def build_quadtre_indexes(self):
         """
         Build an array of openGL indexes to tbe used be tiles stitching
@@ -1198,89 +1085,285 @@ class Terrain:
                     array[k + row + 2] = array[k + row + 4]
                     array[k + row + 5] = array[k + row + 4]
 
+    def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
+        """
+
+        :param position:
+        :param tiles_2_display:
+        :return:
+        """
+        if tile is None:
+            tile = self.quadtree.around(position, max_depth)
+        else:
+            index = "%d-%d-%d" % (max_depth, position.np[0], position.np[1])
+            # tile = self.quadtree.around(position, max_depth)
+            tile = self.quadtree_index[index]
+
+        parent = tile.parent
+
+        quadrant = -1       # north/east, north/west ...
+
+        # add all direct neighbors
+        sub = parent.sub
+        for i in range(4):
+            quad = sub[i]
+            if quad == tile:
+                quadrant = i
+            if not quad.traversed:
+                tiles_2_display.append(quad)
+
+        # register stitching on borders
+        if not sub[0].traversed:
+            sub[0].east = sub[0].south = False
+            sub[0].west = sub[0].north = True
+
+        if not sub[1].traversed:
+            sub[1].west = sub[1].south = False
+            sub[1].east = sub[1].north = True
+
+        if not sub[2].traversed:
+            sub[2].east = sub[2].north = False
+            sub[2].west = sub[2].south = True
+
+        if not sub[3].traversed:
+            sub[3].west = sub[3].north = False
+            sub[3].east = sub[3].south = True
+
+        for quad in sub:
+            if not quad.traversed:
+                quad.traversed = True
+
+        parent.traversed = True
+
+        return parent, quadrant
+
+    def _find_add_quadrant(self, e, x, y, tiles_2_display, queue):
+        position = e[0]
+        max_depth = e[1]
+        tile1 = e[2]
+
+        if x == 0 and y == 0 and tile1 is not None:
+            _vector2.np[0] = tile1.center.np[0]
+            _vector2.np[1] = tile1.center.np[1]
+            parent, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
+            queue.append([parent.center, parent.level, parent])
+            return parent, quadrant
+
+        x += position.np[0]
+        y += position.np[1]
+
+        _vector2.np[0] = x
+        _vector2.np[1] = y
+        size = self.size / 2
+        if -size <= x < size and -size <= y < size:
+            parent, quadrant = self._add_full_quadrant(_vector2, tiles_2_display, max_depth, tile1)
+            queue.append([parent.center, parent.level, parent])
+            return parent, quadrant
+
+        return None,None
+
+    def _build_view(self, position: Vector2, tiles_2_display: list,max_depth: int):
+        """
+
+        :return:
+        """
+
+        neighbors = [
+            [
+                # north & west
+                [-1, 0],
+                [-1, -1],
+                [0, -1]
+            ],
+            [
+                # north & east
+                [1, 0],
+                [1, -1],
+                [0, -1]
+            ],
+            [
+                # south & west
+                [-1, 0],
+                [-1, 1],
+                [0, 1]
+            ],
+            [
+                # south & east
+                [1, 0],
+                [1, 1],
+                [0, 1]
+            ]
+        ]
+
+        # if the player is on the same tile as last frame
+        tile = self.quadtree.around(position, max_depth)
+        if self.quadtree_current_tile == tile:
+            return False
+
+        self.quadtree_current_tile = tile
+
+        queue = deque()
+        queue.append([position, max_depth, None])
+
+        while len(queue) > 0:
+            e = queue.popleft()
+            max_depth = e[1]
+
+            # reached root of tree ?
+            if max_depth == 0:
+                return -1
+
+            """
+            quadrant
+            +-----+-----+
+            !  0  !  1  !
+            +-----+-----+
+            !  2  !  3  !
+            +-----+-----+           
+            """
+            parent, quadrant = self._find_add_quadrant(e, 0, 0, tiles_2_display, queue)
+            if parent is None:
+                continue
+
+            size = parent.sub[0].size
+
+            # add the neighbors quadrants
+            # based on tile the player is on
+            if quadrant == 0:
+                """
+                +-----+-----+
+                ! n_w !north!
+                +-----+-----+
+                ! west!tile !
+                +-----+-----+
+                """
+                west, q = self._find_add_quadrant(e, -size, 0, tiles_2_display, queue)
+                north_west, q = self._find_add_quadrant(e, -size, -size, tiles_2_display, queue)
+                north, q = self._find_add_quadrant(e, 0, -size, tiles_2_display, queue)
+                # stitching ?
+                if west is not None:
+                    west.sub[1].east = west.sub[3].east = False
+                    parent.sub[0].west = parent.sub[2].west = False
+                if north is not None:
+                    north.sub[2].south = north.sub[3].south = False
+                    parent.sub[0].north = parent.sub[1].north = False
+                if north_west is not None:
+                    north.sub[0].west = north.sub[2].west = False
+                    north_west.sub[1].east = north_west.sub[3].east = False
+                    west.sub[0].north = west.sub[1].north = False
+                    north_west.sub[2].south = north_west.sub[3].south = False
+
+            elif quadrant == 1:
+                """
+                +-----+-----+
+                !north! n_e !
+                +-----+-----+
+                !tile !east !
+                +-----+-----+
+                """
+                east, q = self._find_add_quadrant(e, size, 0, tiles_2_display, queue)
+                north_east, q = self._find_add_quadrant(e, size, -size, tiles_2_display, queue)
+                north, q = self._find_add_quadrant(e, 0, -size, tiles_2_display, queue)
+                # stitching ?
+                if east is not None:
+                    east.sub[0].west = east.sub[2].west = False
+                    parent.sub[1].east = parent.sub[3].east = False
+                if north is not None:
+                    north.sub[2].south = north.sub[3].south = False
+                    parent.sub[0].north = parent.sub[1].north = False
+                if north_east is not None:
+                    east.sub[0].north = east.sub[1].north = False
+                    north_east.sub[2].south = north_east.sub[3].south = False
+                    north.sub[1].east = north.sub[3].east = False
+                    north_east.sub[0].west = north_east.sub[2].west = False
+
+            elif quadrant == 2:
+                """
+                +-----+-----+
+                !west !tile !
+                +-----+-----+
+                ! s_w !south!
+                +-----+-----+
+                """
+                west, q = self._find_add_quadrant(e, -size, 0, tiles_2_display, queue)
+                south_west, q = self._find_add_quadrant(e, -size, size, tiles_2_display, queue)
+                south, q = self._find_add_quadrant(e, 0, size, tiles_2_display, queue)
+                # stitching ?
+                if west is not None:
+                    west.sub[1].east = west.sub[3].east = False
+                    parent.sub[0].west = parent.sub[2].west = False
+                if south is not None:
+                    south.sub[0].north = south.sub[1].north = False
+                    parent.sub[2].south = parent.sub[3].south = False
+                if south_west is not None:
+                    west.sub[2].south = west.sub[3].south = False
+                    south_west.sub[0].north = south_west.sub[1].north = False
+                    south.sub[0].west = south.sub[3].west = False
+                    south_west.sub[1].east = south_west.sub[3].east = False
+            else:
+                """
+                +-----+-----+
+                !tile !east !
+                +-----+-----+
+                !south! s_e !
+                +-----+-----+
+                """
+                east, q = self._find_add_quadrant(e, size, 0, tiles_2_display, queue)
+                south_east, q = self._find_add_quadrant(e, size, size, tiles_2_display, queue)
+                south, q = self._find_add_quadrant(e, 0, size, tiles_2_display, queue)
+                # stitching ?
+                if east is not None:
+                    east.sub[0].west = east.sub[2].west = False
+                    parent.sub[1].east = parent.sub[3].east = False
+                if south is not None:
+                    south.sub[0].north = south.sub[1].north = False
+                    parent.sub[2].south = parent.sub[3].south = False
+                if south_east is not None:
+                    east.sub[2].south = east.sub[3].south = False
+                    south_east.sub[0].north = south_east.sub[1].north = False
+                    south.sub[1].east = south.sub[3].east = False
+                    south_east.sub[0].west = south_east.sub[2].west = False
+
+        return True
+
     def _stich_neighbours(self):
         """
-        build tiles neighbors
-        and stich them
+        check for each tile if a border needs stitching
         """
         # build the tiles by size from smallest to biggest
         self.tiles_onscreen.sort(key=lambda x: x.size)
 
-        # reset north, south, east, west neighbors
         for tile in self.tiles_onscreen:
-            tile.east = tile.west = tile.north = tile.south = None
-
-        # parse all tiles to find the neighbors
-        north = THREE.Vector2()
-        south = THREE.Vector2()
-        east = THREE.Vector2()
-        west = THREE.Vector2()
-        l = len(self.tiles_onscreen)
-
-        for i in range(l):
-            tile = self.tiles_onscreen[i]
             if not tile.mesh.visible:
                 continue
 
             if not hasattr(tile, 'debug'):
                 tile.debug = None
 
-            size = tile.size * 0.75
-            level = tile.level - 1
-
-            x = tile.center.x
-            y = tile.center.y
-
-            north.set(x, y - size)
-            south.set(x, y + size)
-            east.set(x + size, y)
-            west.set(x - size, y)
-
             code = 0
 
-            for j in range(i + 1, l):
-                tile_j = self.tiles_onscreen[j]
-                if not tile_j.mesh.visible:
-                    continue
+            if tile.north:
+                code |= 1
 
-                if tile_j.level < level:
-                    # there is no more than 1 level of difference between 2 tiles
-                    continue
+            if tile.south:
+                """
+                if hasattr(tile.mesh, 'debug'):
+                    self.scene.remove(tile.mesh.debug)
+                t = tile_j.mesh.position.clone()
+                t.sub(tile.mesh.position)
+                l1 = t.length()
+                t.normalize()
+                tile.mesh.debug = THREE.ArrowHelper(t, tile.mesh.position,
+                                                    l1, tile_j.mesh.material.color)
+                self.scene.add(tile.mesh.debug)
+                """
+                code |= 2
 
-                if tile_j.is_point_inside(north):
-                    if tile_j.level < tile.level:
-                        code |= 1
-                    tile.north = tile_j
-                    tile_j.south = tile
+            if tile.west:
+                code |= 4
 
-                if tile_j.is_point_inside(south):
-                    """
-                    if hasattr(tile.mesh, 'debug'):
-                        self.scene.remove(tile.mesh.debug)
-                    t = tile_j.mesh.position.clone()
-                    t.sub(tile.mesh.position)
-                    l1 = t.length()
-                    t.normalize()
-                    tile.mesh.debug = THREE.ArrowHelper(t, tile.mesh.position,
-                                                        l1, tile_j.mesh.material.color)
-                    self.scene.add(tile.mesh.debug)
-                    """
-                    if tile_j.level < tile.level:
-                        code |= 2
-                    tile.south = tile_j
-                    tile_j.north = tile
-
-                if tile_j.is_point_inside(west):
-                    if tile_j.level < tile.level:
-                        code |= 4
-                    tile.west = tile_j
-                    tile_j.east = tile
-
-                if tile_j.is_point_inside(east):
-                    if tile_j.level < tile.level:
-                        code |= 8
-                    tile.east = tile_j
-                    tile_j.west = tile
+            if tile.east:
+                code |= 8
 
             tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
 
@@ -1323,8 +1406,6 @@ class Terrain:
             self.scene.add(player.frustrum1)
 
         # check if the object is behind the player
-        _vector2 = THREE.Vector2()
-        hm_quad_radius = 0
         p = THREE.Vector2(position.x, position.y)
         for quad in self.tiles_onscreen:
             # if p.distanceTo(quad.center) < quad.visibility_radius:
@@ -1367,7 +1448,9 @@ class Terrain:
 
         position2D = THREE.Vector2(position.x, position.y)
         # self._check_quad_lod(position2D, self.quadtree, tiles_2_display)
-        self._build_view(position2D, tiles_2_display, -1)
+        if not self._build_view(position2D, tiles_2_display, -1):
+            # there is no change
+            return
 
         # compare the list of tiles to display with the current list of tiles
 

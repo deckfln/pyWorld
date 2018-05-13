@@ -54,5 +54,7 @@ Config = {
         'enabled': False,
         'size': 1024,
         'debug': False
-    }
+    },
+
+    "benchmark": True
 }
