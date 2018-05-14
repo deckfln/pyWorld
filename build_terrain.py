@@ -17,14 +17,16 @@ from city import *
 from Terrain import *
 from Forest import *
 
+import build.terrain as build_terrain
+
 
 def build():
     terrain = Terrain.Terrain(512, 25, 512)
     terrain.init()
 
     if not Config['terrain']['flat']:
-        terrain.perl_generate()
-        terrain.build_normalmap()
+        build_terrain.perlin_generate(terrain)
+        build_terrain.build_normalmap(terrain)
 
     terrain.build()
 
@@ -40,10 +42,10 @@ def build():
         terrain.scenery.extend(trees)
 
     if not Config['terrain']['flat']:
-        terrain.build_normalmap()
+        build_terrain.build_normalmap(terrain)
 
-    terrain.buildTerrainMesh()
-    terrain.build_mesh_scenery()
+    build_terrain.build_mesh(terrain)
+    build_terrain.build_mesh_scenery(terrain)
 
     terrain.dump()
 

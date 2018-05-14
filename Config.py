@@ -16,9 +16,9 @@ Config = {
 
     "terrain": {
         "flat": False,               # do not generate noise
-        "forest": True,             # display forest
-        "city": True,               # generate a city
-        "roads": True,
+        "forest": False,             # display forest
+        "city": False,               # generate a city
+        "roads": False,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,
         "debug": {
