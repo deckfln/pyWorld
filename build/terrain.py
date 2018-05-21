@@ -4,6 +4,7 @@
 
 from Terrain import *
 from PerlinSimplexNoise import *
+from threading import Thread
 
 
 def perlin_generate(terrain):
@@ -72,9 +73,9 @@ def build_normalmap(terrain):
                 terrain.map2screenXY(x+1, y, mB)
                 terrain.map2screenXY(x, y, mC)
 
-                pA.set(mA.x, mA.y, zA)
-                pB.set(mB.x, mB.y, zB)
-                pC.set(mC.x, mC.y, zC)
+                pA.set(mA.np[0], mA.np[1], zA)
+                pB.set(mB.np[0], mB.np[1], zB)
+                pC.set(mC.np[0], mC.np[1], zC)
 
                 cb.subVectors( pC, pB )
                 ab.subVectors( pA, pB )
@@ -92,9 +93,9 @@ def build_normalmap(terrain):
             terrain.map2screenXY(x+1, y, mB)
             terrain.map2screenXY(x+1, y+1, mC)
 
-            pA.set(mA.x, mA.y, zA)
-            pB.set(mB.x, mB.y, zB)
-            pC.set(mC.x, mC.y, zC)
+            pA.set(mA.np[0], mA.np[1], zA)
+            pB.set(mB.np[0], mB.np[1], zB)
+            pC.set(mC.np[0], mC.np[1], zC)
 
             cb.subVectors( pC, pB )
             ab.subVectors( pA, pB )

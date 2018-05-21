@@ -60,6 +60,7 @@ class Terrain:
         self.radiuses = [0] * self.nb_levels
 
         self.ratio = (self.size-1)/self.onscreen
+        self.ratio_screen_2_map = self.onscreen / self.size
         self.half = self.onscreen/2
 
         self.tiles_onscreen = []
@@ -410,8 +411,11 @@ class Terrain:
         if target is None:
             target = THREE.Vector2()
 
-        target.x = position.x * self.onscreen / self.size - self.onscreen / 2
-        target.y = position.y * self.onscreen / self.size - self.onscreen / 2
+        ratio = self.ratio_screen_2_map
+        half = self.half
+
+        target.np[0] = position.np[0] * ratio - half
+        target.np[1] = position.np[1] * ratio - half
 
         return target
 
@@ -425,8 +429,11 @@ class Terrain:
         if target is None:
             target = THREE.Vector2()
 
-        target.x = x * self.onscreen / self.size - self.onscreen / 2
-        target.y = y * self.onscreen / self.size - self.onscreen / 2
+        ratio = self.ratio_screen_2_map
+        half = self.half
+
+        target.np[0] = x * ratio - half
+        target.np[1] = y * ratio - half
 
         return target
 

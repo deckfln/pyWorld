@@ -41,12 +41,12 @@
 13/05/18: 07/05/18  terrain quad        speed up the new algo
 14/05/18: 18/04/18  terrain class       refactor the class to move the build part to a dedicated file
 14/05/18: 07/05/18  terrain quad        do not keep the tile grid square. Move the point inside the grid to the highest point in the sub-tile
+21/05/18: 11/01/18  performance         avoid visual hiccup when the player moves
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
 TODO: 03/01/18  terrain generation  optimize normalMap building
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
-TODO: 11/01/18  performance         avoid hiccup when the player moves forward
 TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap
 TODO: 27/01/18  camera              smooth the movement when then camera goes upward or downward to follow the terrain

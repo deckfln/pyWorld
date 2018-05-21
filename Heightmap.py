@@ -43,11 +43,12 @@ class Heightmap:
         self.map[x + y * self.size] += h
 
     def get(self, x, y):
-        if x < 0 or y < 0 or x >= self.size or y >= self.size:
-            return None
+        s = self.size
+        if 0 <= x < s and 0 <= y < s:
+            p = int(x + y * s)
+            return self.map[p]
 
-        p = int(int(x) + int(y) * self.size)
-        return self.map[p]
+        return None
 
     def getNormalize(self, x, y):
         return self.get(x, y) / self.size

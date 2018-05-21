@@ -38,6 +38,7 @@ class Params:
         self.clock = None
         self.hour = 0
         self.keymap = {
+            110: 0,     # N
             273: 0,     # up
             274: 0,     # down
             275: 0,     # left
@@ -74,6 +75,9 @@ class Params:
         ]
         self.waypoint = Config["benchmark"]
         self.procedural_scenery = ProceduralScenery()
+        self.fps = 0
+        self.frame_by_frame = False
+        self.suspended = False
 
 
 def init(p):
@@ -341,11 +345,14 @@ def animate(p):
                 if quad.level >= 4:
                    p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
 
+    p.fps += 1
+
     # t = time.time()
     render(p)
     # c = time.time() - t
-    # if c > 0.033:
-    #     print(c)
+        # print(c, p.player.vcamera.position.x, p.player.vcamera.position.y, p.player.vcamera.position.z)
+        # if c > 0.033:
+        #    print(c)
 
 
 def render(p):
@@ -368,6 +375,14 @@ def keyboard(event, p):
     elif keyCode == 116:  # T
         if down:
             print("[%f, %f]," %(p.player.position.x, p.player.position.y))
+    elif keyCode == 115:  # S
+        p.frame_by_frame = True
+        p.suspended = True
+    elif keyCode == 110:  # N
+        if not p.keymap[keyCode]:
+            p.suspended = False
+        p.keymap[keyCode] = down
+
     elif keyCode in p.keymap:
         p.keymap[keyCode] = down
 

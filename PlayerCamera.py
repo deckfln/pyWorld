@@ -7,6 +7,7 @@ from Config import *
 
 _p = THREE.Vector3()
 _p1 = THREE.Vector3()
+_p2 = THREE.Vector3()
 _hm = THREE.Vector2()
 
 
@@ -19,6 +20,8 @@ class PlayerCamera:
         self.shoulder = THREE.Vector3()
         self.behind = THREE.Vector3()
         self.distance = THREE.Vector3()
+        self.angularSpeed = 0
+        self.accelerate = False
 
         if Config['camera']['debug']:
             material = THREE.LineBasicMaterial({
@@ -86,7 +89,6 @@ class PlayerCamera:
                 d.copy(_p)
                 
             i += 0.05
-
         self.updated = True
 
         if Config['camera']['debug']:
@@ -99,8 +101,52 @@ class PlayerCamera:
             self.lookAt.copy(self.shoulder)
 
     def display(self, camera):
-        if self.updated:
+        """
+        move the real camera to the virtual camera
+        the real camera has a momentum and speedup to join the position of the virtual camera
+        :param camera:
+        :return:
+        """
+        _p.subVectors(self.position, self.lookAt)
+        d = _p.length()
+        _p1.subVectors(camera.position, self.lookAt).normalize().multiplyScalar(d)
+        a = _p.angleTo(_p1)
+
+        # print("angle", a)
+        if a < 0.005:
+            # if the 2 vectors point to the same direction
+            # move straight ahead
             camera.position.copy(self.position)
             camera.controls.target.copy(self.lookAt)
             camera.up.set(0, 0, 1)
-            self.updated = False
+            self.angularSpeed = 0
+            self.accelerate = False
+        else:
+            # rotate angular
+            # if camera was steady, give it a kick
+            if self.angularSpeed == 0:
+                self.angularSpeed = 0.05
+                self.accelerate = True
+                # print("kick")
+
+            _p2.subVectors(_p, _p1)
+            delta = _p2.length()
+            d1 = delta * self.angularSpeed
+            if d1 > delta:
+                self.angularSpeed = 1
+                self.accelerate = False
+                # print('stop')
+
+            _p2.multiplyScalar(self.angularSpeed)
+            _p.copy(_p1).add(_p2).normalize().multiplyScalar(d)
+
+            camera.position.copy(self.lookAt).add(_p)
+            _p.subVectors(camera.position, self.position)
+            camera.controls.target.copy(self.lookAt)
+            camera.up.set(0, 0, 1)
+
+            # print("  ", delta, d1, self.angularSpeed, _p.length())
+
+            if self.accelerate:
+                self.angularSpeed *= 2
+                # print('speed')

@@ -183,6 +183,7 @@ class Player(Actor):
 
         p = _v3d_static.copy(self.position)
         d = _v3d1_static.copy(self.direction)
+        d.multiplyScalar(0.1)
         d.multiplyScalar(delta)    # handle time
         
         # handle speed
@@ -211,18 +212,18 @@ class Player(Actor):
             p.add(d)
 
         size = self.terrain.size
-        if p.x < -size or p.x < -size or p.x >= size or p.y >= size:
-            return False
+        if -size < p.x <= size and -size < p.y <= size:
+            self.position.copy(p)
 
-        self.position.copy(p)
-        
-        if Config['player']['debug']['direction']:
-            self.helper.position.copy(p)
+            if Config['player']['debug']['direction']:
+                self.helper.position.copy(p)
 
-        if Config['player']['debug']['collision']:
-            self.aabb.position.copy(p)
-        
-        return True
+            if Config['player']['debug']['collision']:
+                self.aabb.position.copy(p)
+
+            return True
+
+        return False
 
     def move_back(self,delta, run):
         """
