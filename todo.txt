@@ -42,6 +42,8 @@
 14/05/18: 18/04/18  terrain class       refactor the class to move the build part to a dedicated file
 14/05/18: 07/05/18  terrain quad        do not keep the tile grid square. Move the point inside the grid to the highest point in the sub-tile
 21/05/18: 11/01/18  performance         avoid visual hiccup when the player moves
+22/05/18: 07/05/18  pyGame              force pyGame to use antialiasing: applied in three.py
+28/05/18: 01/05/18  gui                 add a FPS widget
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -56,8 +58,6 @@ TODO: 28/01/18  lights              implement lights in the shaders following Un
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 01/05/18  init                add a loading GUI
-TODO: 01/05/18  gui                 add a FPS widget
-TODO: 07/05/18  pyGame              force pyGame to use antialiasing
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

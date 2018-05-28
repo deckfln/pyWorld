@@ -12,6 +12,7 @@ from datetime import datetime
 from THREE import *
 from THREE.pyOpenGL.pyOpenGL import *
 from THREE.controls.TrackballControls import *
+from THREE.TextureLoader import *
 
 from Terrain import *
 from Player import *
@@ -21,6 +22,7 @@ from quadtree import *
 
 from ProceduralScenery import *
 from Scenery import *
+from Gui import *
 
 
 class Params:
@@ -78,6 +80,7 @@ class Params:
         self.fps = 0
         self.frame_by_frame = False
         self.suspended = False
+        self.GUI = None
 
 
 def init(p):
@@ -86,13 +89,21 @@ def init(p):
     :param p:
     :return:
     """
+    # load the gui
+    loader = THREE.TextureLoader()
+
+    img = loader.load("img/gui.png")
+    img.magFilter = THREE.NearestFilter
+    img.minFilter = THREE.NearestFilter
+
     # /// Global : renderer
     print("Init pyOPenGL...")
     p.container = pyOpenGL(p)
     p.container.addEventListener('resize', onWindowResize, False)
 
-    p.renderer = THREE.pyOpenGLRenderer({'antialias': True})
+    p.renderer = THREE.pyOpenGLRenderer({'antialias': True, 'gui': img})
     p.renderer.setSize( window.innerWidth, window.innerHeight )
+    p.GUI = GUI(p.renderer)
 
     p.camera = THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000)
     p.camera.position.set(0, 0, 100)
@@ -347,11 +358,13 @@ def animate(p):
 
     p.fps += 1
 
-    # t = time.time()
+    # update gui
+    p.GUI.update_fps()
+
     render(p)
     # c = time.time() - t
-        # print(c, p.player.vcamera.position.x, p.player.vcamera.position.y, p.player.vcamera.position.z)
-        # if c > 0.033:
+    # print(c, p.player.vcamera.position.x, p.player.vcamera.position.y, p.player.vcamera.position.z)
+    # if c > 0.033:
         #    print(c)
 
 
