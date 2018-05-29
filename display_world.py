@@ -6,6 +6,7 @@ mango_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(mango_dir)
 
 import pickle
+from threading import Thread
 
 from datetime import datetime
 
@@ -81,6 +82,153 @@ class Params:
         self.frame_by_frame = False
         self.suspended = False
         self.GUI = None
+        self.init_thread = None
+        self.load_percentage = 0
+
+
+class _InitThread(Thread):
+    """
+    https://skryabiin.wordpress.com/2015/04/25/hello-world/
+    SDL 2.0, OpenGL, and Multithreading (Windows)
+    """
+
+    def __init__(self, p):
+        Thread.__init__(self)
+        self.p = p
+
+    def run(self):
+        """Code à exécuter pendant l'exécution du thread."""
+        p = self.p
+
+        p.controls = TrackballControls(p.camera, p.container)
+        p.camera.controls = p.controls
+
+        # cubemap
+        path = "img/skybox/"
+        format = '.png'
+
+        urls = [
+            path + 'front' + format,
+            path + 'left' + format,
+            path + 'right' + format,
+            path + 'back' + format,
+            path + 'top' + format,
+            path + 'bottom' + format
+        ]
+
+        print("Init CubeMap...")
+        background = THREE.CubeTextureLoader().load(urls)
+        background.format = THREE.RGBFormat
+
+        p.load_percentage += 5
+
+        p.clock = THREE.Clock()
+
+        # Lights
+        ambLight = THREE.AmbientLight(0x999999)
+
+        # initialize the sun
+        _material = THREE.MeshBasicMaterial({
+            'color': 0xffffff
+        })
+        p.sun = THREE.DirectionalLight(0xffffff, 1)
+        p.sun.position.set(100, 100, 100)
+
+        instance_material.uniforms.light.value = p.sun.position
+        instance_material.uniforms.ambientLightColor.value = ambLight.color
+
+        # sun imposter
+        g_sun = THREE.SphereBufferGeometry(2, 8, 8)
+        m_sun = THREE.Mesh(g_sun, _material)
+        p.sun.add(m_sun)
+
+        # init the scene
+        p.scene.add(ambLight)
+        p.scene.add(p.sun)
+        p.scene.background = background
+
+        # init the shadowmap
+        if Config['shadow']['enabled']:
+            p.renderer.shadowMap.enabled = True
+            p.sun.castShadow = True
+            p.sun.shadow.mapSize.width = Config['shadow']['size']
+            p.sun.shadow.mapSize.height = Config['shadow']['size']
+            p.sun.shadow.camera.top = 32
+            p.sun.shadow.camera.bottom = -32
+            p.sun.shadow.camera.right = 32
+            p.sun.shadow.camera.left = -32
+            p.sun.shadow.camera.near = 128
+            p.sun.shadow.camera.far = 256 + 32
+            pars = {'minFilter': THREE.NearestFilter, 'magFilter': THREE.NearestFilter, 'format': THREE.RGBAFormat}
+
+            p.sun.shadow.map = THREE.pyOpenGLRenderTarget(Config['shadow']['size'], Config['shadow']['size'], pars)
+            p.sun.shadow.map.texture.name = p.sun.name + ".shadowMap"
+
+            if Config['shadow']['debug']:
+                p.helper = THREE.CameraHelper(p.sun.shadow.camera)
+                p.scene.add(p.helper)
+                p.debug = THREE.Mesh(THREE.SphereBufferGeometry(2, 8, 8), _material)
+                p.scene.add(p.debug)
+
+            instance_material.uniforms.directionalShadowMap.value = p.sun.shadow.map.texture
+            instance_material.uniforms.directionalShadowMatrix.value = p.sun.shadow.matrix
+            instance_material.uniforms.directionalShadowSize.value = p.sun.shadow.mapSize
+
+        # init the asset instanced models
+        print("Init Assets...")
+
+        p.assets.load('evergreen', 5, "models/anime_tree/D0406452B11", THREE.Vector2(1, 1))
+        p.assets.load('evergreen', 4, "models/anime_tree/4/model", THREE.Vector2(1, 1))
+        p.assets.load('evergreen', 3, "models/anime_tree/3/model", THREE.Vector2(1, 1))
+        p.assets.load('evergreen', 2, "models/anime_tree/2/model", THREE.Vector2(1, 1))
+        p.assets.load('evergreen', 1, "models/anime_tree/1/model", THREE.Vector2(1, 1))
+        p.load_percentage += 5
+
+        p.assets.load('tree', 5, "models/old-tree/model", THREE.Vector2(1, 1))
+        p.assets.load('tree', 4, "models/old-tree/4/model", THREE.Vector2(1, 1))
+        p.assets.load('tree', 3, "models/old-tree/3/model", THREE.Vector2(1, 1))
+        p.assets.load('tree', 2, "models/old-tree/2/model", THREE.Vector2(1, 1))
+        p.assets.load('tree', 1, "models/old-tree/1/model", THREE.Vector2(1, 1))
+        p.load_percentage += 5
+
+        p.assets.load('house', 1, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+        p.assets.load('house', 2, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+        p.assets.load('house', 3, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+        p.assets.load('house', 4, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+        p.assets.load('house', 5, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
+        p.load_percentage += 5
+
+        # dynamic assets
+        p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1), True)
+        p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3), True)
+        p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1), True)
+        p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1), True)
+        p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1), True)
+        p.load_percentage += 5
+
+        # add them to the scene, as each asset as a instancecount=0, none will be displayed
+        p.assets.add_2_scene(p.scene)
+
+        # init the terrain
+        print("Init Terrain...")
+        p.terrain = Terrain(512, 25, 512)
+        p.terrain.load(p.sun)
+        p.load_percentage += 5
+        p.terrain.scene = p.scene
+        p.load_percentage += 5
+
+        print("Init Player...")
+        p.player = Player(THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
+        p.actors.append(p.player)
+        p.load_percentage += 5
+
+        initQuadtreeProcess()
+
+        print("Init meshes...")
+        p.terrain.quadtree.loadChildren(p)
+        p.terrain.build_quadtre_indexes()
+        p.load_percentage += 5
+        print("End init")
 
 
 def init(p):
@@ -109,132 +257,37 @@ def init(p):
     p.camera.position.set(0, 0, 100)
     p.camera.up.set(0, 0, 1)
 
-    p.controls = TrackballControls(p.camera, p.container)
-    p.camera.controls = p.controls
-
-    # cubemap
-    path = "img/skybox/"
-    format = '.png'
-
-    urls = [
-        path + 'front' + format,
-        path + 'left' + format,
-        path + 'right' + format,
-        path + 'back' + format,
-        path + 'top' + format,
-        path + 'bottom' + format
-    ]
-
-    print("Init CubeMap...")
-    background = THREE.CubeTextureLoader().load(urls)
-    background.format = THREE.RGBFormat
-
-    p.clock = THREE.Clock()
-
-    # Lights
-    ambLight = THREE.AmbientLight(0x999999)
-
-    # initialize the sun
-    _material = THREE.MeshBasicMaterial({
-        'color': 0xffffff
-    })
-    p.sun = THREE.DirectionalLight(0xffffff, 1)
-    p.sun.position.set(100, 100, 100)
-
-    instance_material.uniforms.light.value = p.sun.position
-    instance_material.uniforms.ambientLightColor.value = ambLight.color
-
-    # sun imposter
-    g_sun = THREE.SphereBufferGeometry(2, 8, 8)
-    m_sun = THREE.Mesh(g_sun, _material)
-    p.sun.add(m_sun)
-
-    # init the scene
     p.scene = THREE.Scene()
     p.scene.add(p.camera)
-    p.scene.add(ambLight)
-    p.scene.add(p.sun)
-    p.scene.background = background
 
-    # init the shadowmap
-    if Config['shadow']['enabled']:
-        p.renderer.shadowMap.enabled = True
-        p.sun.castShadow = True
-        p.sun.shadow.mapSize.width = Config['shadow']['size']
-        p.sun.shadow.mapSize.height = Config['shadow']['size']
-        p.sun.shadow.camera.top = 32
-        p.sun.shadow.camera.bottom = -32
-        p.sun.shadow.camera.right = 32
-        p.sun.shadow.camera.left = -32
-        p.sun.shadow.camera.near = 128
-        p.sun.shadow.camera.far = 256+32
-        pars = {'minFilter': THREE.NearestFilter, 'magFilter': THREE.NearestFilter, 'format': THREE.RGBAFormat}
+    p.init_thread = _InitThread(p)
+    p.init_thread.start()
 
-        p.sun.shadow.map = THREE.pyOpenGLRenderTarget(Config['shadow']['size'], Config['shadow']['size'], pars)
-        p.sun.shadow.map.texture.name = p.sun.name + ".shadowMap"
-
-        if Config['shadow']['debug']:
-            p.helper = THREE.CameraHelper(p.sun.shadow.camera)
-            p.scene.add(p.helper)
-            p.debug = THREE.Mesh(THREE.SphereBufferGeometry(2, 8, 8), _material)
-            p.scene.add(p.debug)
-
-        instance_material.uniforms.directionalShadowMap.value = p.sun.shadow.map.texture
-        instance_material.uniforms.directionalShadowMatrix.value = p.sun.shadow.matrix
-        instance_material.uniforms.directionalShadowSize.value = p.sun.shadow.mapSize
-
-    # init the asset instanced models
-    print("Init Assets...")
-
-    p.assets.load('evergreen', 5,  "models/anime_tree/D0406452B11", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 4,  "models/anime_tree/4/model", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 3,  "models/anime_tree/3/model", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 2,  "models/anime_tree/2/model", THREE.Vector2(1, 1))
-    p.assets.load('evergreen', 1,  "models/anime_tree/1/model", THREE.Vector2(1, 1))
-
-    p.assets.load('tree', 5,  "models/old-tree/model", THREE.Vector2(1, 1))
-    p.assets.load('tree', 4,  "models/old-tree/4/model", THREE.Vector2(1, 1))
-    p.assets.load('tree', 3,  "models/old-tree/3/model", THREE.Vector2(1, 1))
-    p.assets.load('tree', 2,  "models/old-tree/2/model", THREE.Vector2(1, 1))
-    p.assets.load('tree', 1,  "models/old-tree/1/model", THREE.Vector2(1, 1))
-
-    p.assets.load('house', 1,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-    p.assets.load('house', 2,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-    p.assets.load('house', 3,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-    p.assets.load('house', 4,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-    p.assets.load('house', 5,  "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-
-    # dynamic assets
-    p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1), True)
-    p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3), True)
-    p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1), True)
-    p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1), True)
-    p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1), True)
-    
-    # add them to the scene, as each asset as a instancecount=0, none will be displayed
-    p.assets.add_2_scene(p.scene)
-
-    # init the terrain
-    print("Init Terrain...")
-    p.terrain = Terrain(512, 25, 512)
-    p.terrain.load(p.sun)
-    p.terrain.scene = p.scene
-
-    print("Init Player...")
-    p.player = Player(THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
-    p.actors.append(p.player)
-
-    initQuadtreeProcess()
-
-    print("Init meshes...")
-    p.terrain.quadtree.loadChildren()
-    p.terrain.build_quadtre_indexes()
-
+    """
     p.player.draw()
 
     # do a first render to initialize as much as possible
     render(p)
-    print("End Init")
+    """
+    p.container.addEventListener('animationRequest', render_load)
+
+
+def render_load(p):
+    """
+
+    :param p:
+    :return:
+    """
+    if p.init_thread is not None and not p.init_thread.is_alive():
+        p.init_thread.join()
+        p.init_thread = None
+        p.player.draw()
+        p.container.addEventListener('animationRequest', animate)
+        p.GUI.reset()
+        return
+
+    p.GUI.load_bar(p.load_percentage)
+    p.renderer.render(p.scene, p.camera)
 
 
 def onWindowResize(event, p):
@@ -254,6 +307,11 @@ def onWindowResize(event, p):
 
 
 def animate(p):
+    """
+
+    :param p:
+    :return:
+    """
     if p.waypoint:
         # direction toward the next waypoint
         x = p.waypoints[p.waypoint + 1][0]
@@ -369,10 +427,21 @@ def animate(p):
 
 
 def render(p):
+    """
+
+    :param p:
+    :return:
+    """
     p.renderer.render(p.scene, p.camera)
 
 
 def keyboard(event, p):
+    """
+
+    :param event:
+    :param p:
+    :return:
+    """
     keyCode = event.keyCode
     down = (event.type == 'keydown' ) * 1
 
@@ -406,11 +475,15 @@ def keyboard(event, p):
 
 
 def main(argv=None):
+    """
+
+    :param argv:
+    :return:
+    """
     p = Params()
 
     init(p)
 
-    p.container.addEventListener('animationRequest', animate)
     p.container.addEventListener('keydown', keyboard)
     p.container.addEventListener('keyup', keyboard)
     p.container.loop()

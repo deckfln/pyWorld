@@ -124,15 +124,16 @@ class Quadtree:
         if not self.mesh:
             AsyncIO.read(self)
 
-    def loadChildren(self):
+    def loadChildren(self, p):
         """
         @param {type} scene
         @returns {undefined}
         """
+        p.load_percentage += 0.1
         self.load()
         if self.sub[0] is not None:
             for child in self.sub:
-                child.loadChildren()
+                child.loadChildren(p)
 
     def notTraversed(self):
         """

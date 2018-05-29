@@ -16,9 +16,9 @@ Config = {
 
     "terrain": {
         "flat": False,               # do not generate noise
-        "forest": False,             # display forest
-        "city": False,               # generate a city
-        "roads": False,
+        "forest": True,             # display forest
+        "city": True,               # generate a city
+        "roads": True,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,
         "debug": {
@@ -28,7 +28,7 @@ Config = {
             "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
         },
-        'display_scenary': False
+        'display_scenary': True
     },
 
     "river": {

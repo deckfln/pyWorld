@@ -45,3 +45,26 @@ class GUI:
                 self.gui_data[p+3] = 0
 
         self.texture.needsUpdate = True
+
+    def load_bar(self, pct):
+        t = time.time()
+        if self.last_time > 0 and t < self.last_time + 1:
+            return
+
+        self.last_time = t
+
+        h = int(self.height / 2)
+        pct = int(pct * 200 / 100)
+
+        for y in range(h - 20, h + 20):
+            p = 4*y*self.width
+            for x in range(0, pct):
+                self.gui_data[p] = 255
+                self.gui_data[p+3] = 255
+                p += 4
+
+        self.texture.needsUpdate = True
+
+    def reset(self):
+        self.gui_data.fill(0)
+        self.texture.needsUpdate = True
