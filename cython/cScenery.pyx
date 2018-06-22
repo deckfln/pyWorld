@@ -9,6 +9,7 @@ cimport cython
 
 from THREE.Vector2 import *
 from THREE.Vector3 import *
+from prng import *
 
 import sys
 import numpy as np
@@ -17,6 +18,7 @@ from cpython cimport array
 import array
 from libc.math cimport sqrt, floor
 from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy
 
 from cHeightmap import cHeightmap_bilinear
 from cVectorMap import *
@@ -25,190 +27,135 @@ cdef object _tm = Vector2()
 cdef object _im = Vector2()
 cdef object _vector3 = Vector3()
 
-cdef float *_buffer = <float *>malloc(65536 * 3 * sizeof(float))
-cdef int _first1 = -1
-cdef int _first9 = -1
-cdef int _first25 = -1
-cdef int _buffer_size = 0
-
-
-"""
-"
-"""
-cpdef int _displace(float x, float y):
-    cdef float x1 = x + 256
-    cdef float y1 = y + 256
-
-    cdef int x2 = int(x1)
-    cdef int y2 = int(y1)
-
-    cdef int fx = int((x1 - x2) * 32)
-    cdef int fy = int((y1 - y2) * 32)
-
-    return (x2 / 16 + fx) * 2 + (y2 / 16 + fy)*128
+rand = Random(0)
 
 """
 "
 """
 cdef class _scenery:
-    cdef int instances
-    cdef int normals
+    cdef public next
     cdef int size
+    cdef positions
+    cdef normals
+    cdef public int index
 
-    def __init__(_scenery self, float density, int x, int y, terrain, heightmap, normalMap, np.ndarray[float, ndim=1] displacement_map not None):
-        global _buffer_size, _first1, _first9, _first25, _buffer
-        cdef int first
-        cdef int size
+    def __init__(self):
+        self.next = None
+        self.size = 0
+        self.positions = None
+        self.normals = None
+        self.index = 0
 
-        if density < 0.25:
-            self.instances = -1
-            self.normals = -1
+    def set(_scenery self, int i, _scenery next):
+        self.index = i
+        self.next = next
+
+    def init(_scenery self, densities, instance, int x, int y, terrain, heightmap, normalMap):
+        rand.seed = abs(x*y) * (instance + 1) + 7
+        cdef float density = densities[instance]
+
+        cdef int instances = 0
+
+        cdef int nb = int(density*10)
+        if nb == 0:
             self.size = 0
             return
-        elif density < 0.5:
-            first = _first1
-            size = 1
-        elif density < 0.75:
-            first = _first9
-            size = 9
-        else:
-            first = _first25
-            size = 25
 
-        if first < 0:
-            first = _buffer_size
-            _buffer_size += size*2*3
-            if _buffer_size > 65536*3:
-                print("cScenery: _buffer_size exceed limit")
-                sys.exit(-1)
-        else:
-            if size == 1:
-                _first1 = int(_buffer[first])
-            elif size == 9:
-                _first9 = int(_buffer[first])
-            else:
-                _first25 = int(_buffer[first])
+        if self.positions is None:
+            self.positions = np.zeros(nb*3, dtype=np.float32)
+            self.normals = np.zeros(nb * 3, dtype=np.float32)
+        elif nb > self.size:
+            self.positions = np.zeros(nb*3, dtype=np.float32)
+            self.normals = np.zeros(nb * 3, dtype=np.float32)
 
-        self.instances = first
-        self.normals = first + size*3
-        self.size = size
+        self.size = nb
+        cdef np.ndarray[float, ndim=1] positions = self.positions
+        cdef np.ndarray[float, ndim=1] normals = self.normals
 
-        cdef int instances = self.instances
-        cdef int normals = self.normals
-        cdef int step
-        cdef float dstep
-
-        if size == 1:
-            step = 5
-            dstep = 4
-        elif size == 9:
-            step = 2
-            dstep = 2
-        else:
-            step = 1
-            dstep = 1
-
-        cdef int tx
-        cdef int ty
-        cdef float _p1x
-        cdef float _p1y
-        cdef int displacement
+        cdef int i
+        cdef float dx
+        cdef float dy
         cdef float z
-        cdef np.ndarray[float, ndim=1] vec3 = _vector3.np
-        cdef np.ndarray[float, ndim=1] heightmap_map = heightmap.map
-        cdef int heightmap_size = heightmap.size
-        cdef np.ndarray[float, ndim=1] normal_map = normalMap.map
-        cdef int normal_size = normalMap.size
-        cdef tmx, tmy
+        cdef np.ndarray[float, ndim=1] vec3
 
-        tx = -2
-        while tx < 3:
-            _p1x = x + tx / 2
-            ty = -2
-            while ty < 3:
-                _p1y = y + ty / 2
+        for i in range(nb):
+            dx = rand.random()*2 - 1 + x
+            dy = rand.random()*2 - 1 + y
 
-                displacement = _displace(_p1x, _p1y)
+            terrain.screen2mapXY(dx, dy, _tm)
+            z = heightmap.bilinear(_tm.x, _tm.y)
 
-                _p1x += displacement_map[displacement] * dstep
-                _p1y += displacement_map[displacement + 1] * dstep
+            normalMap.nearest(_tm.x, _tm.y, _vector3)
+            vec3 = _vector3.np
 
-                terrain.screen2mapXY(_p1x, _p1y, _tm)
-                tmx = _tm.x
-                tmy = _tm.y
-                z = cHeightmap_bilinear(heightmap_map, heightmap_size, tmx, tmy)
-                cVectorMap_nearest(normal_map, normal_size, tmx, tmy, vec3)
+            positions[instances] = dx
+            positions[instances + 1] = dy
+            positions[instances + 2] = z
 
-                _buffer[instances] = _p1x
-                _buffer[instances + 1] = _p1y
-                _buffer[instances + 2] = z
+            normals[instances] = vec3[0]
+            normals[instances + 1] = vec3[1]
+            normals[instances + 2] = vec3[2]
 
-                _buffer[normals] = vec3[0]
-                _buffer[normals + 1] = vec3[1]
-                _buffer[normals + 2] = vec3[2]
-
-                normals += 3
-                instances += 3
-
-                ty += 2
-            tx += 2
-
-    def free(_scenery self):
-        global _buffer_size, _first1, _first9, _first25, _buffer
-        if not self.size:
-            return
-
-        cdef int first
-
-        if self.size == 1:
-            first = _first1
-        elif self.size == 9:
-            first = _first9
-        else:
-            first = _first25
-
-        _buffer[self.instances] = float(first)
-
-        if self.size == 1:
-            _first1 = self.instances
-        elif self.size == 9:
-            _first9 = self.instances
-        else:
-            _first25 = self.instances
+            instances += 3
 
     def concatenate(_scenery self, geometry):
-        global _buffer
         if not self.size:
-            return
+            return True
 
-        cdef int instances = self.instances
-        cdef int normals = self.normals
+        # if self.loaded:
+        #    return True
 
+        cdef np.ndarray[float, ndim=1] positions = self.positions
+        cdef np.ndarray[float, ndim=1] normal = self.normals
         cdef int le = self.size*3
-
-        cdef attributes = geometry.attributes
-        cdef np.ndarray[float, ndim=1, mode="c"] offset = attributes.offset.array
-        cdef np.ndarray[float, ndim=1, mode="c"] normal = attributes.normals.array
-        cdef float *offset_p = <float *>&offset[0]
-        cdef float *normal_p = <float *>&normal[0]
-
+        cdef np.ndarray[float, ndim=1] offset = geometry.attributes.offset.array
+        cdef np.ndarray[float, ndim=1] normals = geometry.attributes.normals.array
         cdef int nb = geometry.maxInstancedCount
 
-        cdef int length = le - 1
-        cdef int end = nb * 3 + length
-        instances += length
-        normals += length
-        while length >= 0:
-            offset_p[end] = _buffer[instances]
-            normal_p[end] = _buffer[normals]
-            end -= 1
-            instances -= 1
-            normals -= 1
-            length -= 1
+        cdef int i = nb * 3
+
+        cdef float *dest = &offset[i]
+        cdef float *source = &positions[0]
+        memcpy (dest, source, le*sizeof(float))
+
+        dest = &normals[i]
+        source = &normal[0]
+        memcpy (dest, source, le*sizeof(float))
+
+        #offset[i:i + le] = positions[0:le]
+        #normals[i:i + le] = normal[0:le]
 
         nb += le / 3
         geometry.maxInstancedCount = nb
 
+        return True
+
+
+"""
+"""
+# keep a global list of sceneris
+_sceneries = [_scenery() for i in range(8192*6)]
+_first = _sceneries[8191*6]
+
+for i in range(8191*6, -1, -1):
+    _sceneries[i].set(i, _sceneries[i - 1])
+
+
+cpdef _allocate(densities, instance, x, y, terrain, heightmap, normalMap):
+    global _first, _sceneries
+    cdef _scenery allocated = _first
+    allocated.init(densities, instance, x, y, terrain, heightmap, normalMap)
+    if allocated.size > 0:
+        _first = allocated.next
+    else:
+        allocated = None
+    return allocated
+
+
+cpdef _free(_scenery scenery):
+    global _first, _sceneries
+    scenery.next = _first
+    _first = scenery
 
 """
 "
@@ -219,128 +166,134 @@ cdef class _spot:
     cdef _scenery prairie
     cdef _scenery fern
     cdef _scenery shrub
+    cdef _scenery forest2
     cdef _buffer
 
-    def __init__(_spot self, _scenery grass, _scenery high_grass, _scenery prairie, _scenery fern, _scenery shrub):
+    def __init__(_spot self, _scenery grass, _scenery high_grass, _scenery prairie, _scenery fern, _scenery shrub, _scenery forest2):
         self.grass = grass
         self.high_grass = high_grass
         self.prairie = prairie
         self.fern = fern
         self.shrub = shrub
+        self.forest2 = forest2
 
-    def free(_spot self):
-        self.grass.free()
-        self.high_grass.free()
-        self.prairie.free()
-        self.fern.free()
-        self.shrub.free()
+    def free(self):
+        if self.grass is not None:
+            _free(self.grass)
+        if self.high_grass is not None:
+            _free(self.high_grass)
+        if self.prairie is not None:
+            _free(self.prairie)
+        if self.fern is not None:
+            _free(self.fern)
+        if self.shrub is not None:
+            _free(self.shrub)
+        if self.forest2 is not None:
+            _free(self.forest2)
 
-    def concatenate(_spot self, list geometries):
-        self.grass.concatenate(geometries[0])
-        self.high_grass.concatenate(geometries[1])
-        self.prairie.concatenate(geometries[2])
-        self.fern.concatenate(geometries[3])
-        self.shrub.concatenate(geometries[4])
+    def concatenate(self, geometries):
+        if self.grass is not None:
+            self.grass.concatenate(geometries[0])
+
+        if self.high_grass is not None:
+            self.high_grass.concatenate(geometries[1])
+
+        if self.prairie is not None:
+            self.prairie.concatenate(geometries[2])
+
+        if self.fern is not None:
+            self.fern.concatenate(geometries[3])
+
+        if self.shrub is not None:
+            self.shrub.concatenate(geometries[4])
+
+        if self.forest2 is not None:
+            self.forest2.concatenate(geometries[5])
 
 """
 
 """
-def c_instantiate(object self, int px, int py, object terrain, object quad, object assets):
+def c_instantiate(object self, int px, int py, object terrain, object assets):
+        # parse the quad
+        cdef int size = 16  # int(quad.size / 2)
+        cdef int terrain_size = terrain.size / 2
 
-    # parse the quad
-    cdef int size = quad.size / 2
-    cdef int terrain_size = terrain.size / 2
+        cdef int _px = px - size
+        cdef int _py = py - size
+        if _px <= -terrain_size:
+            _px = -terrain_size + 1
+        if _py <= -terrain_size:
+            _py = -terrain_size + 1
 
-    cdef int _px = quad.center.x - size
-    if _px < -terrain_size:
-        _px = -terrain_size + 1
+        cdef int _p2x = px + size
+        cdef int _p2y = py + size
+        if _p2x > terrain.size:
+            _p2x = terrain.size - 1
+        if _p2y > terrain.size:
+            _p2y = terrain.size - 1
 
-    cdef int _py = quad.center.y - size
-    if _py < -terrain_size:
-        _py = -terrain_size + 1
+        cdef object geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "grass", "forest", "forest1", 'forest2')]
 
-    cdef int _p2x = quad.center.x + size
-    if _p2x > terrain_size:
-        _p2x = terrain_size - 1
+        cdef cache = self.cache
+        indexmap = terrain.indexmap
+        normalMap = terrain.normalMap
+        heightmap = terrain.heightmap
 
-    cdef int _p2y = quad.center.y + size
-    if _p2y > terrain_size:
-        _p2y = terrain_size - 1
+        cdef int x = _px
+        cdef int y
+        cdef int dx
+        cdef int dx2
+        cdef int d
+        cdef str k
+        cdef s
 
-    cdef int nbspots = 0
+        while x < _p2x:
+            dx = px - x
+            dx2 = dx * dx
+            y = _py
+            while y < _p2y:
+                # only sample points inside the player 16 radius
+                dy = py - y
+                d = dx2 + dy * dy
 
-    cdef list geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
-    cdef dict cache = self.cache
+                if d <= 256:
+                    k = "%d:%d" % (x, y)
+                    if k not in cache:
+                        terrain.screen2mapXY(x, y, _tm)
 
-    cdef int x
-    cdef int y
+                        # do not put scenery on roads or rivers
+                        if terrain.isRiverOrRoad(_tm):
+                            continue
 
-    cdef int dx
-    cdef int dx2
-    cdef int dy
-    cdef int d
+                        # get the density of each ground type
+                        terrain.heightmap2indexmap(_tm, _im)
+                        s = indexmap.bilinear_density(_im.x, _im.y)
+                        if s is None:
+                            print(x, y, _im.x, _im.y)
+                            continue
 
-    cdef int i
-    cdef list c
-    cdef object fifo = self.fifo
-    cdef object indexmap = terrain.indexmap
-    cdef object normalMap = terrain.normalMap
-    cdef np.ndarray[float, ndim=1] s
-    cdef np.ndarray[float, ndim=1] displacement_map = self.displacement
-    cdef heightmap = terrain.heightmap
-    cdef int heightmap_size = terrain.heightmap.size
-    cdef _spot spot
+                        # now pick the density of grass
+                        grass = _allocate(s, 0, x, y, terrain, heightmap, normalMap)
+                        high_grass = _allocate(s, 1, x, y, terrain, heightmap, normalMap)
+                        prairie = _allocate(s, 2, x, y, terrain, heightmap, normalMap)
+                        fern = _allocate(s, 3, x, y, terrain, heightmap, normalMap)
+                        shrub = _allocate(s, 4, x, y, terrain, heightmap, normalMap)
+                        forest2 = _allocate(s, 5, x, y, terrain, heightmap, normalMap)
 
-    global _tm
-    global _im
+                        cache[k] = _spot(grass, high_grass, prairie, fern, shrub, forest2)
 
-    x = _px
-    while x < _p2x:
-        dx = px - x
-        dx2 = dx * dx
-        y = _py
-        while y < _p2y:
-            dy = py - y
-            d = dx2 + dy * dy
+                        self.fifo.append(k)
 
-            if d <= 256:
-                k = "%d:%d" % (x, y)
-                if k not in cache:
-                    terrain.screen2mapXY(x, y, _tm)
+                        if len(cache) > 8192:
+                            k1 = self.fifo.pop(0)
+                            cache[k1].free()
+                            del cache[k1]
 
-                    # do not put scenery on roads or rivers
-                    if terrain.isRiverOrRoad(_tm):
-                        continue
+                    cache[k].concatenate(geometries)
+                y += 1
+            x += 1
 
-                    # get the density of each ground type
-                    terrain.heightmap2indexmap(_tm, _im)
-                    s = indexmap.bilinear_density(_im.x, _im.y)
-                    if s is None:
-                        continue
-
-                    # now pick the density of grass
-                    cache[k] = _spot(
-                        _scenery(s[0], x, y, terrain, heightmap, normalMap, displacement_map),
-                        _scenery(s[1], x, y, terrain, heightmap, normalMap, displacement_map),
-                        _scenery(s[2], x, y, terrain, heightmap, normalMap, displacement_map),
-                        _scenery(s[3], x, y, terrain, heightmap, normalMap, displacement_map),
-                        _scenery(s[4], x, y, terrain, heightmap, normalMap, displacement_map)
-                        )
-
-                    self.fifo.append(k)
-
-                    if len(cache) > 1024:
-                        k1 = self.fifo.pop(0)
-                        cache[k1].free()
-                        del cache[k1]
-
-                cache[k].concatenate(geometries)
-            y += 2
-        x += 2
-
-    cdef attributes
-    for geometry in geometries:
-        if geometry.maxInstancedCount > 0:
-            attributes = geometry.attributes
-            attributes.offset.needsUpdate = True
-            attributes.normals.needsUpdate = True
+        for geometry in geometries:
+            if geometry.maxInstancedCount > 0:
+                geometry.attributes.offset.needsUpdate = True
+                geometry.attributes.normals.needsUpdate = True

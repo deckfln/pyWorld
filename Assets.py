@@ -6,6 +6,7 @@ from THREE.loaders.MTLLoader import *
 from THREE.pyOpenGL.pyCache import *
 from Config import *
 from THREE.loaders.ColladaLoader2 import *
+import Utils
 
 loader = THREE.FileLoader()
 
@@ -24,6 +25,15 @@ if Config["shadow"]["enabled"]:
 instance_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
     'vertexShader': loader.load('shaders/dynamic_instances/vertex.glsl'),
+    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
+    'wireframe': False,
+    'vertexColors': THREE.Constants.VertexColors,
+    'transparent': True
+})
+
+instance_grass_material = THREE.ShaderMaterial({
+    'uniforms': uniforms,
+    'vertexShader': loader.load('shaders/dynamic_instances/vertex_grass.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
@@ -80,16 +90,18 @@ class Assets:
         instancedBufferGeometry = THREE.InstancedBufferGeometry().copy(mesh.geometry)
 
         # we can display up to 16000 instances
-        offsets = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic(True)
-        scales = THREE.InstancedBufferAttribute(Float32Array(48000), 2, 1).setDynamic(True)
-
+        offsets = THREE.InstancedBufferAttribute(Float32Array(64000), 3, 1).setDynamic(True)
         instancedBufferGeometry.addAttribute('offset', offsets)  # per mesh translation
-        instancedBufferGeometry.addAttribute('scale', scales)  # per mesh scale
 
         if dynamic:
-            normals = THREE.InstancedBufferAttribute(Float32Array(48000), 3, 1).setDynamic(True)
+            mesh.material = instance_grass_material.clone()
+            normals = THREE.InstancedBufferAttribute(Float32Array(64000), 3, 1).setDynamic(True)
             instancedBufferGeometry.addAttribute('normals', normals)
             instancedBufferGeometry.removeAttribute('normal')
+        else:
+            mesh.material = instance_material.clone()
+            scales = THREE.InstancedBufferAttribute(Float32Array(64000), 2, 1).setDynamic(True)
+            instancedBufferGeometry.addAttribute('scale', scales)  # per mesh scale
 
         instancedBufferGeometry.maxInstancedCount = 0
 
@@ -98,7 +110,6 @@ class Assets:
         mesh.castShadow = True
         mesh.receiveShadow = True
         mesh.customDepthMaterial = instance_depth_material
-        mesh.material = instance_material.clone()
         mesh.material.map = map
         mesh.material.normalMap = normalMap
         mesh.material.uniforms.map.value = map
@@ -116,6 +127,8 @@ class Assets:
                 asset = self._load(model)
 
                 mesh = asset.children[0]
+                mesh.geometry = Utils.Geometry2indexedBufferGeometry(mesh.geometry)
+                mesh.userData["dynamic"] = True
                 mesh.geometry.computeBoundingBox()
                 if not isinstance(mesh.material, list):
                     mesh.material.normalMap = mesh.material.bumpMap
@@ -124,7 +137,7 @@ class Assets:
                 dy = abs(mesh.geometry.boundingBox.min.y) + abs(mesh.geometry.boundingBox.max.y)
                 dz = abs(mesh.geometry.boundingBox.min.z) + abs(mesh.geometry.boundingBox.max.z)
 
-                mesh.geometry.scale(1 / dx, 1 / dy, 1 / dz)
+                mesh.geometry.scale(1 / dx, 1 / dx, 1 / dx)
                 mesh.geometry.rotateX(math.pi / 2)
                 self.cache[model] = mesh
                 mesh.name = model
@@ -134,10 +147,11 @@ class Assets:
 
         self._instantiate_mesh(mesh, dynamic)
 
-        scale = mesh.geometry.attributes.scale
-        for i in range(0, len(scale.array), 2):
-            scale.array[i] = vscale.x
-            scale.array[i + 1] = vscale.y
+        if not dynamic:
+            scale = mesh.geometry.attributes.scale
+            for i in range(0, len(scale.array), 2):
+                scale.array[i] = vscale.x
+                scale.array[i + 1] = vscale.y
 
         if level is not None:
             k = "%s:%d" % (name, level)
@@ -153,7 +167,13 @@ class Assets:
 
     def reset_instances(self):
         for asset in self.assets.values():
-            asset.geometry.maxInstancedCount = 0
+            if "dynamic" not in asset.userData:
+                asset.geometry.maxInstancedCount = 0
+
+    def reset_dynamic_instances(self):
+        for asset in self.assets.values():
+            if "dynamic" in asset.userData:
+                asset.geometry.maxInstancedCount = 0
 
     def instantiate(self, asset):
         key = "%s:%d" % (asset.name, asset.level)

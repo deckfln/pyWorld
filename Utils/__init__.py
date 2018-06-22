@@ -39,7 +39,7 @@ def Geometry2indexedBufferGeometry(geometry):
         p.y = array1[i+1]
         p.z = array1[i+2]
 
-        key= "%d:%d:%d" % (p.x, p.y, p.z)
+        key= "%f:%f:%f" % (p.x, p.y, p.z)
         if key in hposition:
             vertice_index = hposition[key]
         else:

@@ -1,6 +1,5 @@
 // per instance
 in vec3 offset;
-in vec2 scale;
 in vec3 normals;
 
 // shadownmap
@@ -19,9 +18,9 @@ out vec3 vNormal;
 void main() {
     vUv = uv;
     vColor.xyz = color.xyz;
-    vNormal = normal;
+    vNormal = normals;
 
-    vec3 iPosition = position * vec3(scale.x, scale.x,  scale.y) + offset;
+    vec3 iPosition = position + offset;
     vec4 mvPosition = modelViewMatrix * vec4( iPosition, 1.0 );
 
     gl_Position = projectionMatrix * mvPosition;

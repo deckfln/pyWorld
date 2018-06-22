@@ -83,6 +83,8 @@ class Params:
         self.suspended = False
         self.GUI = None
         self.init_thread = None
+        self.animate_thread = None
+        self.queue = queue.Queue()
         self.load_percentage = 0
 
 
@@ -136,6 +138,9 @@ class _InitThread(Thread):
 
         instance_material.uniforms.light.value = p.sun.position
         instance_material.uniforms.ambientLightColor.value = ambLight.color
+
+        instance_grass_material.uniforms.light.value = p.sun.position
+        instance_grass_material.uniforms.ambientLightColor.value = ambLight.color
 
         # sun imposter
         g_sun = THREE.SphereBufferGeometry(2, 8, 8)
@@ -200,10 +205,11 @@ class _InitThread(Thread):
 
         # dynamic assets
         p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1), True)
-        p.assets.load('high grass', None, "models/grass/grass", THREE.Vector2(1, 3), True)
+        p.assets.load('high grass', None, "models/grass2/grass", THREE.Vector2(1, 2), True)
         p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1), True)
-        p.assets.load('fern', None, "models/ferm/obj__fern3", THREE.Vector2(1, 1), True)
-        p.assets.load('shrub', None, "models/shrub/obj__shr3", THREE.Vector2(1, 1), True)
+        p.assets.load('forest', None, "models/forest/obj__fern3", THREE.Vector2(1, 1), True)
+        p.assets.load('forest1', None, "models/forest1/obj__shr3", THREE.Vector2(1, 1), True)
+        p.assets.load('forest2', None, "models/forest2/obj__fern2", THREE.Vector2(1, 1), True)
         p.load_percentage += 5
 
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
@@ -229,6 +235,31 @@ class _InitThread(Thread):
         p.terrain.build_quadtre_indexes()
         p.load_percentage += 5
         print("End init")
+
+
+class _animate_thread(Thread):
+    """
+    https://skryabiin.wordpress.com/2015/04/25/hello-world/
+    SDL 2.0, OpenGL, and Multithreading (Windows)
+    """
+
+    def __init__(self, p, queue):
+        Thread.__init__(self)
+        self.p = p
+        self.queue = queue
+
+    def run(self):
+        q = self.queue
+        p = self.p
+
+        while True:
+            action = q.get()
+            if action is None:
+                break
+
+            checkQuadtreeProcess()
+
+            q.task_done()
 
 
 def init(p):
@@ -263,6 +294,9 @@ def init(p):
     p.init_thread = _InitThread(p)
     p.init_thread.start()
 
+    p.animate_thread = _animate_thread(p, p.queue)
+    p.animate_thread.start()
+
     """
     p.player.draw()
 
@@ -284,6 +318,7 @@ def render_load(p):
         p.player.draw()
         p.container.addEventListener('animationRequest', animate)
         p.GUI.reset()
+        p.container.start_benchmark()
         return
 
     p.GUI.load_bar(p.load_percentage)
@@ -340,8 +375,6 @@ def animate(p):
 
     # print(a, dst, p.player.action.x, p.player.action.y)
 
-    checkQuadtreeProcess()
-
     # target 30 FPS, if time since last animate is exactly 0.033ms, delta=1
     delta = (p.clock.getDelta() * 30)
     delta = 1
@@ -354,7 +387,33 @@ def animate(p):
 
     # update the animation loops
     for actor in p.actors:
-        actor.update(delta/30)
+        actor.update(delta / 30)
+
+    # Check player direction
+    # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
+
+    # move the camera
+    if not p.free_camera:
+        p.player.vcamera.display(p.camera)
+
+    # display the terrain tiles
+    p.terrain.draw(p.player)
+
+    # extract the assets from each visible tiles and build the instances
+    if Config['terrain']['display_scenary']:
+        p.assets.reset_instances()
+
+        #for quad in p.terrain.tiles_onscreen:
+        #    if quad.mesh.visible:
+        #        # build instances from teh tiles
+        #        for asset in quad.assets.values():
+        #            if len(asset.offset) > 0:
+        #                p.assets.instantiate(asset)
+
+        # build procedural scenery around the player, on even frame
+        if p.renderer._infoRender.frame % 5:
+            p.assets.reset_dynamic_instances()
+            p.procedural_scenery.instantiate(p.player, p.terrain, p.assets)
 
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
@@ -392,28 +451,6 @@ def animate(p):
     p.terrain.update_light(p.hour)
     p.assets.set_light_uniform(p.sun.position)
 
-    # move the camera
-    if not p.free_camera:
-        p.player.vcamera.display(p.camera)
-
-    # display the terrain tiles
-    p.terrain.draw(p.player)
-
-    # extract the assets from each visible tiles and build the instances
-    if Config['terrain']['display_scenary']:
-        p.assets.reset_instances()
-
-        for quad in p.terrain.tiles_onscreen:
-            if quad.mesh.visible:
-                # build instances from teh tiles
-                for asset in quad.assets.values():
-                    if len(asset.offset) > 0:
-                        p.assets.instantiate(asset)
-
-                # build procedural scenery on the higher tiles
-                if quad.level >= 4:
-                   p.procedural_scenery.instantiate(p.player, p.terrain, quad, p.assets)
-
     p.fps += 1
 
     # update gui
@@ -424,6 +461,8 @@ def animate(p):
     # print(c, p.player.vcamera.position.x, p.player.vcamera.position.y, p.player.vcamera.position.z)
     # if c > 0.033:
         #    print(c)
+
+    # p.queue.put(1)
 
 
 def render(p):
@@ -487,10 +526,12 @@ def main(argv=None):
     p.container.addEventListener('keydown', keyboard)
     p.container.addEventListener('keyup', keyboard)
     p.container.loop()
+    p.queue.put(None)
+    p.animate_thread.join()
 
 
 if __name__ == "__main__":
     r = main()
-    killQuadtreeProcess()
+    # killQuadtreeProcess()
 
     sys.exit(r)

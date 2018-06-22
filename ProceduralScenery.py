@@ -30,128 +30,76 @@ _first1 = -1
 _first9 = -1
 _first25 = -1
 _buffer_size = 0
+rand = Random(0)
 
 
 class _scenery:
-    def __init__(self, density, x, y, terrain, heightmap, normalMap, displacement_map):
+    def __init__(self):
+        self.next = None
+        self.size = 0
+        self.positions = None
+        self.normals = None
+        self.index = 0
+
+    def init(self, densities, instance, x, y, terrain, heightmap, normalMap):
         global _buffer, _buffer_size, _first1, _first9, _first25
 
-        # self.instances = np.zeros(size*3, dtype=np.float32)
-        # self.normals = np.zeros(size*3, dtype=np.float32)
-        if density < 0.25:
-            self.instances = -1
-            self.normals = -1
+        rand.seed = abs(x*y) * (instance + 1) + 7
+        density = densities[instance]
+
+        instances = 0
+
+        nb = int(density*10)
+        if nb == 0:
             self.size = 0
             return
-        elif density < 0.5:
-            first = _first1
-            size = 1
-        elif density < 0.75:
-            first = _first9
-            size = 9
-        else:
-            first = _first25
-            size = 25
 
-        if first < 0:
-            first = _buffer_size
-            _buffer_size += size*2*3
-            # print(_buffer_size)
-        else:
-            if size == 1:
-                _first1 = int(_buffer[first])
-            elif size == 9:
-                _first9 = int(_buffer[first])
-            else:
-                _first25 = int(_buffer[first])
+        if self.positions is None:
+            self.positions = np.zeros(nb*3, dtype=np.float32)
+            self.normals = np.zeros(nb * 3, dtype=np.float32)
+        elif nb > self.size:
+            self.positions = np.zeros(nb*3, dtype=np.float32)
+            self.normals = np.zeros(nb * 3, dtype=np.float32)
 
-        self.instances = int(first)
-        self.normals = int(first + size*3)
-        self.size = size
-
-        instances = self.instances
+        self.size = nb
+        positions = self.positions
         normals = self.normals
 
-        if size == 1:
-            step = 5
-            dstep = 2
-        elif size == 9:
-            step = 2
-            dstep = 1
-        else:
-            step = 1
-            dstep = 0.5
+        for i in range(nb):
+            dx = rand.random()*2 - 1 + x
+            dy = rand.random()*2 - 1 + y
 
-        for tx in range(-2, 3, step):
-            _p1x = x + tx / 2
-            for ty in range(-2, 3, step):
-                _p1y = y + ty / 2
+            terrain.screen2mapXY(dx, dy, _tm)
+            z = heightmap.bilinear(_tm.x, _tm.y)
 
-                displacement = _displace(_p1x, _p1y)
+            normalMap.nearest(_tm.x, _tm.y, _vector3)
+            vec3 = _vector3.np
 
-                _p1x += displacement_map[displacement] * dstep
-                _p1y += displacement_map[displacement + 1] * dstep
+            positions[instances] = dx
+            positions[instances + 1] = dy
+            positions[instances + 2] = z
 
-                terrain.screen2mapXY(_p1x, _p1y, _tm)
-                try:
-                    z = heightmap.bilinear(_tm.x, _tm.y)
-                except:
-                    print("heightmap.bilinear ", x, y, _tm.x, _tm.y)
+            normals[instances] = vec3[0]
+            normals[instances + 1] = vec3[1]
+            normals[instances + 2] = vec3[2]
 
-                normalMap.nearest(_tm.x, _tm.y, _vector3)
-                vec3 = _vector3.np
-
-                _buffer[instances] = _p1x
-                _buffer[instances + 1] = _p1y
-                _buffer[instances + 2] = z
-
-                _buffer[normals] = vec3[0]
-                _buffer[normals + 1] = vec3[1]
-                _buffer[normals + 2] = vec3[2]
-
-                normals += 3
-                instances += 3
-
-    def free(self):
-        global _buffer, _buffer_size, _first1, _first9, _first25
-        if self.size == 0:
-            return
-
-        if self.size == 1:
-            first = _first1
-        elif self.size == 9:
-            first = _first9
-        else:
-            first = _first25
-
-        _buffer[self.instances] = first
-
-        if self.size == 1:
-            _first1 = self.instances
-        elif self.size == 9:
-            _first9 = self.instances
-        else:
-            _first25 = self.instances
+            instances += 3
 
     def concatenate(self, geometry):
         global _buffer
         if not self.size:
             return True
 
-        instances = self.instances
-        normals = self.normals
+        # if self.loaded:
+        #    return True
 
+        positions = self.positions
         le = self.size*3
-
         offset = geometry.attributes.offset.array
-        normal = geometry.attributes.normals.array
-
         nb = geometry.maxInstancedCount
 
         i = nb * 3
-
-        offset[i:i + le] = _buffer[instances:instances + le]
-        normal[i:i + le] = _buffer[normals:normals + le]
+        offset[i:i + le] = positions[0:le]
 
         nb += int(le / 3)
         geometry.maxInstancedCount = nb
@@ -159,40 +107,77 @@ class _scenery:
         return True
 
 
-def _displace(x, y):
-    x1 = x + 256
-    y1 = y + 256
+# keep a global list of sceneris
+_sceneries = [_scenery() for i in range(8192*6)]
+_first = _sceneries[8191*6]
 
-    x2 = int(x1)
-    y2 = int(y1)
+for i in range(8191*6, -1, -1):
+    _sceneries[i].next = _sceneries[i - 1]
+    _sceneries[i].index = i
 
-    fx = (x1 - x2) * 32
-    fy = (y1 - y2) * 32
 
-    return int((x2 / 16 + fx) * 2 + (y2 / 16 + fy)*128)
+def _allocate(densities, instance, x, y, terrain, heightmap, normalMap):
+    global _first
+    allocated = _first
+    allocated.init(densities, instance, x, y, terrain, heightmap, normalMap)
+    if allocated.size > 0:
+        _first = allocated.next
+    else:
+        allocated = None
+    return allocated
+
+
+def _free(scenery):
+    global _first
+    scenery.next = _first
+    _first = scenery
 
 
 class _spot:
-    def __init__(self, grass, high_grass, prairie, fern, shrub):
+    """
+    all the scenery computed at a spot
+    a spot if an integer position
+    """
+    def __init__(self, grass, high_grass, prairie, fern, shrub, forest2):
         self.grass = grass
         self.high_grass = high_grass
         self.prairie = prairie
         self.fern = fern
         self.shrub = shrub
+        self.forest2 = forest2
 
     def free(self):
-        self.grass.free()
-        self.high_grass.free()
-        self.prairie.free()
-        self.fern.free()
-        self.shrub.free()
+        if self.grass is not None:
+            _free(self.grass)
+        if self.high_grass is not None:
+            _free(self.high_grass)
+        if self.prairie is not None:
+            _free(self.prairie)
+        if self.fern is not None:
+            _free(self.fern)
+        if self.shrub is not None:
+            _free(self.shrub)
+        if self.forest2 is not None:
+            _free(self.forest2)
 
     def concatenate(self, geometries):
-        self.grass.concatenate(geometries[0])
-        self.high_grass.concatenate(geometries[1])
-        self.prairie.concatenate(geometries[2])
-        self.fern.concatenate(geometries[3])
-        self.shrub.concatenate(geometries[4])
+        if self.grass is not None:
+            self.grass.concatenate(geometries[0])
+
+        if self.high_grass is not None:
+            self.high_grass.concatenate(geometries[1])
+
+        if self.prairie is not None:
+            self.prairie.concatenate(geometries[2])
+
+        if self.fern is not None:
+            self.fern.concatenate(geometries[3])
+
+        if self.shrub is not None:
+            self.shrub.concatenate(geometries[4])
+
+        if self.forest2 is not None:
+            self.forest2.concatenate(geometries[5])
 
 
 class ProceduralScenery:
@@ -201,42 +186,35 @@ class ProceduralScenery:
         self.np = np.zeros(2)
         rand = Random(5489671)
 
-        self.displacement = np.zeros(64*64*2, np.float32)
-        p = 0
-        for i in range(64*64):
-            self.displacement[p] = (rand.random() - 0.5) * 2
-            self.displacement[p + 1] = (rand.random() - 0.5) * 2
-            p += 2
-
         self.cache = {}
         self.fifo = []
 
-    def instantiate(self, player, terrain, quad, assets):
+    def instantiate(self, player, terrain, assets):
         _p.copy(player.position)
         _p1.copy(player.direction).multiplyScalar(8)
         _p.add(_p1)
 
         if _cython:
-            c_instantiate(self, _p.x, _p.y, terrain, quad, assets)
+            c_instantiate(self, _p.x, _p.y, terrain, assets)
         else:
-            self.p_instantiate(_p.x, _p.y, terrain, quad, assets)
+            self.p_instantiate(_p.x, _p.y, terrain, assets)
 
-    def p_instantiate(self, px, py, terrain, quad, assets):
+    def p_instantiate(self, px, py, terrain, assets):
         global _buffer_size
 
         # parse the quad
-        size = int(quad.size / 2)
+        size = 32  # int(quad.size / 2)
         terrain_size = terrain.size / 2
 
-        _px = int(quad.center.x - size)
-        _py = int(quad.center.y - size)
+        _px = int(px - size)
+        _py = int(py - size)
         if _px <= -terrain_size:
             _px = -terrain_size + 1
         if _py <= -terrain_size:
             _py = -terrain_size + 1
 
-        _p2x = int(quad.center.x + size)
-        _p2y = int(quad.center.y + size)
+        _p2x = int(px + size)
+        _p2y = int(py + size)
         if _p2x > terrain.size:
             _p2x = terrain.size - 1
         if _p2y > terrain.size:
@@ -245,13 +223,12 @@ class ProceduralScenery:
         px = int(px)
         py = int(py)
 
-        geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "prairie", "fern", "shrub")]
+        geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "grass", "forest", "forest1", 'forest2')]
 
         cache = self.cache
         indexmap = terrain.indexmap
         normalMap = terrain.normalMap
         heightmap = terrain.heightmap
-        displacement_map = self.displacement
 
         x = _px
         while x < _p2x:
@@ -263,7 +240,7 @@ class ProceduralScenery:
                 dy = py - y
                 d = dx2 + dy * dy
 
-                if d <= 256:
+                if d <= 512:
                     k = "%d:%d" % (x, y)
                     if k not in cache:
                         terrain.screen2mapXY(x, y, _tm)
@@ -284,24 +261,25 @@ class ProceduralScenery:
                             continue
 
                         # now pick the density of grass
-                        cache[k] = _spot(
-                            _scenery(s[0], x, y, terrain, heightmap, normalMap, displacement_map),
-                            _scenery(s[1], x, y, terrain, heightmap, normalMap, displacement_map),
-                            _scenery(s[2], x, y, terrain, heightmap, normalMap, displacement_map),
-                            _scenery(s[3], x, y, terrain, heightmap, normalMap, displacement_map),
-                            _scenery(s[4], x, y, terrain, heightmap, normalMap, displacement_map)
-                            )
+                        grass = _allocate(s, 0, x, y, terrain, heightmap, normalMap)
+                        high_grass = _allocate(s, 1, x, y, terrain, heightmap, normalMap)
+                        prairie = _allocate(s, 2, x, y, terrain, heightmap, normalMap)
+                        fern = _allocate(s, 3, x, y, terrain, heightmap, normalMap)
+                        shrub = _allocate(s, 4, x, y, terrain, heightmap, normalMap)
+                        forest2 = _allocate(s, 5, x, y, terrain, heightmap, normalMap)
+
+                        cache[k] = _spot(grass, high_grass, prairie, fern, shrub, forest2)
 
                         self.fifo.append(k)
 
-                        if len(cache) > 1022:
+                        if len(cache) > 8192:
                             k1 = self.fifo.pop(0)
                             cache[k1].free()
                             del cache[k1]
 
                     cache[k].concatenate(geometries)
-                y += 2
-            x += 2
+                y += 1
+            x += 1
 
         for geometry in geometries:
             if geometry.maxInstancedCount > 0:
