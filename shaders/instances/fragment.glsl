@@ -132,7 +132,7 @@ void main()
     float shadow = clamp(getShadowMap(), 0.5, 1.0);
     gl_FragColor = shadow * diffuse;
 #else
-    gl_FragColor = (0.3 + brightness) * color;
+    gl_FragColor = brightness * color;
     gl_FragColor.a = opacity;
 #endif
 }

@@ -1,7 +1,6 @@
 // per instance
 in vec3 offset;
 in vec2 scale;
-in vec3 normals;
 
 // shadownmap
 

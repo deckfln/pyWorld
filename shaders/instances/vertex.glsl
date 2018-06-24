@@ -18,7 +18,8 @@ varying vec3 vViewPosition;
 void main() {
     vUv = uv;
     vColor.xyz = color.xyz;
-    vNormal = normal;
+    // the normal vector might not be normalized. So extra check
+    vNormal = normalize(normal);
 
     vec3 iPosition = position * vec3(scale.x, scale.x,  scale.y) + offset;
     vec4 mvPosition = modelViewMatrix * vec4( iPosition, 1.0 );

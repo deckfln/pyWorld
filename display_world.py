@@ -219,6 +219,7 @@ class _InitThread(Thread):
         print("Init Terrain...")
         p.terrain = Terrain(512, 25, 512)
         p.terrain.load(p.sun)
+        p.assets.set_light_uniform(p.sun.position)
         p.load_percentage += 5
         p.terrain.scene = p.scene
         p.load_percentage += 5
@@ -403,12 +404,12 @@ def animate(p):
     if Config['terrain']['display_scenary']:
         p.assets.reset_instances()
 
-        #for quad in p.terrain.tiles_onscreen:
-        #    if quad.mesh.visible:
-        #        # build instances from teh tiles
-        #        for asset in quad.assets.values():
-        #            if len(asset.offset) > 0:
-        #                p.assets.instantiate(asset)
+        for quad in p.terrain.tiles_onscreen:
+            if quad.mesh.visible:
+                # build instances from teh tiles
+                for asset in quad.assets.values():
+                    if len(asset.offset) > 0:
+                        p.assets.instantiate(asset)
 
         # build procedural scenery around the player, on even frame
         if p.renderer._infoRender.frame % 5:
@@ -449,7 +450,6 @@ def animate(p):
         p.hour = 0
 
     p.terrain.update_light(p.hour)
-    p.assets.set_light_uniform(p.sun.position)
 
     p.fps += 1
 

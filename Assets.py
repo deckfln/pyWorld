@@ -11,7 +11,7 @@ import Utils
 loader = THREE.FileLoader()
 
 uniforms = {
-    'light': {'type': "v3", 'value': None},
+    'light': {'type': "v3", 'value': THREE.Vector3()},
     'ambientLightColor': {'type': "v3", 'value': None},
     'map': {'type': "t", 'value': None},
     'normalMap': {'type': "t", 'value': None},
@@ -24,7 +24,7 @@ if Config["shadow"]["enabled"]:
 
 instance_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
-    'vertexShader': loader.load('shaders/dynamic_instances/vertex.glsl'),
+    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
     'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
@@ -34,7 +34,7 @@ instance_material = THREE.ShaderMaterial({
 instance_grass_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
     'vertexShader': loader.load('shaders/dynamic_instances/vertex_grass.glsl'),
-    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
+    'fragmentShader': loader.load('shaders/dynamic_instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
     'transparent': True
@@ -75,7 +75,7 @@ class Assets:
 
     def set_light_uniform(self, position):
         for asset in self.assets.values():
-            asset.material.uniforms.light.value.copy(position)
+            asset.material.uniforms.light.value = position
 
     def _instantiate_mesh(self, mesh, dynamic):
         normalMap = None
@@ -127,8 +127,9 @@ class Assets:
                 asset = self._load(model)
 
                 mesh = asset.children[0]
-                mesh.geometry = Utils.Geometry2indexedBufferGeometry(mesh.geometry)
-                mesh.userData["dynamic"] = True
+                #mesh.geometry = Utils.Geometry2indexedBufferGeometry(mesh.geometry)
+                if dynamic:
+                    mesh.userData["dynamic"] = True
                 mesh.geometry.computeBoundingBox()
                 if not isinstance(mesh.material, list):
                     mesh.material.normalMap = mesh.material.bumpMap

@@ -102,7 +102,7 @@ void main()
     vec4 color = texture2D(map, vUv);
 
     // handle transparency
-    float opacity = diffuse.a;
+    float opacity = color.a;
     if(opacity < 0.5)
         discard;
 
