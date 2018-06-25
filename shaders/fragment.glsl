@@ -68,7 +68,8 @@ float getShadowMap()
 }
 #endif
 
-uniform sampler2D textures[ 14 ];
+uniform sampler2D blendmap_texture;
+uniform sampler2D terrain_textures;
 uniform sampler2D indexmap;
 uniform sampler2D shadowmap;
 uniform float indexmap_repeat;
@@ -77,66 +78,10 @@ uniform float water_shift;
 uniform vec3 light;
 uniform float blendmap_repeat;
 
-// textures table
-#define blend_png 0
-#define water_png 1
-#define riverbed_png 2
-#define grass_png 3
-#define grass1_png 4
-#define grass2_png 5
-#define forest_png 6
-#define forest1_png 7
-#define forest2_png 8
-#define paving_png 9
-#define rock_png 10
-#define dirt_png 11
-#define dirt1_png 12
-#define stone_path_png 13
-
 /**
- * get the texel value from the indexed tile ID at current position vv
- */
-vec4 getIndex(int id, vec2 vv)
-{
-    vec4 texel;
-
-    if (id==blend_png)
-          texel=texture2D(textures[blend_png],vv);
-    else if (id==water_png)
-          texel=texture2D(textures[water_png],vv);
-    else if (id==riverbed_png)
-          texel=texture2D(textures[riverbed_png],vv);
-    else if (id==paving_png)
-          texel=texture2D(textures[paving_png],vv);
-    else if (id==grass_png)
-          texel=texture2D(textures[grass_png],vv);
-    else if (id==grass1_png)
-          texel=texture2D(textures[grass1_png],vv);
-    else if (id==grass2_png)
-          texel=texture2D(textures[grass2_png],vv);
-    else if (id==forest_png)
-          texel=texture2D(textures[forest_png],vv);
-    else if (id==forest1_png)
-          texel=texture2D(textures[forest1_png],vv);
-    else if (id==forest2_png)
-          texel=texture2D(textures[forest2_png],vv);
-    else if (id==forest2_png)
-          texel=texture2D(textures[forest2_png],vv);
-    else if (id==rock_png)
-          texel=texture2D(textures[rock_png],vv);
-    else if (id==dirt_png)
-          texel=texture2D(textures[dirt_png],vv);
-    else if (id==dirt1_png)
-          texel=texture2D(textures[dirt1_png],vv);
-    else if (id==stone_path_png)
-          texel=texture2D(textures[stone_path_png],vv);
-
-  return texel;
-}
-
-
-/**
+ * mix a seamless tile to avoid the repetition effect byt mixing borders
  * get the composited texel value at the tile position
+ *
  * http://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
  */
 vec4 hash4( vec2 p ) { return fract(sin(vec4( 1.0+dot(p,vec2(37.0,17.0)),
@@ -144,14 +89,18 @@ vec4 hash4( vec2 p ) { return fract(sin(vec4( 1.0+dot(p,vec2(37.0,17.0)),
                                               3.0+dot(p,vec2(41.0,29.0)),
                                               4.0+dot(p,vec2(23.0,31.0))))*103.0); }
 
-vec4 colorAt(vec2 dtile)
+vec4 colorAt(vec2 in_map)
 {
-  vec2 p = dtile/indexmap_size;
+  vec2 p = in_map/indexmap_size;
+
+  vec4 tile = texture2D(indexmap, p);
+  int tileID = int(tile.r*255.0);
 
   vec2 rvv =  vUv*indexmap_repeat;
-  vec4 tile = texture2D(indexmap, p);
-
   vec2 vv = fract(rvv);
+  return texture2D(terrain_textures, vec2(tileID / 8.0 + vv.x / 8, vv.y));
+  /*
+  return getIndex(tileID, vv);
 
   vec2 iuv = floor(rvv);
   vec4 ofa = hash4(iuv + vec2(0,0));
@@ -171,23 +120,11 @@ vec4 colorAt(vec2 dtile)
   vec2 uvc = rvv*ofc.zw + ofc.xy;
   vec2 uvd = rvv*ofd.zw + ofd.xy;
 
-  int tileID = int(tile.r*255.0);
 
   return mix( mix( getIndex(tileID, uva), getIndex(tileID, uvb), b.x ),
               mix( getIndex(tileID, uvc), getIndex(tileID, uvb), b.x),
               b.y );
-
-  // first layer tile index
-  tileID = int(tile.r*255.0);
-  vec4 primary = getIndex(tileID, vv);
-
-  // second layer tile index
-  tileID = int(tile.g*255.0);
-  vec2 uvv = vec2(vv.y-0.1, vv.x+0.2)*2.0;
-  vec4 secondary = getIndex(tileID, uvv);
-
-//  return mix(primary, secondary, tile.a);
-  return mix(primary, secondary, 0.5);
+*/
 }
 
 void main()
@@ -208,6 +145,7 @@ void main()
     vec2 delta = fract(mapvUv)-0.5;
 
     // get a box in the atlas map
+    // find the bottomleft point of the quad
     vec2 bottomleft;
     vec2 quadrant = sign(delta);
     bottomleft = clamp(quadrant, vec2(-1, -1), vec2(0, 0));
@@ -215,9 +153,9 @@ void main()
     // texture from atlas maps at each corner of the box
     bottomleft = center_of_tile + bottomleft;
     vec4 bottomleft_c = colorAt(bottomleft);
-    vec4 bottomright_c= colorAt(bottomleft+vec2(1,0));
-    vec4 topleft_c= colorAt(bottomleft+vec2(0,1));
-    vec4 topright_c= colorAt(bottomleft+vec2(1,1));
+    vec4 bottomright_c= colorAt(bottomleft + vec2(1,0));
+    vec4 topleft_c= colorAt(bottomleft + vec2(0,1));
+    vec4 topright_c= colorAt(bottomleft + vec2(1,1));
 
     // bilinear blending of the 4 textures
     vec4 bottomleft_b = vec4(0.0, 0.0, 0.0, 1.0);
@@ -236,13 +174,13 @@ void main()
 
     // path & river extracted from the blendmap
     vec2 blend_uv = fract(vUv * blendmap_repeat);
-    vec4 paving = texture2D(textures[stone_path_png], blend_uv);
-    vec4 riverbed = texture2D(textures[riverbed_png], blend_uv);
+    vec4 paving = texture2D(terrain_textures, vec2(7.0/8.0 + blend_uv.x/8.0, blend_uv.y));
+    // vec4 riverbed = texture2D(textures[riverbed_png], blend_uv);
 
-    vec4 blendIndex = texture2D(textures[blend_png], vUv);
+    vec4 blendIndex = texture2D(blendmap_texture, vUv);
     vec4 red=vec4(1.0, 0.0, 0.0, 1.0);
 
-    vec4 fromBlend = paving*blendIndex.x + red*blendIndex.y + riverbed*blendIndex.z;
+    vec4 fromBlend = paving*blendIndex.x; // + red*blendIndex.y + riverbed*blendIndex.z;
     float blend_idx = clamp(blendIndex.x + blendIndex.z, 0.0, 1.0);
 
     // blend blendmap + ground

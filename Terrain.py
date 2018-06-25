@@ -16,20 +16,20 @@ from IndexMap import *
 myrandom = Random(5454334)
 
 
+TILE_grass_png = 0
+TILE_grass1_png = 1
+TILE_grass2_png = 2
+TILE_forest_png = 3
+TILE_forest1_png = 4
+TILE_forest2_png = 5
+TILE_stone_path_png = 6
+TILE_paving_png = 7
 TILE_blend_png = 0
 TILE_water_png = 1
 TILE_riverbed_png = 2
-TILE_grass_png = 3
-TILE_grass1_png = 4
-TILE_grass2_png = 5
-TILE_forest_png = 6
-TILE_forest1_png = 7
-TILE_forest2_png = 8
-TILE_paving_png = 9
-TILE_rock_png = 10
-TILE_dirt_png = 11
-TILE_dirt1_png = 12
-TILE_stone_path_png = 13
+TILE_rock_png = 3
+TILE_dirt_png = 4
+TILE_dirt1_png = 5
 
 _vector3 = THREE.Vector3()
 _vector2 = THREE.Vector2()
@@ -70,6 +70,8 @@ class Terrain:
         self.material = None
         self.textures = []
         self.light = None
+        self.terrain_textures = None
+        self.blendmap_texture = None
 
         self.quadtree_mesh_indexes = None       # index backup for tiles
         self.quadtree_current_tile = None       # cache the current tile the player is sitting on
@@ -124,41 +126,26 @@ class Terrain:
             loader = THREE.TextureLoader()
 
             indexmap = loader.load("img/indexmap.png")
-
             indexmap.magFilter = THREE.NearestFilter
             indexmap.minFilter = THREE.NearestFilter
             self.indexmap.texture = indexmap
 
-            textures = [
-                "img/blendmap.png",
-                "img/water.png",
-                "img/riverbed.png",
-                "img/grass.png",
-                "img/grass1.png",
-                "img/grass2.png",
-                "img/forest.png",
-                "img/forest1.png",
-                "img/forest2.png",
-                "img/paving.png",
-                "img/rock.png",
-                "img/dirt.png",
-                "img/dirt1.png",
-                "img/stone_path.png"
-            ]
+            self.terrain_textures = loader.load("img/terrain.png")
+            self.terrain_textures.minFilter = THREE.LinearMipMapLinearFilter
+            self.terrain_textures.magFilter = THREE.LinearFilter
+            self.terrain_textures.wrapS = THREE.RepeatWrapping
+            self.terrain_textures.wrapT = THREE.RepeatWrapping
 
-            self.textures = []
-            for name in textures:
-                t = loader.load(name)
-                t.generateMipmaps = True
-                t.minFilter = THREE.LinearMipMapLinearFilter
-                t.magFilter = THREE.LinearFilter
-                t.wrapS = THREE.RepeatWrapping
-                t.wrapT = THREE.RepeatWrapping
-                self.textures.append(t)
+            self.blendmap.texture = loader.load("img/blendmap.png")
+            self.blendmap.texture.minFilter = THREE.LinearMipMapLinearFilter
+            self.blendmap.texture.magFilter = THREE.LinearFilter
+            self.blendmap.texture.wrapS = THREE.RepeatWrapping
+            self.blendmap.texture.wrapT = THREE.RepeatWrapping
 
             loader = THREE.FileLoader()
             uniforms = {
-                'textures': {'type': "tv", 'value': self.textures},
+                'blendmap_texture': {'type': "v", 'value': self.blendmap.texture},
+                'terrain_textures': {'type': "t", 'value': self.terrain_textures},
                 'light': {'type': "v3", 'value': light.position},
                 'water_shift': {'type': "f", 'value': 0},
                 'indexmap': {'type': "t", 'value': self.indexmap.texture},

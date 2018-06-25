@@ -119,14 +119,14 @@ class IndexMap(TextureMap):
         # test each ground
         grounds = self.grounds
         grounds.fill(0)
-        grounds[z1 - Terrain.TILE_grass_png] = 1
-        grounds[z2 - Terrain.TILE_grass_png] = 1
-        grounds[z3 - Terrain.TILE_grass_png] = 1
-        grounds[z4 - Terrain.TILE_grass_png] = 1
+        grounds[z1] = 1
+        grounds[z2] = 1
+        grounds[z3] = 1
+        grounds[z4] = 1
 
         for g in range(6):
             if grounds[g]:
                 # only run a bilinear computation on grounds that are actually present in the quadrant
-                grounds[g] = bilinear_ground(g + Terrain.TILE_grass_png)
+                grounds[g] = bilinear_ground(g)
 
         return grounds

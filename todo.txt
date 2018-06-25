@@ -47,6 +47,7 @@
 29/05/18: 01/05/18  init                add a loading GUI
 22/06/18:           procedural scenery  reimplement the generation process. Fast and better
 23/06/18: 26/06/18  scenery             lighting is wrong for some models because of normal vectors not normalized
+24/06/18: 25/06/18  terrain shader      use only 1 image instead of 6 images for the terrain textures
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -63,6 +64,7 @@ TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
 TODO: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
+TODO: 24/06/18  terrain shader      use 2 levels of images based on distance
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
