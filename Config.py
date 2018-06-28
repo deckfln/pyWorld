@@ -56,5 +56,5 @@ Config = {
         'debug': False
     },
 
-    "benchmark": True
+    "benchmark": False
 }

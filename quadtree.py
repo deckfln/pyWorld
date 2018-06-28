@@ -46,6 +46,8 @@ class _instance:
 
 class Quadtree:
     material = None
+    material_far = None
+    material_very_far = None
     asyncIO = None
 
     def __init__(self, level, center, size, parent):
@@ -195,7 +197,12 @@ class Quadtree:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
         else:
-            self.mesh.material = self.material
+            if self.level < 3:
+                self.mesh.material = self.material_very_far
+            elif self.level < 5:
+                self.mesh.material = self.material_far
+            else:
+                self.mesh.material = self.material
 
         # load the scenary mesh and display
         """

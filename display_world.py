@@ -319,7 +319,8 @@ def render_load(p):
         p.player.draw()
         p.container.addEventListener('animationRequest', animate)
         p.GUI.reset()
-        p.container.start_benchmark()
+        if Config["benchmark"]:
+            p.container.start_benchmark()
         return
 
     p.GUI.load_bar(p.load_percentage)

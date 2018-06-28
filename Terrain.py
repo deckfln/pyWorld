@@ -68,6 +68,8 @@ class Terrain:
         # THREE objects
         self.scene = None
         self.material = None
+        self.material_far = None
+        self.material_very_far = None
         self.textures = []
         self.light = None
         self.terrain_textures = None
@@ -131,20 +133,12 @@ class Terrain:
             self.indexmap.texture = indexmap
 
             self.terrain_textures = loader.load("img/terrain.png")
-            self.terrain_textures.minFilter = THREE.LinearMipMapLinearFilter
-            self.terrain_textures.magFilter = THREE.LinearFilter
-            self.terrain_textures.wrapS = THREE.RepeatWrapping
-            self.terrain_textures.wrapT = THREE.RepeatWrapping
 
             self.blendmap.texture = loader.load("img/blendmap.png")
-            self.blendmap.texture.minFilter = THREE.LinearMipMapLinearFilter
-            self.blendmap.texture.magFilter = THREE.LinearFilter
-            self.blendmap.texture.wrapS = THREE.RepeatWrapping
-            self.blendmap.texture.wrapT = THREE.RepeatWrapping
 
-            loader = THREE.FileLoader()
+            floader = THREE.FileLoader()
             uniforms = {
-                'blendmap_texture': {'type': "v", 'value': self.blendmap.texture},
+                'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': self.terrain_textures},
                 'light': {'type': "v3", 'value': light.position},
                 'water_shift': {'type': "f", 'value': 0},
@@ -161,10 +155,49 @@ class Terrain:
 
             self.material = THREE.ShaderMaterial( {
                 'uniforms': uniforms,
-                'vertexShader': loader.load('shaders/vertex.glsl'),
-                'fragmentShader': loader.load('shaders/fragment.glsl'),
+                'vertexShader': floader.load('shaders/vertex.glsl'),
+                'fragmentShader': floader.load('shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
+
+            terrain_far = loader.load("img/terrain_far.png")
+
+            uniforms_far = {
+                'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
+                'terrain_textures': {'type': "t", 'value': terrain_far},
+                'light': {'type': "v3", 'value': light.position},
+                'water_shift': {'type': "f", 'value': 0},
+                'indexmap': {'type': "t", 'value': self.indexmap.texture},
+                'indexmap_size': {'type': "f", 'value': self.indexmap.size},
+                'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
+                'blendmap_repeat': {'type': "f", 'value': 64}
+            }
+            self.material_far = THREE.ShaderMaterial( {
+                'uniforms': uniforms_far,
+                'vertexShader': floader.load('shaders/vertex.glsl'),
+                'fragmentShader': floader.load('shaders/fragment.glsl'),
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
+
+            terrain_very_far = loader.load("img/terrain_very_far.png")
+
+            uniforms_very_far = {
+                'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
+                'terrain_textures': {'type': "t", 'value': terrain_very_far},
+                'light': {'type': "v3", 'value': light.position},
+                'water_shift': {'type': "f", 'value': 0},
+                'indexmap': {'type': "t", 'value': self.indexmap.texture},
+                'indexmap_size': {'type': "f", 'value': self.indexmap.size},
+                'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
+                'blendmap_repeat': {'type': "f", 'value': 64}
+            }
+            self.material_very_far = THREE.ShaderMaterial( {
+                'uniforms': uniforms_very_far,
+                'vertexShader': floader.load('shaders/vertex.glsl'),
+                'fragmentShader': floader.load('shaders/fragment.glsl'),
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
+
 
     def build(self):
         self.indexmap.build()
@@ -189,6 +222,8 @@ class Terrain:
             self.quadtree = quads[0]
             quads[0].build_index(self.quadtree_index)
             Quadtree.material = self.material
+            Quadtree.material_far = self.material_far
+            Quadtree.material_very_far = self.material_very_far
 
         self.indexmap.load("img/indexmap.png")
         self.blendmap.load("img/blendmap.png")

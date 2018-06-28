@@ -48,6 +48,7 @@
 22/06/18:           procedural scenery  reimplement the generation process. Fast and better
 23/06/18: 26/06/18  scenery             lighting is wrong for some models because of normal vectors not normalized
 24/06/18: 25/06/18  terrain shader      use only 1 image instead of 6 images for the terrain textures
+28/06/18: 24/06/18  terrain shader      use 2 levels of images based on distance
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -64,7 +65,7 @@ TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
 TODO: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
-TODO: 24/06/18  terrain shader      use 2 levels of images based on distance
+TODO: 28/06/18  engine              move shaders & texture to configuration files
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -76,3 +77,5 @@ TODO: 03/02/18  shadows             if player is partily in the shadow of a tree
 TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 10/02/18  lightning           instances objects lightning is wrong
 TODO: 24/02/18  terrain             frustrum culling is visible on the edge
+TODO: 25/06/18  animation	        character is blinking when running
+TODO: 25/06/18  procedural scenery  generation circle is not always along the player direction
