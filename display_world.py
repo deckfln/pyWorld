@@ -106,20 +106,8 @@ class _InitThread(Thread):
         p.camera.controls = p.controls
 
         # cubemap
-        path = "img/skybox/"
-        format = '.png'
-
-        urls = [
-            path + 'front' + format,
-            path + 'left' + format,
-            path + 'right' + format,
-            path + 'back' + format,
-            path + 'top' + format,
-            path + 'bottom' + format
-        ]
-
         print("Init CubeMap...")
-        background = THREE.CubeTextureLoader().load(urls)
+        background = THREE.CubeTextureLoader().load(Config['engine']['skycube'])
         background.format = THREE.RGBFormat
 
         p.load_percentage += 5
@@ -182,35 +170,17 @@ class _InitThread(Thread):
         # init the asset instanced models
         print("Init Assets...")
 
-        p.assets.load('evergreen', 5, "models/anime_tree/D0406452B11", THREE.Vector2(1, 1))
-        p.assets.load('evergreen', 4, "models/anime_tree/4/model", THREE.Vector2(1, 1))
-        p.assets.load('evergreen', 3, "models/anime_tree/3/model", THREE.Vector2(1, 1))
-        p.assets.load('evergreen', 2, "models/anime_tree/2/model", THREE.Vector2(1, 1))
-        p.assets.load('evergreen', 1, "models/anime_tree/1/model", THREE.Vector2(1, 1))
-        p.load_percentage += 5
+        for name in Config['engine']['assets']:
+            models = Config['engine']['assets'][name]
+            for lod in range(5):
+                p.assets.load(name, lod+1, models[lod], THREE.Vector2(1, 1))
+                p.load_percentage += 1
 
-        p.assets.load('tree', 5, "models/old-tree/model", THREE.Vector2(1, 1))
-        p.assets.load('tree', 4, "models/old-tree/4/model", THREE.Vector2(1, 1))
-        p.assets.load('tree', 3, "models/old-tree/3/model", THREE.Vector2(1, 1))
-        p.assets.load('tree', 2, "models/old-tree/2/model", THREE.Vector2(1, 1))
-        p.assets.load('tree', 1, "models/old-tree/1/model", THREE.Vector2(1, 1))
-        p.load_percentage += 5
-
-        p.assets.load('house', 1, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-        p.assets.load('house', 2, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-        p.assets.load('house', 3, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-        p.assets.load('house', 4, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-        p.assets.load('house', 5, "models/wooden_house/wooden_house", THREE.Vector2(1, 1))
-        p.load_percentage += 5
-
-        # dynamic assets
-        p.assets.load('grass', None, "models/grass/grass", THREE.Vector2(1, 1), True)
-        p.assets.load('high grass', None, "models/grass2/grass", THREE.Vector2(1, 2), True)
-        p.assets.load('prairie', None, "models/flower/obj__flow2", THREE.Vector2(1, 1), True)
-        p.assets.load('forest', None, "models/forest/obj__fern3", THREE.Vector2(1, 1), True)
-        p.assets.load('forest1', None, "models/forest1/obj__shr3", THREE.Vector2(1, 1), True)
-        p.assets.load('forest2', None, "models/forest2/obj__fern2", THREE.Vector2(1, 1), True)
-        p.load_percentage += 5
+        # dynamic assets (sceneries)
+        for name in Config['engine']['dynamic_asset']:
+            model = Config['engine']['dynamic_asset'][name]
+            p.assets.load(name, None, model, THREE.Vector2(1, 1), True)
+            p.load_percentage += 5
 
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
         p.assets.add_2_scene(p.scene)
@@ -446,7 +416,7 @@ def animate(p):
     # time passes
     # complete half-circle in 5min = 9000 frames
     # 1 frame = pi/9000
-    p.hour += delta * (math.pi / 9000)
+    p.hour += delta * (math.pi / 4000)
     if p.hour > math.pi:
         p.hour = 0
 

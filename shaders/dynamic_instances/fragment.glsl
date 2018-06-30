@@ -134,5 +134,6 @@ void main()
     gl_FragColor = shadow * (0.3 + brightness) * color;
 #else
     gl_FragColor = (0.3 + brightness) * color;
+    gl_FragColor.a = opacity;
 #endif
 }

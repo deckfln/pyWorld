@@ -111,7 +111,7 @@ void main()
     #endif
 
     // Add directional light
-    vec3 nlight = normalize(light);
+    vec3 nlight = -normalize(light);
     float nDotl = dot(normal, nlight);
     float brightness = max(nDotl, 0.0);
 

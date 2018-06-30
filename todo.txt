@@ -49,6 +49,7 @@
 23/06/18: 26/06/18  scenery             lighting is wrong for some models because of normal vectors not normalized
 24/06/18: 25/06/18  terrain shader      use only 1 image instead of 6 images for the terrain textures
 28/06/18: 24/06/18  terrain shader      use 2 levels of images based on distance
+28/06/18: 30/06/18  engine              move shaders & texture to configuration files
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -65,7 +66,10 @@ TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
 TODO: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
-TODO: 28/06/18  engine              move shaders & texture to configuration files
+TODO: 30/06/18  sun                 move the sun from an mesh object to the skycube
+TODO: 30/06/18  sun lighting        adapt sun color based on time
+TODO: 30/06/18  skycube             move clouds on the skycube
+TODO: 30/06/18  clouds              display clouds shadow on the terrain
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -79,3 +83,4 @@ TODO: 10/02/18  lightning           instances objects lightning is wrong
 TODO: 24/02/18  terrain             frustrum culling is visible on the edge
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 25/06/18  procedural scenery  generation circle is not always along the player direction
+TODO: 30/06/18  procedural scenery  grass disapear sometimes (add dual face quads ?)
