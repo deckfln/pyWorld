@@ -17,7 +17,10 @@ varying vec3 vViewPosition;
 
 void main() {
     vUv = uv;
+#ifdef USE_COLOR
     vColor.xyz = color.xyz;
+#endif
+
     // the normal vector might not be normalized. So extra check
     vNormal = normalize(normal);
 

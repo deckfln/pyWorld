@@ -105,12 +105,6 @@ class _InitThread(Thread):
         p.controls = TrackballControls(p.camera, p.container)
         p.camera.controls = p.controls
 
-        # cubemap
-        print("Init CubeMap...")
-        background = THREE.CubeTextureLoader().load(Config['engine']['skycube'])
-        background.format = THREE.RGBFormat
-
-        p.load_percentage += 5
 
         p.clock = THREE.Clock()
 
@@ -130,10 +124,30 @@ class _InitThread(Thread):
         instance_grass_material.uniforms.light.value = p.sun.position
         instance_grass_material.uniforms.ambientLightColor.value = ambLight.color
 
+        # cubemap
+        print("Init CubeMap...")
+        loader = THREE.FileLoader()
+
+        background = THREE.CubeTextureLoader().load(Config['engine']['skycube'])
+        background.format = THREE.RGBFormat
+
+        p.renderer.background.boxMesh_vertex = loader.load('shaders/skybox/vertex.glsl')
+        p.renderer.background.boxMesh_fragment = loader.load('shaders/skybox/fragment.glsl')
+        p.renderer.background.boxMesh_uniforms = {
+                    'tCube': UniformValue(None),
+                    'tFlip': UniformValue(- 1),
+                    'opacity': UniformValue(1.0),
+                    'light': {'type': "v3", 'value': p.sun.position},
+                }
+
+        p.load_percentage += 5
+
         # sun imposter
+        """
         g_sun = THREE.SphereBufferGeometry(2, 8, 8)
         m_sun = THREE.Mesh(g_sun, _material)
         p.sun.add(m_sun)
+        """
 
         # init the scene
         p.scene.add(ambLight)

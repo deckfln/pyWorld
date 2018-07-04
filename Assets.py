@@ -37,7 +37,8 @@ instance_grass_material = THREE.ShaderMaterial({
     'fragmentShader': loader.load('shaders/dynamic_instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
-    'transparent': True
+    'transparent': True,
+    'side': THREE.Constants.DoubleSide
 })
 
 instance_depth_material = THREE.ShaderMaterial({
