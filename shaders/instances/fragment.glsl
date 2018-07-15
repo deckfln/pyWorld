@@ -92,7 +92,8 @@ float unpackRGBAToDepth( const in vec4 v ) {
 #endif
 
 uniform vec3 light;
-uniform vec3 ambientLightColor;
+uniform vec3 sunColor;
+uniform float ambientCoeff;
 uniform sampler2D map;
 
 void main()
@@ -132,7 +133,7 @@ void main()
     float shadow = clamp(getShadowMap(), 0.5, 1.0);
     gl_FragColor = shadow * diffuse;
 #else
-    gl_FragColor = brightness * color;
+    gl_FragColor = clamp(brightness + ambientCoeff, 0.0, 1.0) * vec4(sunColor, 1.0) * color;
     gl_FragColor.a = opacity;
 #endif
 }

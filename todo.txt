@@ -54,6 +54,9 @@
 10/02/18            light               instances objects lightning is wrong
 30/06/18            procedural scenery  grass disapear sometimes (add dual face quads ?)
 07/07/18            lightning           update the sun shader on the skybox
+08/07/18: 30/06/18  sun lighting        adapt sun color based on time
+08/07/18: 03/07/18  light               add ambient color. Back color of objects is all black
+15/07/18: 09/07/18  terrain             add bumpmap to terrain tiles
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -70,13 +73,12 @@ TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
 TODO: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
-TODO: 30/06/18  sun lighting        adapt sun color based on time
 TODO: 30/06/18  skycube             move clouds on the skycube
 TODO: 30/06/18  clouds              display clouds shadow on the terrain
 TODO: 01/07/18  post processing     add haze
 TODO: 03/07/18  post processing     reimplement mesh streaming
 TODO: 03/07/18  init                add some spining cube during the loading screen
-TODO: 03/07/18  light               add ambient color. Back color of objects is all black
+TODO: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

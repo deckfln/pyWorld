@@ -1,6 +1,7 @@
 varying vec2 vUv;
 varying float z;
 varying vec3 vertexNormal;
+varying vec3 vViewPosition;
 
 // chunk(packing)
 const float PackUpscale = 256. / 255.;
@@ -15,58 +16,76 @@ float unpackRGBAToDepth( const in vec4 v ) {
 
 // chunk(shadowmap_pars_fragment);
 #ifdef USE_SHADOWMAP
-uniform sampler2D directionalShadowMap;
-uniform vec2 directionalShadowSize;
-varying vec4 vDirectionalShadowCoord;
-float texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
-    float depth = unpackRGBAToDepth( texture2D( depths, uv ) );
-    float distance = compare - depth;
-    if (distance < 0)
-        return 1.0;
+    uniform sampler2D directionalShadowMap;
+    uniform vec2 directionalShadowSize;
+    varying vec4 vDirectionalShadowCoord;
+    float texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
+        float depth = unpackRGBAToDepth( texture2D( depths, uv ) );
+        float distance = compare - depth;
+        if (distance < 0)
+            return 1.0;
 
-    float shadow = distance*20.0;
-    return shadow;
-}
-
-float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {
-    float shadow = 1.0;
-    shadowCoord.xyz /= shadowCoord.w;
-    shadowCoord.z += shadowBias;
-    bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
-    bool inFrustum = all( inFrustumVec );
-    bvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );
-    bool frustumTest = all( frustumTestVec );
-    if ( frustumTest ) {
-//        shadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );
-        vec2 texelSize = vec2( 1.0 ) / shadowMapSize;
-        float dx0 = - texelSize.x * shadowRadius;
-        float dy0 = - texelSize.y * shadowRadius;
-        float dx1 = + texelSize.x * shadowRadius;
-        float dy1 = + texelSize.y * shadowRadius;
-        shadow = (
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +
-                texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )
-                ) * ( 1.0 / 9.0 );
+        float shadow = distance*20.0;
+        return shadow;
     }
-    return shadow;
-}
-// chunk(shadowmap_pars_fragment);
 
-/**
- * Get the shadow
- */
-float getShadowMap()
-{
-    return  getShadow( directionalShadowMap, directionalShadowSize, 0.0, 0.5, vDirectionalShadowCoord );
-}
+    float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowCoord ) {
+        float shadow = 1.0;
+        shadowCoord.xyz /= shadowCoord.w;
+        shadowCoord.z += shadowBias;
+        bvec4 inFrustumVec = bvec4 ( shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0 );
+        bool inFrustum = all( inFrustumVec );
+        bvec2 frustumTestVec = bvec2( inFrustum, shadowCoord.z <= 1.0 );
+        bool frustumTest = all( frustumTestVec );
+        if ( frustumTest ) {
+    //        shadow = texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z );
+            vec2 texelSize = vec2( 1.0 ) / shadowMapSize;
+            float dx0 = - texelSize.x * shadowRadius;
+            float dy0 = - texelSize.y * shadowRadius;
+            float dx1 = + texelSize.x * shadowRadius;
+            float dy1 = + texelSize.y * shadowRadius;
+            shadow = (
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy0 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy0 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy0 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, 0.0 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy, shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, 0.0 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx0, dy1 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( 0.0, dy1 ), shadowCoord.z ) +
+                    texture2DCompare( shadowMap, shadowCoord.xy + vec2( dx1, dy1 ), shadowCoord.z )
+                    ) * ( 1.0 / 9.0 );
+        }
+        return shadow;
+    }
+    // chunk(shadowmap_pars_fragment);
+
+    /**
+     * Get the shadow
+     */
+    float getShadowMap()
+    {
+        return  getShadow( directionalShadowMap, directionalShadowSize, 0.0, 0.5, vDirectionalShadowCoord );
+    }
 #endif
+
+/*
+ *
+ */
+uniform sampler2D normalMap;
+vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 normal ) {
+    vec3 q0 = vec3( dFdx( eye_pos.x ), dFdx( eye_pos.y ), dFdx( eye_pos.z ) );
+    vec3 q1 = vec3( dFdy( eye_pos.x ), dFdy( eye_pos.y ), dFdy( eye_pos.z ) );
+    vec2 st0 = dFdx( vUv.st );
+    vec2 st1 = dFdy( vUv.st );
+    vec3 S = normalize( q0 * st1.t - q1 * st0.t );
+    vec3 T = normalize( -q0 * st1.s + q1 * st0.s );
+    vec3 N = normalize( surf_norm );
+    // vec3 mapN = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;
+    vec3 mapN = normal * 2.0 - 1.0;
+    mat3 tsn = mat3( S, T, N );
+    return normalize( tsn * mapN );
+}
 
 uniform sampler2D blendmap_texture;
 uniform sampler2D terrain_textures;
@@ -77,6 +96,8 @@ uniform float indexmap_size;
 uniform float water_shift;
 uniform vec3 light;
 uniform float blendmap_repeat;
+uniform vec3 sunColor;
+uniform float ambientCoeff;
 
 /**
  * mix a seamless tile to avoid the repetition effect byt mixing borders
@@ -89,7 +110,7 @@ vec4 hash4( vec2 p ) { return fract(sin(vec4( 1.0+dot(p,vec2(37.0,17.0)),
                                               3.0+dot(p,vec2(41.0,29.0)),
                                               4.0+dot(p,vec2(23.0,31.0))))*103.0); }
 
-vec4 colorAt(vec2 in_map)
+vec4 colorAt(sampler2D map, vec2 in_map)
 {
   vec2 p = in_map/indexmap_size;
 
@@ -98,7 +119,7 @@ vec4 colorAt(vec2 in_map)
 
   vec2 rvv =  vUv*indexmap_repeat;
   vec2 vv = fract(rvv);
-  return texture2D(terrain_textures, vec2(tileID / 8.0 + vv.x / 8, vv.y));
+  return texture2D(map, vec2(tileID / 8.0 + vv.x / 8, vv.y));
   /*
   return getIndex(tileID, vv);
 
@@ -127,6 +148,9 @@ vec4 colorAt(vec2 in_map)
 */
 }
 
+/*******
+ *
+ *******/
 void main()
 {
     /*
@@ -148,14 +172,7 @@ void main()
     // find the bottomleft point of the quad
     vec2 bottomleft;
     vec2 quadrant = sign(delta);
-    bottomleft = clamp(quadrant, vec2(-1, -1), vec2(0, 0));
-
-    // texture from atlas maps at each corner of the box
-    bottomleft = center_of_tile + bottomleft;
-    vec4 bottomleft_c = colorAt(bottomleft);
-    vec4 bottomright_c= colorAt(bottomleft + vec2(1,0));
-    vec4 topleft_c= colorAt(bottomleft + vec2(0,1));
-    vec4 topright_c= colorAt(bottomleft + vec2(1,1));
+    bottomleft = clamp(quadrant, vec2(-1, -1), vec2(0, 0)) + center_of_tile;
 
     // bilinear blending of the 4 textures
     vec4 bottomleft_b = vec4(0.0, 0.0, 0.0, 1.0);
@@ -165,12 +182,39 @@ void main()
 
     // locate the texel inside the quadrand
     vec2 blend4tex = mapvUv - bottomleft;
+    /*
     vec4 t1 = mix(bottomleft_b, bottomright_b, blend4tex.x);
     vec4 t2 = mix(topleft_b, topright_b, blend4tex.x);
     vec4 t3 = mix(t1, t2, blend4tex.y);
+    */
+
+    // texture from atlas maps at each corner of the box
+    vec4 bottomleft_c = colorAt(terrain_textures, bottomleft);
+    vec4 bottomright_c= colorAt(terrain_textures, bottomleft + vec2(1,0));
+    vec4 topleft_c= colorAt(terrain_textures, bottomleft + vec2(0,1));
+    vec4 topright_c= colorAt(terrain_textures, bottomleft + vec2(1,1));
+
+    vec4 t1 = mix(bottomleft_c, bottomright_c, blend4tex.x);
+    vec4 t2 = mix(topleft_c, topright_c, blend4tex.x);
+    vec4 ground = mix(t1, t2, blend4tex.y);
 
     // blend the 4 quadrand textures
-    vec4 ground = t3.w*bottomleft_c + t3.z*bottomright_c + t3.y*topleft_c + t3.x*topright_c;
+    //vec4 ground = t3.w*bottomleft_c + t3.z*bottomright_c + t3.y*topleft_c + t3.x*topright_c;
+    //ground = vec4(0.5,0.5,0.5,1.0);
+
+    // do the same with the normalmap
+    // normal from atlas maps at each corner of the box
+    vec3 bottomleft_n = normalize(colorAt(normalMap, bottomleft).xyz);
+    vec3 bottomright_n= normalize(colorAt(normalMap, bottomleft + vec2(1,0)).xyz);
+    vec3 topleft_n= normalize(colorAt(normalMap, bottomleft + vec2(0,1)).xyz);
+    vec3 topright_n= normalize(colorAt(normalMap, bottomleft + vec2(1,1)).xyz);
+
+    vec3 t1_n = mix(bottomleft_n, bottomright_n, blend4tex.x);
+    vec3 t2_n = mix(topleft_n, topright_n, blend4tex.x);
+    vec3 normal = mix(t1_n, t2_n, blend4tex.y);
+
+    // perturb the normal vector
+    vec3 finalNormal = perturbNormal2Arb( -vViewPosition, vertexNormal, normal );
 
     // path & river extracted from the blendmap
     vec2 blend_uv = fract(vUv * blendmap_repeat);
@@ -188,12 +232,8 @@ void main()
 
     // Add directional light
     vec3 nlight = normalize(light);
-    float nDotl = dot(vertexNormal, nlight);
+    float nDotl = dot(finalNormal, nlight);
     float brightness = max(nDotl, 0.0);
-    vec4 diffuse = color * brightness;
-
-    // and ambient light
-    vec4 ambient = color * 0.3;
 
 #ifdef USE_SHADOWMAP
     // extract the shadow
@@ -203,7 +243,7 @@ void main()
 
     gl_FragColor = shadow * diffuse*( mix(ground, fromBlend, blend_idx));
 #else
-    gl_FragColor = (0.3 + brightness) * color;
+    gl_FragColor = clamp(ambientCoeff + brightness, 0.0, 1.0) * vec4(sunColor, 1.0) * color;
 #endif
 
     // for debug, tint the pixel with the indexmap first value

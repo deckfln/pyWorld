@@ -1,9 +1,11 @@
 uniform samplerCube tCube;
 uniform float tFlip;
 uniform float opacity;
+uniform vec3 light;
+uniform vec3 sunColor;
+
 varying vec3 vWorldPosition;
 
-uniform vec3 light;
 
 void main() {
 
@@ -31,5 +33,5 @@ void main() {
 */
         float average_color = (cubeColor.r + cubeColor.g + cubeColor.b)/3;
         float color_distance = 1.0 - abs(0.44705882352941176470588235294118 - average_color);
-        gl_FragColor = cubeColor + pow(brightness, 96);
+        gl_FragColor = (cubeColor + pow(brightness, 96)) * vec4(sunColor, 1.0);
  }

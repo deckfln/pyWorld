@@ -20,6 +20,7 @@ from Player import *
 from Config import *
 from PlayerCamera import *
 from quadtree import *
+from Sun import *
 
 from ProceduralScenery import *
 from Scenery import *
@@ -108,21 +109,16 @@ class _InitThread(Thread):
 
         p.clock = THREE.Clock()
 
-        # Lights
-        ambLight = THREE.AmbientLight(0x999999)
-
         # initialize the sun
-        _material = THREE.MeshBasicMaterial({
-            'color': 0xffffff
-        })
-        p.sun = THREE.DirectionalLight(0xffffff, 1)
-        p.sun.position.set(100, 100, 100)
+        p.sun = Sun()
 
-        instance_material.uniforms.light.value = p.sun.position
-        instance_material.uniforms.ambientLightColor.value = ambLight.color
+        instance_material.uniforms.light.value = p.sun.light.position
+        instance_material.uniforms.ambientCoeff.value = p.sun.ambientCoeff
+        instance_material.uniforms.sunColor.value = p.sun.color
 
-        instance_grass_material.uniforms.light.value = p.sun.position
-        instance_grass_material.uniforms.ambientLightColor.value = ambLight.color
+        instance_grass_material.uniforms.light.value = p.sun.light.position
+        instance_grass_material.uniforms.ambientCoeff.value = p.sun.ambientCoeff
+        instance_grass_material.uniforms.sunColor.value = p.sun.color
 
         # cubemap
         print("Init CubeMap...")
@@ -137,8 +133,9 @@ class _InitThread(Thread):
                     'tCube': UniformValue(None),
                     'tFlip': UniformValue(- 1),
                     'opacity': UniformValue(1.0),
-                    'light': {'type': "v3", 'value': p.sun.position},
-                }
+                    'light': {'type': "v3", 'value': p.sun.light.position},
+                    'sunColor': {'type': "v3", 'value': p.sun.color}
+        }
 
         p.load_percentage += 5
 
@@ -150,8 +147,8 @@ class _InitThread(Thread):
         """
 
         # init the scene
-        p.scene.add(ambLight)
-        p.scene.add(p.sun)
+        p.scene.add(THREE.AmbientLight(p.sun.color))
+        p.scene.add(p.sun.light)
         p.scene.background = background
 
         # init the shadowmap
@@ -203,7 +200,7 @@ class _InitThread(Thread):
         print("Init Terrain...")
         p.terrain = Terrain(512, 25, 512)
         p.terrain.load(p.sun)
-        p.assets.set_light_uniform(p.sun.position)
+        p.assets.set_light_uniform(p.sun.light.position)
         p.load_percentage += 5
         p.terrain.scene = p.scene
         p.load_percentage += 5
@@ -404,28 +401,7 @@ def animate(p):
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
 
-    # "sun" directional vector
-    sun_vector = THREE.Vector3(0, 256 * math.cos(p.hour), 256 * math.sin(p.hour))
-
-    # define the shadowmap camera target, 10 units ahead of the player position along the view sight
-    line_of_sight = p.player.direction.clone().multiplyScalar(24).add(p.player.position)
-    # hm = p.terrain.screen2map(line_of_sight)
-    line_of_sight.z = p.player.position.z   # p.terrain.get(hm.x, hm.y)
-    p.sun.target.position.copy(line_of_sight)
-    p.sun.target.updateMatrixWorld()
-
-    if Config['shadow']['debug']:
-        p.debug.position.copy(line_of_sight)
-
-    # move back the sun direction to set the shadow camera position
-    line_of_sight.add(sun_vector)
-    p.sun.shadow.camera.position.copy(line_of_sight)
-    p.sun.position.copy(line_of_sight)
-
-    # need to update the projectmatric, don't know why
-    # if the camera herlper is turned on, it does the update
-    p.sun.shadow.camera.updateProjectionMatrix()
-    p.sun.shadow.camera.updateMatrixWorld()
+    p.sun.move(p)
 
     # time passes
     # complete half-circle in 5min = 9000 frames
@@ -433,8 +409,6 @@ def animate(p):
     p.hour += delta * (math.pi / 4000)
     if p.hour > math.pi:
         p.hour = 0
-
-    p.terrain.update_light(p.hour)
 
     p.fps += 1
 

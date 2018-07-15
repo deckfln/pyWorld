@@ -12,7 +12,8 @@ loader = THREE.FileLoader()
 
 uniforms = {
     'light': {'type': "v3", 'value': THREE.Vector3()},
-    'ambientLightColor': {'type': "v3", 'value': None},
+    'ambientCoeff': {'type': "float", 'value': 0.3},
+    'sunColor': {'type': "v3", 'value': THREE.Vector3()},
     'map': {'type': "t", 'value': None},
     'normalMap': {'type': "t", 'value': None},
 }

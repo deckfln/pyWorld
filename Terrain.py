@@ -106,7 +106,7 @@ class Terrain:
     def init(self):
         self.normalMap = VectorMap(self.size)
 
-    def shaders(self, light):
+    def shaders(self, sun):
         """
         Initialize the shader material
         :param light:
@@ -132,7 +132,8 @@ class Terrain:
             indexmap.minFilter = THREE.NearestFilter
             self.indexmap.texture = indexmap
 
-            self.terrain_textures = loader.load("img/terrain.png")
+            self.terrain_textures = loader.load("img/terrain_d.png")
+            normalMap = loader.load("img/terrain_n.png")
 
             self.blendmap.texture = loader.load("img/blendmap.png")
 
@@ -140,18 +141,21 @@ class Terrain:
             uniforms = {
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': self.terrain_textures},
-                'light': {'type': "v3", 'value': light.position},
+                'light': {'type': "v3", 'value': sun.light.position},
                 'water_shift': {'type': "f", 'value': 0},
                 'indexmap': {'type': "t", 'value': self.indexmap.texture},
                 'indexmap_size': {'type': "f", 'value': self.indexmap.size},
                 'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {'type': "f", 'value': 64}
+                'blendmap_repeat': {'type': "f", 'value': 64},
+                'ambientCoeff': {'type': "float", 'value': sun.ambientCoeff},
+                'sunColor': {'type': "v3", 'value': sun.color},
+                'normalMap': {'type': "t", 'value': normalMap},
             }
 
             if Config["shadow"]["enabled"]:
-                uniforms['directionalShadowMap'] = {'type': 'v', 'value': light.shadow.map.texture}
-                uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': light.shadow.matrix}
-                uniforms['directionalShadowSize'] = {'type': 'v2', 'value': light.shadow.mapSize}
+                uniforms['directionalShadowMap'] = {'type': 'v', 'value': sun.light.shadow.map.texture}
+                uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': sun.light.shadow.matrix}
+                uniforms['directionalShadowSize'] = {'type': 'v2', 'value': sun.light.shadow.mapSize}
 
             self.material = THREE.ShaderMaterial( {
                 'uniforms': uniforms,
@@ -160,17 +164,20 @@ class Terrain:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_far = loader.load("img/terrain_far.png")
+            terrain_far = loader.load("img/terrain_far_d.png")
 
             uniforms_far = {
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': terrain_far},
-                'light': {'type': "v3", 'value': light.position},
+                'light': {'type': "v3", 'value': sun.light.position},
                 'water_shift': {'type': "f", 'value': 0},
                 'indexmap': {'type': "t", 'value': self.indexmap.texture},
                 'indexmap_size': {'type': "f", 'value': self.indexmap.size},
                 'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {'type': "f", 'value': 64}
+                'blendmap_repeat': {'type': "f", 'value': 64},
+                'ambientCoeff': {'type': "float", 'value': sun.ambientCoeff},
+                'sunColor': {'type': "v3", 'value': sun.color},
+                'normalMap': {'type': "t", 'value': normalMap}
             }
             self.material_far = THREE.ShaderMaterial( {
                 'uniforms': uniforms_far,
@@ -184,12 +191,15 @@ class Terrain:
             uniforms_very_far = {
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': terrain_very_far},
-                'light': {'type': "v3", 'value': light.position},
+                'light': {'type': "v3", 'value': sun.light.position},
                 'water_shift': {'type': "f", 'value': 0},
                 'indexmap': {'type': "t", 'value': self.indexmap.texture},
                 'indexmap_size': {'type': "f", 'value': self.indexmap.size},
                 'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {'type': "f", 'value': 64}
+                'blendmap_repeat': {'type': "f", 'value': 64},
+                'ambientCoeff': {'type': "float", 'value': sun.ambientCoeff},
+                'sunColor': {'type': "v3", 'value': sun.color},
+                'normalMap': {'type': "t", 'value': normalMap}
             }
             self.material_very_far = THREE.ShaderMaterial( {
                 'uniforms': uniforms_very_far,
@@ -208,7 +218,7 @@ class Terrain:
         :param sun:
         :return:
         """
-        self.light = sun
+        self.light = sun.light
 
         self.shaders(sun)
         with open("bin/heightmap.pkl", "rb") as f:
@@ -1178,24 +1188,6 @@ class Terrain:
         self._build_tiles_onscreen(position)
         self._frustrum_culling(player, position, direction)
         self._stich_neighbours()
-
-    def update_light(self, time):
-        """
-        @description: update the terrain
-        @param {time} time current time
-        """
-
-        """
-        # shift the water texture
-        self.water_shift += 0.01
-        if self.water_shift >= 1:
-            self.water_shift = 0
-        self.material1.uniforms.water_shift.value = this.water_shift
-        """
-
-        # update light position
-        if self.material is not None:
-            self.material.uniforms.light.value.copy(self.light.position)
 
     def colisionObjects(self, footprint, debug=None):
         """

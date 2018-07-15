@@ -2,6 +2,7 @@
 varying vec2 vUv;
 varying float z;
 varying vec3 vertexNormal;
+varying vec3 vViewPosition;
 
 // shadownmap
 
@@ -26,4 +27,5 @@ void main() {
     // chunk(shadowmap_vertex);
 
     vertexNormal = normal;
+    vViewPosition = worldPosition.xyz;
 }
