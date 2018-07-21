@@ -7,6 +7,7 @@ sys.path.append(mango_dir)
 
 import pickle
 from threading import Thread
+import queue
 
 from datetime import datetime
 
@@ -84,7 +85,6 @@ class Params:
         self.suspended = False
         self.GUI = None
         self.init_thread = None
-        self.animate_thread = None
         self.queue = queue.Queue()
         self.load_percentage = 0
 
@@ -105,7 +105,6 @@ class _InitThread(Thread):
 
         p.controls = TrackballControls(p.camera, p.container)
         p.camera.controls = p.controls
-
 
         p.clock = THREE.Clock()
 
@@ -210,38 +209,11 @@ class _InitThread(Thread):
         p.actors.append(p.player)
         p.load_percentage += 5
 
-        initQuadtreeProcess()
-
         print("Init meshes...")
-        p.terrain.quadtree.loadChildren(p)
+        #p.terrain.quadtree.loadChildren(p)
         p.terrain.build_quadtre_indexes()
         p.load_percentage += 5
         print("End init")
-
-
-class _animate_thread(Thread):
-    """
-    https://skryabiin.wordpress.com/2015/04/25/hello-world/
-    SDL 2.0, OpenGL, and Multithreading (Windows)
-    """
-
-    def __init__(self, p, queue):
-        Thread.__init__(self)
-        self.p = p
-        self.queue = queue
-
-    def run(self):
-        q = self.queue
-        p = self.p
-
-        while True:
-            action = q.get()
-            if action is None:
-                break
-
-            checkQuadtreeProcess()
-
-            q.task_done()
 
 
 def init(p):
@@ -275,9 +247,6 @@ def init(p):
 
     p.init_thread = _InitThread(p)
     p.init_thread.start()
-
-    p.animate_thread = _animate_thread(p, p.queue)
-    p.animate_thread.start()
 
     """
     p.player.draw()
@@ -413,7 +382,8 @@ def animate(p):
     p.fps += 1
 
     # update gui
-    p.GUI.update_fps()
+    if p.GUI.update_fps():
+        p.GUI.loaded_tiles(p.terrain.loader.loaded)
 
     render(p)
     # c = time.time() - t
@@ -469,7 +439,7 @@ def keyboard(event, p):
         p.player.action.x = p.keymap[273] or -p.keymap[274]  # up / down
         p.player.action.y = p.keymap[275] or -p.keymap[276]  # left / right
     else:
-        print(keyCode)
+        print("keyCode:", keyCode)
 
 
 def main(argv=None):
@@ -485,12 +455,9 @@ def main(argv=None):
     p.container.addEventListener('keydown', keyboard)
     p.container.addEventListener('keyup', keyboard)
     p.container.loop()
-    p.queue.put(None)
-    p.animate_thread.join()
+
+    p.terrain.loader.terminate()
 
 
 if __name__ == "__main__":
-    r = main()
-    # killQuadtreeProcess()
-
-    sys.exit(r)
+    main()

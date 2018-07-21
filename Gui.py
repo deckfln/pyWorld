@@ -21,7 +21,7 @@ class GUI:
     def update_fps(self):
         t = time.time()
         if self.last_time > 0 and t < self.last_time + 1:
-            return
+            return False
 
         self.last_time = t
         fps = self.renderer._infoRender.frame - self.last_frame
@@ -46,6 +46,8 @@ class GUI:
 
         self.texture.needsUpdate = True
 
+        return True
+
     def load_bar(self, pct):
         t = time.time()
         if self.last_time > 0 and t < self.last_time + 1:
@@ -57,6 +59,19 @@ class GUI:
         pct = int(pct * 200 / 100)
 
         for y in range(h - 20, h + 20):
+            p = 4*y*self.width
+            for x in range(0, pct):
+                self.gui_data[p] = 255
+                self.gui_data[p+3] = 255
+                p += 4
+
+        self.texture.needsUpdate = True
+
+    def loaded_tiles(self, nb):
+        h = 5
+        pct = int(nb * 200 / 100)
+
+        for y in range(h, 0, -1):
             p = 4*y*self.width
             for x in range(0, pct):
                 self.gui_data[p] = 255

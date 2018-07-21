@@ -257,7 +257,7 @@ class ProceduralScenery:
                         terrain.heightmap2indexmap(_tm, _im)
                         s = indexmap.bilinear_density(_im.x, _im.y)
                         if s is None:
-                            print(x, y, _im.x, _im.y)
+                            print("p_instantiate:", x, y, _im.x, _im.y)
                             continue
 
                         # now pick the density of grass

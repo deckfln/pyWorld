@@ -1,7 +1,12 @@
+"""
+
+"""
 import json
 import pickle
-import multiprocessing
+# import multiprocessing
 import random
+from threading import Thread
+import queue
 
 import THREE
 import Utils as THREE_utils
@@ -11,8 +16,6 @@ from Config import *
 from progress import *
 from THREE.javascriparray import *
 import math
-
-AsyncIO = None
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
             'color': 0x0000ff,
@@ -120,11 +123,10 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
-        global AsyncIO
-
-        # Add to scene if not yet there
-        if not self.mesh:
-            AsyncIO.read(self)
+        with open("bin/" + self.name + ".terrain.pkl", "rb") as f:
+            mesh = pickle.load(f)
+            mesh.rebuild_id()
+            self._record_mesh(mesh)
 
     def loadChildren(self, p):
         """
@@ -182,27 +184,25 @@ class Quadtree:
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = False
 
-    def _record_mesh(self, scene, terrain_mesh):
+    def _record_mesh(self, terrain_mesh):
         """
         @param {type} name
         @param {type} scene
         @returns {undefined}
         """
 
-        self.mesh = terrain_mesh
-
         if self.material is None:
-            self.mesh.material = THREE.MeshLambertMaterial({
+            terrain_mesh.material = THREE.MeshLambertMaterial({
                 'color': random.random()*0xffffff,
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
         else:
             if self.level < 3:
-                self.mesh.material = self.material_very_far
+                terrain_mesh.material = self.material_very_far
             elif self.level < 5:
-                self.mesh.material = self.material_far
+                terrain_mesh.material = self.material_far
             else:
-                self.mesh.material = self.material
+                terrain_mesh.material = self.material
 
         # load the scenary mesh and display
         """
@@ -228,11 +228,14 @@ class Quadtree:
         if Config['player']['debug']['collision']:
             center = self.mesh.position.clone()
             for obj in self.objects:
-                self.mesh.add(obj.AxisAlignedBoundingBoxes(center))
+                terrain_mesh.add(obj.AxisAlignedBoundingBoxes(center))
 
         if self.level > 4 and Config['terrain']['debug']['normals']:
             self.normals = THREE.VertexNormalsHelper(terrain_mesh, 1, 0xff0000, 1)
-            self.mesh.add(self.normals)
+            terrain_mesh.add(self.normals)
+
+        self.mesh = terrain_mesh
+        # print("quadtree:_record_mesh:%s" % self.name)
 
         return self
 
@@ -381,25 +384,27 @@ class quadtreeMessage:
         self.scenary_mesh = None
 
 
-class QuadtreeReader(multiprocessing.Process):
+class QuadtreeReader(Thread):
     """
+    https://skryabiin.wordpress.com/2015/04/25/hello-world/
+    SDL 2.0, OpenGL, and Multithreading (Windows)
     """
-    def __init__(self, task_queue, result_queue):
-        multiprocessing.Process.__init__(self)
-        self.task_queue = task_queue
-        self.result_queue = result_queue
+
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.queue = queue
 
     def run(self):
-        proc_name = self.name
+        queue = self.queue
+
         while True:
-            quadtree_msg = self.task_queue.get()
-            if quadtree_msg is None:
-                # Poison pill means shutdown
+            quadtree = queue.get()
+            if quadtree is None:
                 break
-            terrain_mesh = _loadMeshIO(quadtree_msg.name)
-            quadtree_msg.terrain_mesh = terrain_mesh
-            self.result_queue.put(quadtree_msg)
-        return
+
+            # print("quadtreeReader:%s" % quadtree.name)
+            quadtree.load()
+            queue.task_done()
 
 
 class QuadtreeProcess:
@@ -409,49 +414,17 @@ class QuadtreeProcess:
     """
     def __init__(self):
         # Establish communication queues
-        self.tasks = multiprocessing.Queue()
-        self.results = multiprocessing.Queue()
-        # self.process = QuadtreeReader(self.tasks, self.results)
-        # self.process.start()
-        self.callbacks = {}
-        self.scene = None
+        self.queue = queue.Queue()
+        self.loaded = 0
+
+        self.thread = QuadtreeReader(self.queue)
+        self.thread.start()
 
     def read(self, quadtree):
-        if quadtree.name in self.callbacks:
-            return
-
-        self.callbacks[quadtree.name] = quadtree
-        # self.tasks.put(quadtreeMessage(quadtree.name))
-        terrain_mesh = _loadMeshIO(quadtree.name)
-        quadtree._record_mesh(self.scene, terrain_mesh)
-
-    def check(self):
-        return
-        while not self.results.empty():
-            quadtree_msg = self.results.get()
-            quadtree = self.callbacks[quadtree_msg.name]
-            quadtree._record_mesh(self.scene, quadtree_msg.terrain_mesh)
+        self.queue.put(quadtree)
+        self.loaded += 1
 
     def terminate(self):
-        # self.process.terminate()
+        self.queue.put(None)
+        self.thread.join()
         return
-
-
-def initQuadtreeProcess():
-    global AsyncIO
-    AsyncIO = QuadtreeProcess()
-
-
-def checkQuadtreeProcess():
-    global AsyncIO
-    AsyncIO.check()
-
-
-def loadQuadtreeProcess(quad, scene):
-    global AsyncIO
-    AsyncIO.read(quad, scene, False)
-
-
-def killQuadtreeProcess():
-    global AsyncIO
-    AsyncIO.terminate()
