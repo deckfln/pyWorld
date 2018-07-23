@@ -103,10 +103,19 @@ class Terrain:
         self.quadtree = Quadtree(-1, -1, -1, None)
         self.quadtree_index = {}
 
+        # cache player position and direction
+        self.cache_position = THREE.Vector3(-10000, -10000, -10000)
+        self.cache_direction = THREE.Vector3(-10000, -10000, -10000)
+
         # asynchronous tiles loading
         self.loader = None
         self.loader_queue = []
         self.removal_queue = []
+
+        # frustrum
+        self.frustrum_behind = THREE.Vector2()
+        self.frustrum_left = THREE.Vector2()
+        self.frustrum_right = THREE.Vector2()
 
     def init(self):
         self.normalMap = VectorMap(self.size)
@@ -1075,16 +1084,18 @@ class Terrain:
             return d < distance
 
         # convert player position and line of view to heightmap coordinates
-        hm = THREE.Vector2()
+        hm = _vector2
         self.screen2map(position, hm)
 
         # build the horizon line (90deg of direction)
-        horizon = THREE.Vector2(-direction.y, direction.x)
-        hm_behind = THREE.Vector2(hm.x + horizon.x, hm.y + horizon.y)
+        hm_behind = self.frustrum_behind
+        hm_behind.set(hm.x - direction.y, hm.y + direction.x)
 
-        # build a simple frustrum (45deg left and right)
-        left = THREE.Vector2(direction.x + horizon.x + hm.x, direction.y + horizon.y + hm.y)
-        right= THREE.Vector2(direction.x - horizon.x + hm.x, direction.y - horizon.y + hm.y)
+        # build a simple frustrum
+        left = self.frustrum_left
+        left.set(direction.x, direction.y).rotate(math.pi/3).add(hm)
+        right = self.frustrum_right
+        right.set(direction.x, direction.y).rotate(-math.pi/3).add(hm)
 
         if Config["player"]["debug"]["frustrum"]:
             if hasattr(player, "frustrum"):
@@ -1233,9 +1244,14 @@ class Terrain:
         position = player.vcamera.position
         direction = player.direction
 
-        self._build_tiles_onscreen(position)
-        self._frustrum_culling(player, position, direction)
-        self._stich_neighbours()
+        # update onscreen tiles only if the player moved or rotated
+        if not position.equals(self.cache_position) or not direction.equals(self.cache_direction):
+            self._build_tiles_onscreen(position)
+            self._frustrum_culling(player, position, direction)
+            self._stich_neighbours()
+
+            self.cache_position.copy(position)
+            self.cache_direction.copy(direction)
 
         # review tiles loaded last frame
         self._display_async_loader()

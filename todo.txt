@@ -58,6 +58,7 @@
 08/07/18: 03/07/18  light               add ambient color. Back color of objects is all black
 15/07/18: 09/07/18  terrain             add bumpmap to terrain tiles
 21/04/18: 03/07/18  post processing     reimplement mesh streaming
+23/07/18: 24/02/18  terrain             frustrum culling is visible on the edge
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -80,6 +81,7 @@ TODO: 01/07/18  post processing     add haze
 TODO: 03/07/18  init                add some spining cube during the loading screen
 TODO: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 TODO: 20/07/18  terrain             textures are too repetitive
+TODO: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -89,7 +91,7 @@ TODO: 28/01/18  shadows             when the terrain cast AND receive shadows, s
 TODO: 03/02/18  shadows             if player is partily in the shadow of a tree, the shadow of the player is only partially visible.
                                     the shadow of the tree fade with distance to none but the player is still in the shadow of the tree so doesn't cast shadow by itself
 TODO: 09/02/18  shadows             tree foliage transparency casts shadow
-TODO: 24/02/18  terrain             frustrum culling is visible on the edge
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 25/06/18  procedural scenery  generation circle is not always along the player direction
 TODO: 20/07/18  terrain             texture far away is all wrong
+TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
