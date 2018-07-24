@@ -215,7 +215,6 @@ class Terrain:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-
     def build(self):
         self.indexmap.build()
 
@@ -356,92 +355,6 @@ class Terrain:
         :return:
         """
         return self.indexmap.getXY(x,y)
-
-    def _buildLOD(self, level, points_per_block, heightmaps):
-        """
-        Recursively build multiple LOD of the heightmap
-        :param level:
-        :param points_per_block:
-        :param heightmaps:
-        :return:
-        """
-        # // build LOD0
-        size = self.size
-        divided_size = size / points_per_block
-
-        heightmaps[level] = Heightmap(divided_size, self.onscreen)
-        hm = heightmaps[level].map
-
-        current = 0
-        total = divided_size*divided_size
-
-        for y in range(0, size, points_per_block):
-            for x in range(0, size, points_per_block):
-                # // keep the original values on the border to avoid seams between tiles
-                if x == 0 or y == 0:
-                    p = x + y * size
-                    hm[current] = self.heightmap.map[p]
-                    current += 1
-                    continue
-
-                if x >= size - points_per_block and y >= size - points_per_block:
-                    p = size - 1 + (size - 1) * size
-                    hm[current] = self.heightmap.map[p]
-                    current += 1
-                    continue
-
-                if x >= size - points_per_block:
-                    p = size - 1 + y * size
-                    hm[current] = self.heightmap.map[p]
-                    current += 1
-                    continue
-
-                if y >= size - points_per_block:
-                    p = x + (size - 1) * size
-                    hm[current] = self.heightmap.map[p]
-                    current += 1
-                    continue
-
-                # // get the max of the points_per_block surround the current point
-                sum = 0
-                nb = 0
-                max = -99999
-
-                half = int(points_per_block/2)
-                for i in range(y - half, y + half):
-                    for j in range(x - half, x + half):
-                        # // crop the cell
-                        if i < 0 or j < 0 or i >= size or j >= size:
-                            continue
-
-                        p = j + i * size
-                        h = self.heightmap.map[p]
-
-                        # // do the math
-                        if h > max:
-                            max = h
-                        sum += h
-                        nb += 1
-
-                # // and register the LOD height
-                hm[current] = sum / nb
-                current += 1
-            progress(current, total, "Build LOD %d" % level)
-
-        progress(0, 0)
-        # // recurse until points_per_block == 1
-        if points_per_block > 2:
-            self._buildLOD(level + 1, int(points_per_block / 2), heightmaps)
-        else:
-            # // when point_per_block == 1, just copy the heightmap
-            heightmaps[level + 1] = self.heightmap
-
-    def buildHeightmapsLOD(self):
-        """
-        Build smaller versions of the top heightmap
-        :return:
-        """
-        self._buildLOD(0, self.lod, self.heightmaps)
 
     def map2screen(self, position, target=None):
         """
@@ -677,30 +590,6 @@ class Terrain:
         :return:
         """
         return v.x >= 0 and v.x <= self.indexmap.size and v.y >= 0 and v.y <= self.indexmap.size
-
-    def dump(self):
-        """
-        Save all data of the terrain
-        :return:
-        """
-        with open("bin/heightmap.pkl", "wb") as f:
-            pickle.dump(self.heightmap, f)
-
-        with open("bin/normalmap.pkl", "wb") as f:
-            pickle.dump(self.normalMap, f)
-
-        # dump the meshes
-        self.quadtree.dump_mesh()
-
-        # pack the quad into an array
-        # this will DELETE the meshes so they are NOT in the pickle
-        worldmap = []
-        self.quadtree.dump(worldmap)
-        with open("bin/worldmap.pkl", "wb") as f:
-            pickle.dump(worldmap, f)
-
-        self.indexmap.generate("img/indexmap.png")
-        self.blendmap.generate("img/blendmap.png")
 
     def _check_quad_lod(self, position: Vector2, quad: Quadtree, tiles_2_display: list):
         """

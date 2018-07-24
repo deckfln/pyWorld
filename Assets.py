@@ -25,8 +25,8 @@ if Config["shadow"]["enabled"]:
 
 instance_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
-    'vertexShader': loader.load('shaders/instances/vertex.glsl'),
-    'fragmentShader': loader.load('shaders/instances/fragment.glsl'),
+    'vertexShader': loader.load(Config['folder']+'/shaders/instances/vertex.glsl'),
+    'fragmentShader': loader.load(Config['folder']+'/shaders/instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
     'transparent': True
@@ -34,8 +34,8 @@ instance_material = THREE.ShaderMaterial({
 
 instance_grass_material = THREE.ShaderMaterial({
     'uniforms': uniforms,
-    'vertexShader': loader.load('shaders/dynamic_instances/vertex_grass.glsl'),
-    'fragmentShader': loader.load('shaders/dynamic_instances/fragment.glsl'),
+    'vertexShader': loader.load(Config['folder']+'/shaders/dynamic_instances/vertex_grass.glsl'),
+    'fragmentShader': loader.load(Config['folder']+'/shaders/dynamic_instances/fragment.glsl'),
     'wireframe': False,
     'vertexColors': THREE.Constants.VertexColors,
     'transparent': True,
@@ -44,8 +44,8 @@ instance_grass_material = THREE.ShaderMaterial({
 
 instance_depth_material = THREE.ShaderMaterial({
     'uniforms': {},
-    'vertexShader': loader.load('shaders/instances/depth_vertex.glsl'),
-    'fragmentShader': loader.load('shaders/instances/depth_fragment.glsl')
+    'vertexShader': loader.load(Config['folder']+'/shaders/instances/depth_vertex.glsl'),
+    'fragmentShader': loader.load(Config['folder']+'/shaders/instances/depth_fragment.glsl')
 })
 
 

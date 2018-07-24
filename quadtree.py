@@ -23,7 +23,7 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
             'transparent': True,
             'wireframe': False})
 
-_material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load('img/evergreen.png')})
+_material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/evergreen.png')})
 
 
 def _loadMeshIO(name):
@@ -111,7 +111,7 @@ class Quadtree:
 
     def dump_mesh(self):
         self.mesh.geometry.computeBoundingSphere()
-        with open("bin/" + self.name + ".terrain.pkl", "wb") as f:
+        with open(Config['folder']+"/bin/" + self.name + ".terrain.pkl", "wb") as f:
             pickle.dump(self.mesh, f)
 
         if not self.sub[0] is None:
@@ -123,7 +123,7 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
-        with open("bin/" + self.name + ".terrain.pkl", "rb") as f:
+        with open(Config['folder']+"/bin/" + self.name + ".terrain.pkl", "rb") as f:
             mesh = pickle.load(f)
             mesh.rebuild_id()
             self._record_mesh(mesh)

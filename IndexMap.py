@@ -3,7 +3,7 @@
 """
 
 from TextureMap import *
-from PerlinSimplexNoise import *
+from build.PerlinSimplexNoise import *
 import Terrain
 
 
