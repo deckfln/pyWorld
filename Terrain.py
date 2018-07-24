@@ -1,17 +1,11 @@
-import math
-import pickle
-import numpy as np
 from collections import deque
 
-import THREE
-
-from roads import *
 from prng import *
-from progress import *
 from quadtree import *
-from TextureMap import *
 from VectorMap import *
 from IndexMap import *
+from Heightmap import *
+
 
 myrandom = Random(5454334)
 
@@ -56,7 +50,6 @@ class Terrain:
         self.indexmap = IndexMap(32, 128)
         self.blendmap = TextureMap(256, 1)
         self.scenery = []
-        self.roads = None
         self.radiuses = [0] * self.nb_levels
 
         self.ratio = (self.size-1)/self.onscreen
@@ -684,13 +677,6 @@ class Terrain:
         :return:
         """
         return v.x >= 0 and v.x <= self.indexmap.size and v.y >= 0 and v.y <= self.indexmap.size
-
-    def build_roads(self):
-        """
-        Build 2 roads on the terrain
-        :return:
-        """
-        self.roads = Roads(self)
 
     def dump(self):
         """

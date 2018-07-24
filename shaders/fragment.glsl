@@ -265,4 +265,7 @@ void main()
 
     // debug shadowmap
     //    gl_FragColor = texture2D(shadowmap, vUv);
+
+    // debug indexmap
+    //gl_FragColor = red*blendIndex.x;
 }

@@ -1,3 +1,7 @@
+"""
+
+"""
+import numpy as np
 import math
 from array import *
 import PIL
@@ -11,8 +15,8 @@ class Mask:
         :param radius: 
         """
         self.radius = radius
-        size = radius * 2
-        self.mask = array('B', [0] * (size * size))  # float
+        size = radius * 2 + 1
+        self.mask = np.zeros(size * size, np.uint8)
         p = 0
         for y in range(size):
             for x in range(size):
@@ -41,7 +45,7 @@ class Mask:
         z = position[1]
 
         radius = self.radius
-        size = self.radius * 2
+        size = self.radius * 2+1
         data = blend.data
         data_s = blend.width * 4
 
@@ -75,7 +79,7 @@ class Mask:
 
         blend = terrain.blendmap
         radius = self.radius
-        size = self.radius * 2
+        size = self.radius * 2 + 1
         data = blend.data
         data_s = blend.size * 4
         blendSize = blend.size

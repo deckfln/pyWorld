@@ -4,7 +4,7 @@
 
 from Terrain import *
 from PerlinSimplexNoise import *
-from threading import Thread
+from build.roads import *
 
 
 def perlin_generate(terrain):
@@ -261,3 +261,12 @@ def build_mesh_scenery(terrain):
     # root.scenery_instance()
 
     progress(0, 0)
+
+
+def build_roads(terrain):
+    """
+    Build 2 roads on the terrain
+    :return:
+    """
+    terrain.roads = Roads(terrain)
+

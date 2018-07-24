@@ -7,6 +7,7 @@ from PIL import Image
 from array import *
 import sys
 import math
+import os
 
 import THREE
 
@@ -23,7 +24,7 @@ class TextureMap:
         """
         self.size = size
         self.repeat = repeat
-        self.data = np.zeros(size * size * 4, 'b')  # unsigned char RGBA
+        self.data = np.zeros(size * size * 4, np.uint8)  # unsigned char RGBA
         self.texture = None
         self.vector4 = THREE.Vector4()
 
@@ -61,6 +62,8 @@ class TextureMap:
     def generate(self, file):
         bytes = self.data.tobytes()
         im = PIL.Image.frombytes("RGBA", (self.size, self.size), bytes)
+        if os.path.exists(file):
+            os.remove(file)
         im.save(file)
 
     def load(self, file):

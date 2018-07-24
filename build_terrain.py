@@ -31,7 +31,7 @@ def build():
     terrain.build()
 
     if Config['terrain']['roads']:
-        terrain.build_roads()
+        build_terrain.build_roads(terrain)
 
     if Config['terrain']['city']:
         city_create(terrain)
