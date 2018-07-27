@@ -213,22 +213,25 @@ void main()
     vec3 t2_n = mix(topleft_n, topright_n, blend4tex.x);
     vec3 normal = mix(t1_n, t2_n, blend4tex.y);
 
-    // perturb the normal vector
-    vec3 finalNormal = perturbNormal2Arb( -vViewPosition, vertexNormal, normal );
-
     // path & river extracted from the blendmap
     vec2 blend_uv = fract(vUv * blendmap_repeat);
-    vec4 paving = texture2D(terrain_textures, vec2(7.0/8.0 + blend_uv.x/8.0, blend_uv.y));
+    blend_uv.x = 7.0/8.0 + blend_uv.x/8.0;
+    vec4 paving = texture2D(terrain_textures, blend_uv);
+    vec3 blend_normal = normalize(texture2D(normalMap, blend_uv).xyz);
     // vec4 riverbed = texture2D(textures[riverbed_png], blend_uv);
 
     vec4 blendIndex = texture2D(blendmap_texture, vUv);
-    vec4 red=vec4(1.0, 0.0, 0.0, 1.0);
+    // vec4 red=vec4(1.0, 0.0, 0.0, 1.0);
 
     vec4 fromBlend = paving*blendIndex.x; // + red*blendIndex.y + riverbed*blendIndex.z;
     float blend_idx = clamp(blendIndex.x + blendIndex.z, 0.0, 1.0);
 
     // blend blendmap + ground
     vec4 color = mix(ground, fromBlend, blend_idx);
+    normal = mix(normal, blend_normal, blend_idx);
+
+    // perturb the normal vector
+    vec3 finalNormal = perturbNormal2Arb( -vViewPosition, vertexNormal, normal );
 
     // Add directional light
     vec3 nlight = normalize(light);
@@ -268,4 +271,7 @@ void main()
 
     // debug indexmap
     //gl_FragColor = red*blendIndex.x;
+
+    // debug normalmap
+    // gl_FragColor = vec4(finalNormal, 1.0);
 }
