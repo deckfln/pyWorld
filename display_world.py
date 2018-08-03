@@ -416,7 +416,7 @@ def keyboard(event, p):
     # change status of SHIFT
     if keyCode == 304:
         p.shift = down
-        p.player.run = down
+        p.player.set_run(down)
 
     if keyCode == 97:   # Q
         p.container.quit()

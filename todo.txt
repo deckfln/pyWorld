@@ -62,6 +62,7 @@
 24/07/18: 23/07/18  terrain             roads are not draws on top of terrain texture
 24/07/18: 23/07/18  engine              completely split the build_engine from the display_engine
 27/07/18: 24/07/18  terrain             road bumpmap is not applied
+03/08/18: 24/07/18  camera              change camera position based on speed (the faster, the farest)
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -85,7 +86,8 @@ TODO: 03/07/18  init                add some spining cube during the loading scr
 TODO: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
-TODO: 24/07/18  camera              change camera position based on speed (the faster, the farest)
+TODO: 28/07/18  engine              move shader configuration to config file
+TODO: 03/08/18  camera              move the camera 'higher' to actually move the player down on the screen
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

@@ -90,6 +90,18 @@ class Player(Actor):
         
         # self.heightmap.draw(self.position)
 
+    def set_run(self, run):
+        """
+        change the player speed. Has an impact on the virtual camera position
+        :param run:
+        :return:
+        """
+        self.run = run
+        if run:
+            self.vcamera.set_distance_run()
+        else:
+            self.vcamera.set_distance_walk()
+
     def getZ(self, position=None):
         """
         Get the position of the player based on the heightmap
@@ -166,7 +178,7 @@ class Player(Actor):
 
         # TODO: get the players camera from smehwere
         self.vcamera.move(self, terrain)
- 
+
     def move_forward(self, delta, run):
         """
          * @description move player along the direction vector
@@ -185,7 +197,7 @@ class Player(Actor):
         d = _v3d1_static.copy(self.direction)
         d.multiplyScalar(0.1)
         d.multiplyScalar(delta)    # handle time
-        
+
         # handle speed
         if run:
             d.multiplyScalar(2)

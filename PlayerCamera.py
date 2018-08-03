@@ -21,7 +21,10 @@ class PlayerCamera:
         self.behind = THREE.Vector3()
         self.distance = THREE.Vector3()
         self.angularSpeed = 0
+        self.linearAcceleration = 0
         self.accelerate = False
+        self.distance_from_player = 5
+        self.debug = False
 
         if Config['camera']['debug']:
             material = THREE.LineBasicMaterial({
@@ -37,12 +40,18 @@ class PlayerCamera:
             self.line = THREE.Line(geometry, material)
             self.line.frustumCulled = False
 
-    def debug(self, scene):
+    def debug_camera(self, scene):
         if Config['camera']['debug']:
             scene.add(self.line)
 
     def set_controls(self, controls):
         self.controls = controls
+
+    def set_distance_run(self):
+        self.distance_from_player = 10
+
+    def set_distance_walk(self):
+        self.distance_from_player = 5
 
     def move(self, player, terrain):
         shoulder = self.shoulder
@@ -50,9 +59,11 @@ class PlayerCamera:
         distance = self.distance
 
         shoulder.copy(player.position)
+        shoulder.z += 1     # height of the model
+
         behind.copy(shoulder)
         distance.copy(player.direction)
-        distance.multiplyScalar(10)
+        distance.multiplyScalar(self.distance_from_player)
         l1 = distance.length()
         behind.sub(distance)
         behind.z += 2    # over the shoulder
@@ -107,22 +118,83 @@ class PlayerCamera:
         :param camera:
         :return:
         """
+        _p1.subVectors(self.position, camera.position)
+        d = _p1.length()
+        if d < 1:
+            # camera is (nearly) still
+            camera.position.copy(self.position)
+            self.linearAcceleration = 0
+        else:
+            if self.linearAcceleration == 0:
+                # kick off
+                self.linearAcceleration = 1
+
+            if self.linearAcceleration >= d:
+                # reach terminal velocity
+                self.linearAcceleration = d
+                camera.position.copy(self.position)
+            else:
+                # speed up
+                _p1.normalize().multiplyScalar(self.linearAcceleration)
+                camera.position.add(_p1)
+                self.linearAcceleration *= 1.1
+
+        camera.controls.target.copy(self.lookAt)
+        camera.up.set(0, 0, 1)
+
+        """
         _p.subVectors(self.position, self.lookAt)
-        d = _p.length()
-        _p1.subVectors(camera.position, self.lookAt).normalize().multiplyScalar(d)
+        target_camera_distance = _p.length()
+
+        _p1.subVectors(camera.position, self.lookAt)
+        real_camera_distance = _p1.length()
+        _p1.normalize().multiplyScalar(target_camera_distance)
+
+        # print(virtual_camera_distance, real_camera_distance)
         a = _p.angleTo(_p1)
 
+        if self.linearAcceleration > 0:
+            self.linearAcceleration *= 2
+
         # print("angle", a)
-        if a < 0.005:
+        if a < 0.05:
             # if the 2 vectors point to the same direction
-            # move straight ahead
-            camera.position.copy(self.position)
+            # move ahead or bck
+            _p1.subVectors(self.position, camera.position)
+            d = _p1.length()
+            if d > 1:
+                # add a momentum if the distance is 'big'
+                if self.linearAcceleration == 0:
+                    self.linearAcceleration = 0.1
+
+                camera.position.add(_p1.multiplyScalar(self.linearAcceleration))
+            else:
+                camera.position.copy(self.position)
+                self.linearAcceleration = 0
             camera.controls.target.copy(self.lookAt)
             camera.up.set(0, 0, 1)
             self.angularSpeed = 0
             self.accelerate = False
         else:
             # rotate angular
+
+            # player sped up or slowed down
+            d = target_camera_distance - real_camera_distance
+
+            print("*", d)
+
+            if d > 0.5:
+                if self.linearAcceleration == 0:
+                    self.linearAcceleration = 0.1
+
+                delta = d * self.linearAcceleration
+                if delta < d:
+                    target_camera_distance = real_camera_distance + delta
+                else:
+                    self.linearAcceleration = 0
+            else:
+                self.linearAcceleration = 0
+
             # if camera was steady, give it a kick
             if self.angularSpeed == 0:
                 self.angularSpeed = 0.05
@@ -138,7 +210,7 @@ class PlayerCamera:
                 # print('stop')
 
             _p2.multiplyScalar(self.angularSpeed)
-            _p.copy(_p1).add(_p2).normalize().multiplyScalar(d)
+            _p.copy(_p1).add(_p2).normalize().multiplyScalar(target_camera_distance)
 
             camera.position.copy(self.lookAt).add(_p)
             _p.subVectors(camera.position, self.position)
@@ -150,3 +222,4 @@ class PlayerCamera:
             if self.accelerate:
                 self.angularSpeed *= 2
                 # print('speed')
+        """
