@@ -63,6 +63,7 @@
 24/07/18: 23/07/18  engine              completely split the build_engine from the display_engine
 27/07/18: 24/07/18  terrain             road bumpmap is not applied
 03/08/18: 24/07/18  camera              change camera position based on speed (the faster, the farest)
+07/08/18: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -85,7 +86,6 @@ TODO: 01/07/18  post processing     add haze
 TODO: 03/07/18  init                add some spining cube during the loading screen
 TODO: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 TODO: 20/07/18  terrain             textures are too repetitive
-TODO: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
 TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 03/08/18  camera              move the camera 'higher' to actually move the player down on the screen
 
@@ -101,3 +101,6 @@ TODO: 25/06/18  animation	        character is blinking when running
 TODO: 25/06/18  procedural scenery  generation circle is not always along the player direction
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
+TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
+TODO: 05/08/18  terrain             when raching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
+TODO: 06/08/18  camera              just pressing SHIFT move the camera away and keep it away

@@ -7,6 +7,7 @@ import pickle
 import random
 from threading import Thread
 import queue
+import time
 
 import THREE
 import Utils as THREE_utils
@@ -63,6 +64,7 @@ class Quadtree:
         self.objects = []         # // scenary objects
         self.assets = {}       # // scenary meshes
         self.mesh = None          # // terrain mesh
+        self.last_on_screen = 0   # last time the mesh was on screen
         self.traversed = False    # was the node traversed during a recursive pass
         self.visible = False      # display or not the tile
         self.parent = parent      #
@@ -167,6 +169,7 @@ class Quadtree:
         :return:
         """
         self.visible = self.mesh.visible = True
+        self.last_on_screen = time.clock()
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere.visible = True
@@ -390,9 +393,10 @@ class QuadtreeReader(Thread):
     SDL 2.0, OpenGL, and Multithreading (Windows)
     """
 
-    def __init__(self, queue):
-        Thread.__init__(self)
-        self.queue = queue
+    def __init__(self, parent):
+        super().__init__()
+        self.queue = parent.queue
+        self.inmemory  = parent.inmemory
 
     def run(self):
         queue = self.queue
@@ -406,8 +410,11 @@ class QuadtreeReader(Thread):
             quadtree.load()
             queue.task_done()
 
+            # register the mesh in memory and the time of load
+            self.inmemory.append(quadtree)
 
-class QuadtreeProcess:
+
+class QuadtreeManager:
     """
 
     :return:
@@ -416,13 +423,40 @@ class QuadtreeProcess:
         # Establish communication queues
         self.queue = queue.Queue()
         self.loaded = 0
+        self.inmemory = []
 
-        self.thread = QuadtreeReader(self.queue)
+        self.thread = QuadtreeReader(self)
         self.thread.start()
 
     def read(self, quadtree):
         self.queue.put(quadtree)
         self.loaded += 1
+
+    def cleanup(self, scene):
+        """
+        clean old unused mesh quads
+        :return:
+        """
+        # sort the quad by last time on screen
+        def _sort(quad):
+            return quad.last_on_screen
+
+        if self.loaded >= 128:
+            self.inmemory.sort(key=_sort)
+
+            count = 100
+            for quad in self.inmemory:
+                if count < 0:
+                    break
+
+                if not quad.visible:
+                    if quad.mesh:
+                        scene.remove(quad.mesh)
+                        quad.mesh.dispose()
+                        quad.mesh = None
+                        self.loaded -= 1
+
+                count -= 1
 
     def terminate(self):
         self.queue.put(None)

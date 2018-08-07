@@ -244,7 +244,7 @@ class Terrain:
         self.indexmap.load("img/indexmap.png")
         self.blendmap.load("img/blendmap.png")
 
-        self.loader = QuadtreeProcess()
+        self.loader = QuadtreeManager()
 
     def get(self, x, y):
         """
@@ -1130,6 +1130,9 @@ class Terrain:
 
         # review tiles loaded last frame
         self._display_async_loader()
+
+        # clean up old quad meshes
+        self.loader.cleanup(self.scene)
 
     def colisionObjects(self, footprint, debug=None):
         """
