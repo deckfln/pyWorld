@@ -97,10 +97,6 @@ class Player(Actor):
         :return:
         """
         self.run = run
-        if run:
-            self.vcamera.set_distance_run()
-        else:
-            self.vcamera.set_distance_walk()
 
     def getZ(self, position=None):
         """
@@ -157,12 +153,15 @@ class Player(Actor):
                 self.define("wobbly")
             else:
                 self.define("lookaround")
+                self.vcamera.set_distance_walk()
 
         else:
             if run:
                 self.define("running")
+                self.vcamera.set_distance_run()
             else:
                 self.define("walking")
+                self.vcamera.set_distance_walk()
 
             if direction.y == 1:
                 self.turn_right(delta, run)

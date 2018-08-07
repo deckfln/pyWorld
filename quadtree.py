@@ -441,7 +441,7 @@ class QuadtreeManager:
         def _sort(quad):
             return quad.last_on_screen
 
-        if self.loaded >= 128:
+        if self.loaded >= 1024:
             self.inmemory.sort(key=_sort)
 
             count = 100

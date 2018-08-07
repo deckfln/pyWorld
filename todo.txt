@@ -64,6 +64,7 @@
 27/07/18: 24/07/18  terrain             road bumpmap is not applied
 03/08/18: 24/07/18  camera              change camera position based on speed (the faster, the farest)
 07/08/18: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
+07/08/18: 06/08/18  camera              BUG: just pressing SHIFT move the camera away and keep it away
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -103,4 +104,3 @@ TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
 TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
 TODO: 05/08/18  terrain             when raching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
-TODO: 06/08/18  camera              just pressing SHIFT move the camera away and keep it away
