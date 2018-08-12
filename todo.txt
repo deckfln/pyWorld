@@ -65,6 +65,7 @@
 03/08/18: 24/07/18  camera              change camera position based on speed (the faster, the farest)
 07/08/18: 21/07/18  terrain             implement a cleanup process for old in-memory tiles
 07/08/18: 06/08/18  camera              BUG: just pressing SHIFT move the camera away and keep it away
+12/08/18: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -79,7 +80,6 @@ TODO: 28/01/18  lights              implement lights in the shaders following Un
 TODO: 02/02/18  shadows             implement cascaded shadows
 TODO: 03/02/18  shadows             implement poisson based shadow attenuation
 TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
-TODO: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
 TODO: 30/06/18  skycube             move clouds on the skycube
 TODO: 30/06/18  clouds              display clouds shadow on the terrain
@@ -89,6 +89,7 @@ TODO: 08/07/18  light               dim sun intensity at sunrise and sunset (sim
 TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 03/08/18  camera              move the camera 'higher' to actually move the player down on the screen
+TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -104,3 +105,4 @@ TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
 TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
 TODO: 05/08/18  terrain             when raching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
+TODO: 09/08/18  procedural scenery  p_instantiate indexmap bilear crashed on the edge of the map

@@ -16,7 +16,7 @@ sys.path.append(mango_dir)
 
 from cScenery import *
 
-_cython = True
+_cython = False
 
 _tm = THREE.Vector2()
 _im = THREE.Vector2()
@@ -203,7 +203,7 @@ class ProceduralScenery:
         global _buffer_size
 
         # parse the quad
-        size = 32  # int(quad.size / 2)
+        size = 24  # int(quad.size / 2)
         terrain_size = terrain.size / 2
 
         _px = int(px - size)
@@ -215,9 +215,9 @@ class ProceduralScenery:
 
         _p2x = int(px + size)
         _p2y = int(py + size)
-        if _p2x > terrain.size:
+        if _p2x >= terrain.size:
             _p2x = terrain.size - 1
-        if _p2y > terrain.size:
+        if _p2y >= terrain.size:
             _p2y = terrain.size - 1
 
         px = int(px)
@@ -240,25 +240,20 @@ class ProceduralScenery:
                 dy = py - y
                 d = dx2 + dy * dy
 
-                if d <= 512:
+                if d <= 196 or (d <= 256 and x % 2 == 0 and y % 2 == 0) or (d <= 312 and x % 4 == 0 and y % 4 == 0):
                     k = "%d:%d" % (x, y)
                     if k not in cache:
                         terrain.screen2mapXY(x, y, _tm)
 
                         # do not put scenery on roads or rivers
-                        try:
-                            if terrain.isRiverOrRoad(_tm):
-                                continue
-                        except:
-                            print("p_instantiate ", x, y, _tm.x, _tm.y)
+                        if terrain.isRiverOrRoad(_tm):
                             continue
 
                         # get the density of each ground type
                         terrain.heightmap2indexmap(_tm, _im)
                         s = indexmap.bilinear_density(_im.x, _im.y)
                         if s is None:
-                            print("p_instantiate:", x, y, _im.x, _im.y)
-                            continue
+                            raise RuntimeError("ProceduralScenery : p_instantiate indexmap.bilinear_density is None ", x, y, _im.x, _im.y)
 
                         # now pick the density of grass
                         grass = _allocate(s, 0, x, y, terrain, heightmap, normalMap)

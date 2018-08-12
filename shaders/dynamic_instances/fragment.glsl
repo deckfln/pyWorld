@@ -107,6 +107,21 @@ void main()
     if(opacity < 0.5)
         discard;
 
+    // dynamic pixels smoothly pops in
+    float z = gl_FragCoord.z / gl_FragCoord.w;
+    if (z > 21 && int(gl_FragCoord.x) % 4 == 0 && int(gl_FragCoord.y) % 4 == 0) {
+        discard ;
+    }
+    if (z > 23 && int(gl_FragCoord.x) % 2 == 0 && int(gl_FragCoord.y) % 2 == 0) {
+        discard ;
+    }
+    if (z > 25 && int(gl_FragCoord.x) % 4 != 0 && int(gl_FragCoord.y) % 2 != 0) {
+        discard ;
+    }
+
+    //if (int(gl_FragCoord.x) % 4 != 0 && int(gl_FragCoord.y) % 4 != 0 )
+    //    discard;
+
     vec3 normal = vNormal;
     #ifdef USE_NORMALMAP
 	    normal = perturbNormal2Arb( -vViewPosition, normal );

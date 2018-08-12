@@ -145,8 +145,11 @@ class VectorMap:
         return vec3
 
     def p_nearest(self, x, y, vec3):
-        if not (0 <= x < self.size and 0 <= y < self.size):
-            return None
+        size = self.size
+
+        if not (0 <= x < size and 0 <= y < size):
+            raise RuntimeError("VectorMap : p_nearest out of bound x,y ")
+
         if isinstance(x, int) and isinstance(y, int):
             return self.get(x, y, vec3)
 
@@ -159,9 +162,11 @@ class VectorMap:
         offsety = y - gridy
 
         if offsetx > 0.5:
-            gridx += 1
+            if gridx < size-1:
+                gridx += 1
         if offsety > 0.5:
-            gridy += 1
+            if gridy < size-1:
+                gridy += 1
 
         return self.get(gridx, gridy, vec3)
 
