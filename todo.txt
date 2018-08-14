@@ -90,6 +90,7 @@ TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 03/08/18  camera              move the camera 'higher' to actually move the player down on the screen
 TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
+TODO: 14/08/18  scenery             use checkerboard to avoind different LOD pop ins
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -106,3 +107,4 @@ TODO: 23/07/18  terrain             multiple textures are displayed on the same 
 TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
 TODO: 05/08/18  terrain             when raching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
 TODO: 09/08/18  procedural scenery  p_instantiate indexmap bilear crashed on the edge of the map
+TODO: 13/08/18  procedural scenery  p_instantiate and c_instatiate do not show the same textures

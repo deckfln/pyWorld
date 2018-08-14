@@ -215,7 +215,7 @@ cdef class _spot:
 """
 def c_instantiate(object self, int px, int py, object terrain, object assets):
         # parse the quad
-        cdef int size = 16  # int(quad.size / 2)
+        cdef int size = 24  # int(quad.size / 2)
         cdef int terrain_size = terrain.size / 2
 
         cdef int _px = px - size
@@ -227,9 +227,9 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
 
         cdef int _p2x = px + size
         cdef int _p2y = py + size
-        if _p2x > terrain.size:
+        if _p2x >= terrain.size:
             _p2x = terrain.size - 1
-        if _p2y > terrain.size:
+        if _p2y >= terrain.size:
             _p2y = terrain.size - 1
 
         cdef object geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "grass", "forest", "forest1", 'forest2')]
@@ -256,7 +256,7 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
                 dy = py - y
                 d = dx2 + dy * dy
 
-                if d <= 256:
+                if d <= 196 or (d <= 256 and x % 2 == 0 and y % 2 == 0) or (d <= 312 and x % 4 == 0 and y % 4 == 0):
                     k = "%d:%d" % (x, y)
                     if k not in cache:
                         terrain.screen2mapXY(x, y, _tm)
@@ -269,7 +269,7 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
                         terrain.heightmap2indexmap(_tm, _im)
                         s = indexmap.bilinear_density(_im.x, _im.y)
                         if s is None:
-                            print(x, y, _im.x, _im.y)
+                            print("cScenery::c_instantiate", x, y, _im.x, _im.y)
                             continue
 
                         # now pick the density of grass
