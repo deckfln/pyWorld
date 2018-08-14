@@ -16,7 +16,7 @@ sys.path.append(mango_dir)
 
 from cScenery import *
 
-_cython = False
+_cython = True
 
 _tm = THREE.Vector2()
 _im = THREE.Vector2()

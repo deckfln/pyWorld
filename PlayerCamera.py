@@ -20,6 +20,7 @@ class PlayerCamera:
         self.shoulder = THREE.Vector3()
         self.behind = THREE.Vector3()
         self.distance = THREE.Vector3()
+        self.shoulder_delta = THREE.Vector3(0.5, 0, 3)
         self.angularSpeed = 0
         self.linearAcceleration = 0
         self.accelerate = False
@@ -58,15 +59,14 @@ class PlayerCamera:
         behind = self.behind
         distance = self.distance
 
-        shoulder.copy(player.position)
-        shoulder.z += 1     # height of the model
+        shoulder.copy(player.position).add(self.shoulder_delta)
 
         behind.copy(shoulder)
         distance.copy(player.direction)
         distance.multiplyScalar(self.distance_from_player)
         l1 = distance.length()
         behind.sub(distance)
-        behind.z += 2    # over the shoulder
+        #behind.z += 0    # over the shoulder
         
         # check if there is an obstacle on our line of sight
         # move the camera near the player
@@ -127,7 +127,7 @@ class PlayerCamera:
         else:
             if self.linearAcceleration == 0:
                 # kick off
-                self.linearAcceleration = 1
+                self.linearAcceleration = 0.5
 
             if self.linearAcceleration >= d:
                 # reach terminal velocity
