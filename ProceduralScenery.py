@@ -94,12 +94,16 @@ class _scenery:
         #    return True
 
         positions = self.positions
+        normal = self.normals
+
         le = self.size*3
         offset = geometry.attributes.offset.array
+        normals = geometry.attributes.normals.array
         nb = geometry.maxInstancedCount
 
         i = nb * 3
         offset[i:i + le] = positions[0:le]
+        normals[i:i + le] = normal[0:le]
 
         nb += int(le / 3)
         geometry.maxInstancedCount = nb

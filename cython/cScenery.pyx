@@ -269,8 +269,7 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
                         terrain.heightmap2indexmap(_tm, _im)
                         s = indexmap.bilinear_density(_im.x, _im.y)
                         if s is None:
-                            print("cScenery::c_instantiate", x, y, _im.x, _im.y)
-                            continue
+                            raise RuntimeError("ProceduralScenery : p_instantiate indexmap.bilinear_density is None ", x, y, _im.x, _im.y)
 
                         # now pick the density of grass
                         grass = _allocate(s, 0, x, y, terrain, heightmap, normalMap)
