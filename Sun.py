@@ -2,6 +2,8 @@
 
 """
 
+import math
+
 from THREE.Color import *
 from THREE.DirectionalLight import *
 from THREE.MeshBasicMaterial import *
@@ -19,6 +21,13 @@ class Sun:
         self.material = THREE.MeshBasicMaterial({
             'color': 0xffffff
         })
+
+        self.temperatures = [THREE.Color(0, 0, 85/255),        # blue night
+                             THREE.Color(255/255, 255/255, 200/255),     # yellow sunrise
+                             THREE.Color(255/255, 255/255, 255/255),     # white daylight
+                             THREE.Color(250/255, 214/255, 165/255),     # orange sunset
+                             THREE.Color(0, 0, 85/255)         # blue night
+                             ]
 
     def move(self, p):
         # "sun" directional vector
@@ -44,7 +53,19 @@ class Sun:
         # p.sun.shadow.camera.updateProjectionMatrix()
         # p.sun.shadow.camera.updateMatrixWorld()
 
-        # change sun temperature
+        # change sun color temperature
+        # 0           pi/6        2pi/6--4pi/6      5pi/6       pi
+        # (0,0,85)   (255,255,200)      (white)         (250,214,165)    (0, 0, 85)
+        d = p.hour * 4 / math.pi    # bring the hour from 0..pi to 0..4
+        start_color = self.temperatures[int(d)]
+        target_color = self.temperatures[int(d) + 1]
+
+        d = d - int(d)      # bring the position between 3 and 4
+        delta = self.color
+        delta.subColors(target_color, start_color)
+        delta.multiplyScalar(d)
+        delta.add(start_color)
+        """
         if p.hour < math.pi/3:
             r = p.hour*(1.0 - 250/255)/(math.pi/3)
             g = p.hour*(1.0 - 214/255)/(math.pi/3)
@@ -58,3 +79,4 @@ class Sun:
             self.color.setRGB(250/255 + r, 214/255 + g, 165/255 + b)   # sunset color
         else:
             self.color.setRGB(1.0, 1.0, 1.0)   # midday color
+        """
