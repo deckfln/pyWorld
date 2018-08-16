@@ -1,11 +1,10 @@
 """
 """
 import sys, os.path
-mango_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-+ '/THREEpy/')
+mango_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')) + '/THREEpy/')
 sys.path.append(mango_dir)
 
-from build.TerrainBuilder import *
+from TerrainBuilder import *
 
 
 def build():

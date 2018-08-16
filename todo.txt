@@ -68,10 +68,10 @@
 12/08/18: 22/06/18  procedural scenery  Add 2 levels of sceneries: near=dense, far=sparse
 14/08/18: 03/08/18  camera              move the camera 'higher' to actually move the player down on the screen
 14/08/18: 13/08/18  procedural scenery  BUG: p_instantiate and c_instatiate do not show the same textures
+16/08/18: 03/01/18  terrain generation  optimize normalMap building
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
-TODO: 03/01/18  terrain generation  optimize normalMap building
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
 TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap

@@ -2,11 +2,18 @@
 
 """
 
-from build.PerlinSimplexNoise import *
-from build.roads import *
-from build.Forest import *
-from build.city import *
+from PerlinSimplexNoise import *
+from roads import *
+from Forest import *
+from city import *
 from Terrain import *
+import time
+
+mango_dir = os.path.dirname(__file__) + '/../cython/'
+sys.path.append(mango_dir)
+
+from cHeightmapNormals import *
+cython = True
 
 
 class TerrainBuilder(Terrain):
@@ -40,7 +47,7 @@ class TerrainBuilder(Terrain):
             progress(count, total, "Perlin Generate")
         progress(0, 0)
 
-    def build_normalmap(self):
+    def _pbuild_normalmap(self):
         """
         compute the normal map of the top heightmap
         :param heightmap:
@@ -118,6 +125,21 @@ class TerrainBuilder(Terrain):
         normalMap.normalize()
 
         progress(0, 0)
+
+    def build_normalmap(self):
+        if cython:
+            cbuild_normalmap(self, self.heightmap.map, self.heightmap.size, self.normalMap.map, self.normalMap.size)
+        else:
+            self._pbuild_normalmap()
+
+        """
+        np = self.normalMap.map.copy()
+        t  = self.normalMap.map.size
+        normals = self.normalMap.map
+        for i in range(t):
+            if nm[i] != normals[i]:
+                raise RuntimeError("cyhton & python disagreee")
+        """
 
     def _build_lod_mesh(self, quad, level, lx, ly, size, material, count):
         """

@@ -31,6 +31,13 @@ cpdef void cVectorMap_get(np.ndarray[float, ndim=1] map , int size, float x, flo
     vec3[1] = map[p + 1]
     vec3[2] = map[p + 2]
 
+cpdef void cVectorMap_add(np.ndarray[float, ndim=1] map , int size, float x, float y,  np.ndarray[float, ndim=1] vec3 ):
+    cdef int p = int(3 * (x + y*size))
+
+    map[p] += vec3[0]
+    map[p + 1] += vec3[1]
+    map[p + 2] += vec3[2]
+
 cpdef void cVectorMap_bilinear(np.ndarray[float, ndim=1] map , int size, float x, float y,  np.ndarray[float, ndim=1] vec3 ):
     global _z1, _z2, _z3, _z4
 
@@ -81,3 +88,26 @@ cpdef void cVectorMap_nearest(np.ndarray[float, ndim=1] map , int size, float x,
         gridy += 1
 
     cVectorMap_get(map, size, gridx, gridy, vec3)
+
+cpdef void cVectorMap_empty(np.ndarray[float, ndim=1] map , int size):
+    cdef int s = size * size * 3
+    cdef int i
+    for i in range(0, s, 3):
+        map[i ] = 0
+        map[i + 1] = 0
+        map[i + 2] = 1
+
+cpdef void cVectorMap_normalize(np.ndarray[float, ndim=1] map , int size):
+    cdef np.ndarray[float, ndim=1] np
+    cdef int total = size * size * 3
+    _z1 = THREE.Vector3()
+    np = _z1.np
+
+    for i in range(0, total, 3):
+        np[0] = map[i]
+        np[1] = map[i + 1]
+        np[2] = map[i + 2]
+        _z1.normalize()
+        map[i] = np[0]
+        map[i + 1] = np[1]
+        map[i + 2] = np[2]

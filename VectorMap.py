@@ -13,7 +13,7 @@ sys.path.append(mango_dir)
 
 from cVectorMap import *
 
-cython = False
+cython = True
 
 # reusable vectors
 _v1_static = THREE.Vector3()
