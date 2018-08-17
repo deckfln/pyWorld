@@ -70,6 +70,7 @@
 14/08/18: 13/08/18  procedural scenery  BUG: p_instantiate and c_instatiate do not show the same textures
 16/08/18: 03/01/18  terrain generation  optimize normalMap building
 16/08/18: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
+17/08/18: 16/08/18  VectorMap           BUG: cVectorMap_billinear is all wrong (forest not generated, nomalMap wrong). bug was in cVector3_copy
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -92,7 +93,8 @@ TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
 TODO: 14/08/18  scenery             use checkerboard to avoind different LOD pop ins
-TODO: 16/08/18  player              implement the color temperature on the player textures
+TODO: 16/08/18  player              implement the color temperature on the player & scenery objects
+TODO: 16/08/18  scenery             do we need all the classes (Scenery, Tree, Evergreen, House)
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -106,8 +108,5 @@ TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
 TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
-TODO: 05/08/18  terrain             when raching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
+TODO: 05/08/18  terrain             when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
 TODO: 09/08/18  procedural scenery  p_instantiate indexmap bilear crashed on the edge of the map
-TODO: 16/08/18  terrain generation  trees are missing
-TODO: 16/08/18  terrain generation  normal map is all wrong
-

@@ -207,18 +207,6 @@ class Quadtree:
             else:
                 terrain_mesh.material = self.material
 
-        # load the scenary mesh and display
-        """
-        if Config['terrain']['display_scenary'] and scenary_mesh is not None:
-            for obj in scenary_mesh.values():
-                if obj is not None:
-                    obj.material = instance_material
-                    obj.customDepthMaterial = instance_depth_material
-                    obj.frustumCulled = False
-                    obj.geometry.maxInstancedCount = obj.geometry.attributes.offset.meshPerAttribute * obj.geometry.attributes.offset.count
-
-                    self.mesh.add(obj)
-        """
         # if Config['terrain']['debug']['boundingsphere']:
         # TODO : how do you draw the bounding spheres of an instance ?
         #    radius = self.merged_mesh.geometry.boundingSphere.radius
@@ -233,8 +221,8 @@ class Quadtree:
             for obj in self.objects:
                 terrain_mesh.add(obj.AxisAlignedBoundingBoxes(center))
 
-        if self.level > 4 and Config['terrain']['debug']['normals']:
-            self.normals = THREE.VertexNormalsHelper(terrain_mesh, 1, 0xff0000, 1)
+        if self.level > 3 and Config['terrain']['debug']['normals']:
+            self.normals = THREE.VertexNormalsHelper(terrain_mesh, 4, 0xff0000, 4)
             terrain_mesh.add(self.normals)
 
         self.mesh = terrain_mesh

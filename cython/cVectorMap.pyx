@@ -25,7 +25,7 @@ cdef _z3 = THREE.Vector3()
 cdef _z4 = THREE.Vector3()
 
 cpdef void cVectorMap_get(np.ndarray[float, ndim=1] map , int size, float x, float y,  np.ndarray[float, ndim=1] vec3 ):
-    cdef int p = int(3 * (x + y*size))
+    cdef int p = 3 * (int(x) + int(y)*size)
 
     vec3[0] = map[p]
     vec3[1] = map[p + 1]
@@ -46,32 +46,37 @@ cpdef void cVectorMap_bilinear(np.ndarray[float, ndim=1] map , int size, float x
     cdef float gridy = floor(y)
     cdef float offsety = y - gridy
 
+    cdef np.ndarray[float, ndim=1] _z1np = _z1.np
+    cdef np.ndarray[float, ndim=1] _z2np = _z2.np
+    cdef np.ndarray[float, ndim=1] _z3np = _z3.np
+    cdef np.ndarray[float, ndim=1] _z4np = _z4.np
+
     if x == gridx and y == gridy:
         cVectorMap_get(map, size, x, y, vec3)
         return
 
     # bilinear interpolation
 
-    cVectorMap_get(map, size, gridx, gridy, _z1.np)
+    cVectorMap_get(map, size, gridx, gridy, _z1np)
     if gridx < size - 1:
-        cVectorMap_get(map, size, gridx + 1, gridy, _z2.np)
+        cVectorMap_get(map, size, gridx + 1, gridy, _z2np)
         if gridy < size - 1:
-            cVectorMap_get(map, size, gridx + 1, gridy + 1, _z3.np)
+            cVectorMap_get(map, size, gridx + 1, gridy + 1, _z3np)
         else:
-            cVector3_copy(_z3.np, _z1.np)
+            cVector3_copy(_z3.np, _z1np)
     else:
-        cVector3_copy(_z2.np, _z1.np)
-        cVector3_copy(_z3.np, _z1.np)
+        cVector3_copy(_z2.np, _z1np)
+        cVector3_copy(_z3.np, _z1np)
     if gridy < size - 1:
-        cVectorMap_get(map, size, gridx, gridy + 1, _z4.np)
+        cVectorMap_get(map, size, gridx, gridy + 1, _z4np)
     else:
-        cVector3_copy(_z4.np, _z1.np)
+        cVector3_copy(_z4.np, _z1np)
 
     # https://forum.unity.com/threads/vector-bilinear-interpolation-of-a-square-grid.205644/
-    cVector3_lerp(_z1.np, _z2.np, offsetx)
-    cVector3_lerp(_z3.np, _z4.np, offsetx)
-    cVector3_lerp(_z1.np, _z3.np, offsety)
-    cVector3_copy(vec3, _z1.np)
+    cVector3_lerp(_z1np, _z2np, offsetx)
+    cVector3_lerp(_z3np, _z4np, offsetx)
+    cVector3_lerp(_z1np, _z3np, offsety)
+    cVector3_copy(vec3, _z1np)
 
 cpdef void cVectorMap_nearest(np.ndarray[float, ndim=1] map , int size, float x, float y, np.ndarray[float, ndim=1] vec3 ):
     cdef float gridx = floor(x)

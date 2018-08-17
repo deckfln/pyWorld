@@ -7,7 +7,7 @@ setup(
     ext_modules = [
         Extension("cHeightmapNormals",
                 sources=["cHeightmapNormals.pyx"],
-                extra_compile_args=["/openmp"],
+                extra_compile_args=["/fp:fast", "/favor:INTEL64", "/arch:AVX"],
                 include_dirs=[numpy.get_include()]
                   )
     ],

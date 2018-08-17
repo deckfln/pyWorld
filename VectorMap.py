@@ -46,7 +46,7 @@ class VectorMap:
     def setV(self, v, vec3):
         self.set(v.x, v.y, vec3)
 
-    def add(self, x, y, vec3):
+    def _add(self, x, y, vec3):
         if x < 0 or y < 0 or x > self.size or y > self.size:
             return
         p = int(3 * (x + y*self.size))
@@ -60,14 +60,13 @@ class VectorMap:
 
         return vec3
 
-    def get(self, x, y , v):
+    def add(self, x, y, vec3):
         if cython:
-            cVectorMap_get(self.map, self.size, x, y, v.np)
+            cVectorMap_add(self.map, self.size, x, y, vec3.np)
         else:
-            return self.p_get(x, y, v)
-        return v
+            self._padd(x, y, vec3)
 
-    def p_get(self, x, y, v):
+    def _pget(self, x, y, v):
         if x < 0 or y < 0 or x > self.size or y > self.size:
             return None
 
@@ -80,6 +79,13 @@ class VectorMap:
 
         return v
 
+    def get(self, x, y , v):
+        if cython:
+            cVectorMap_get(self.map, self.size, x, y, v.np)
+        else:
+            return self._pget(x, y, v)
+        return v
+
     def getV(self, v, vec3):
         return self.get(v.x, v.y, vec3)
 
@@ -90,17 +96,12 @@ class VectorMap:
             map[i + 1] = 0
             map[i + 2] = 1
 
-    def bilinear(self, x, y, vec3):
-        if cython:
-            cVectorMap_bilinear(self.map, self. size, x, y, vec3.np)
-        else:
-            self.p_bilinear(x, y, vec3)
-        return vec3
-
-    def p_bilinear(self, x, y, vec3):
+    def _pbilinear(self, x, y, vec3):
         global _z1, _z2, _z3, _z4
 
-        if not (0 <= x < self.size and 0 <= y < self.size):
+        size = self.size
+
+        if not (0 <= x < size and 0 <= y < size):
             return None
 
         if isinstance(x, int) and isinstance(y, int):
@@ -116,16 +117,16 @@ class VectorMap:
             return self.get(x, y, vec3)
 
         self.get(gridx, gridy, _z1)
-        if gridx < self.size - 1:
+        if gridx < size - 1:
             self.get(gridx + 1, gridy, _z2)
-            if gridy < self.size - 1:
+            if gridy < size - 1:
                 self.get(gridx + 1, gridy + 1, _z3)
             else:
                 _z3.copy(_z1)
         else:
             _z2.copy(_z1)
             _z3.copy(_z1)
-        if gridy < self.size - 1:
+        if gridy < size - 1:
             self.get(gridx, gridy + 1, _z4)
         else:
             _z4.copy(_z1)
@@ -137,14 +138,14 @@ class VectorMap:
         vec3.copy(_z1)
         return vec3
 
-    def nearest(self, x, y, vec3):
+    def bilinear(self, x, y, vec3):
         if cython:
-            cVectorMap_nearest(self.map, self.size, x, y, vec3.np)
+            cVectorMap_bilinear(self.map, self. size, x, y, vec3.np)
         else:
-            self.p_nearest(x, y, vec3)
+            self._pbilinear(x, y, vec3)
         return vec3
 
-    def p_nearest(self, x, y, vec3):
+    def _pnearest(self, x, y, vec3):
         size = self.size
 
         if not (0 <= x < size and 0 <= y < size):
@@ -153,7 +154,7 @@ class VectorMap:
         if isinstance(x, int) and isinstance(y, int):
             return self.get(x, y, vec3)
 
-        if x.is_integer() and y.is_integer():
+        if x - int(x) == 0 and y - int(y) == 0:
             return self.get(x, y, vec3)
 
         gridx = math.floor(x)
@@ -169,6 +170,13 @@ class VectorMap:
                 gridy += 1
 
         return self.get(gridx, gridy, vec3)
+
+    def nearest(self, x, y, vec3):
+        if cython:
+            cVectorMap_nearest(self.map, self.size, x, y, vec3.np)
+        else:
+            self._pnearest(x, y, vec3)
+        return vec3
 
     def normalize(self):
         map = self.map
@@ -188,10 +196,10 @@ class VectorMap:
         i = 0
         for x in range(self.size):
             for y in range(self.size):
-                v = self.get(x,y)
-                data[i] = v.np[0]
-                data[i + 1] = v.np[1]
-                data[i + 2] = v.np[2]
+                self.get(x,y, _v1_static)
+                data[i] = _v1_static.np[0]
+                data[i + 1] = _v1_static.np[1]
+                data[i + 2] = _v1_static.np[2]
 
                 i += 3
 
