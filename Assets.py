@@ -75,9 +75,11 @@ class Assets:
 
         return asset
 
-    def set_light_uniform(self, position):
+    def set_sun(self, sun):
         for asset in self.assets.values():
-            asset.material.uniforms.light.value = position
+            asset.material.uniforms.light.value = sun.light.position
+            asset.material.uniforms.ambientCoeff.value = sun.ambientCoeff
+            asset.material.uniforms.sunColor.value = sun.color
 
     def _instantiate_mesh(self, mesh, dynamic):
         normalMap = None

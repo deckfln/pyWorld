@@ -13,9 +13,12 @@ from Config import *
 class Sun:
     def __init__(self):
         self.time = 0
-        self.color = THREE.Color(250/255, 214/255, 165/255)   # sunset color
         self.ambientCoeff = 0.3
         self.light = THREE.DirectionalLight(0xffffff, 1)
+        self.ambient = THREE.AmbientLight(0xffffff, self.ambientCoeff)
+        self.color = self.light.color
+        self.ambient.color = self.light.color
+
         self.light.position.set(100, 100, 100)
 
         self.material = THREE.MeshBasicMaterial({
@@ -28,6 +31,10 @@ class Sun:
                              THREE.Color(250/255, 214/255, 165/255),     # orange sunset
                              THREE.Color(0, 0, 85/255)         # blue night
                              ]
+
+    def add2scene(self, scene):
+        scene.add(self.ambient)
+        scene.add(self.light)
 
     def move(self, p):
         # "sun" directional vector
@@ -61,10 +68,10 @@ class Sun:
         target_color = self.temperatures[int(d) + 1]
 
         d = d - int(d)      # bring the position between 3 and 4
-        delta = self.color
-        delta.subColors(target_color, start_color)
+        delta = THREE.Color().subColors(target_color, start_color)
         delta.multiplyScalar(d)
         delta.add(start_color)
+        self.color.copy(delta)
         """
         if p.hour < math.pi/3:
             r = p.hour*(1.0 - 250/255)/(math.pi/3)

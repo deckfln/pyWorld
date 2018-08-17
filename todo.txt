@@ -71,6 +71,7 @@
 16/08/18: 03/01/18  terrain generation  optimize normalMap building
 16/08/18: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 17/08/18: 16/08/18  VectorMap           BUG: cVectorMap_billinear is all wrong (forest not generated, nomalMap wrong). bug was in cVector3_copy
+17/08/18: 16/08/18  player              implement the color temperature on the player & scenery objects
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -93,7 +94,6 @@ TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
 TODO: 14/08/18  scenery             use checkerboard to avoind different LOD pop ins
-TODO: 16/08/18  player              implement the color temperature on the player & scenery objects
 TODO: 16/08/18  scenery             do we need all the classes (Scenery, Tree, Evergreen, House)
 
 -- BUGS --

@@ -110,14 +110,7 @@ class _InitThread(Thread):
 
         # initialize the sun
         p.sun = Sun()
-
-        instance_material.uniforms.light.value = p.sun.light.position
-        instance_material.uniforms.ambientCoeff.value = p.sun.ambientCoeff
-        instance_material.uniforms.sunColor.value = p.sun.color
-
-        instance_grass_material.uniforms.light.value = p.sun.light.position
-        instance_grass_material.uniforms.ambientCoeff.value = p.sun.ambientCoeff
-        instance_grass_material.uniforms.sunColor.value = p.sun.color
+        p.sun.add2scene(p.scene)
 
         # cubemap
         print("Init CubeMap...")
@@ -146,8 +139,6 @@ class _InitThread(Thread):
         """
 
         # init the scene
-        p.scene.add(THREE.AmbientLight(p.sun.color))
-        p.scene.add(p.sun.light)
         p.scene.background = background
 
         # init the shadowmap
@@ -199,7 +190,7 @@ class _InitThread(Thread):
         print("Init Terrain...")
         p.terrain = Terrain(512, 25, 512)
         p.terrain.load(p.sun)
-        p.assets.set_light_uniform(p.sun.light.position)
+        p.assets.set_sun(p.sun)
         p.load_percentage += 5
         p.terrain.scene = p.scene
         p.load_percentage += 5
@@ -333,6 +324,9 @@ def animate(p):
 
     p.controls.update()
 
+    # update lighting
+    p.sun.move(p)
+
     # Check player direction
     # and move the terrain if needed
     p.player.move(delta, p.terrain)
@@ -369,8 +363,6 @@ def animate(p):
 
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)
-
-    p.sun.move(p)
 
     # time passes
     # complete half-circle in 5min = 9000 frames
