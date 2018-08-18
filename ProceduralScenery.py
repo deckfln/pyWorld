@@ -219,10 +219,10 @@ class ProceduralScenery:
 
         _p2x = int(px + size)
         _p2y = int(py + size)
-        if _p2x >= terrain.size:
-            _p2x = terrain.size - 1
-        if _p2y >= terrain.size:
-            _p2y = terrain.size - 1
+        if _p2x >= terrain_size:
+            _p2x = terrain_size - 1
+        if _p2y >= terrain_size:
+            _p2y = terrain_size - 1
 
         px = int(px)
         py = int(py)
@@ -258,7 +258,7 @@ class ProceduralScenery:
                         terrain.heightmap2indexmap(_tm, _im)
                         s = indexmap.bilinear_density(_im.x, _im.y)
                         if s is None:
-                            raise RuntimeError("ProceduralScenery : p_instantiate indexmap.bilinear_density is None ", x, y, _im.x, _im.y)
+                            raise RuntimeError("ProceduralScenery : p_instantiate indexmap.bilinear_density is None ", x, y, _tm.x, _tm.y, _im.x, _im.y)
 
                         # now pick the density of grass
                         grass = _allocate(s, 0, x, y, terrain, heightmap, normalMap)

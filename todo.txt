@@ -73,13 +73,13 @@
 17/08/18: 16/08/18  VectorMap           BUG: cVectorMap_billinear is all wrong (forest not generated, nomalMap wrong). bug was in cVector3_copy
 17/08/18: 16/08/18  player              implement the color temperature on the player & scenery objects
 18/08/18: 05/08/18  procedural scenery  BUG: c_instantiate loops when approaching the the road
+18/08/18: 09/08/18  procedural scenery  BUG: p_instantiate indexmap bilear / nearest crashed on the edge of the map
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
 TODO: 07/01/18  terrain             Update indexmap for steep slop with a rocky texture
 TODO: 15/01/18  performance         use occlusion culling on tiles
 TODO: 17/01/18  terrain + quad      let EMPTY tiles exist to get a non-square heightmap
-TODO: 27/01/18  camera              smooth the movement when then camera goes upward or downward to follow the terrain
 TODO: 28/01/18  player              when the player is sliding down a slope, turn the player along the normal of the slope
 TODO: 28/01/18  shadows             Cast shadows for scenery outside of the frusturm AND outside of the shadow camera cone
 TODO: 28/01/18  lights              implement lights in the shaders following UniformsLibs implementation
@@ -96,6 +96,9 @@ TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
 TODO: 14/08/18  scenery             use checkerboard to avoind different LOD pop ins
 TODO: 16/08/18  scenery             do we need all the classes (Scenery, Tree, Evergreen, House)
+TODO: 18/08/18  gui                 display player's position
+TODO: 18/08/18  heightmap           stream heightmap, normalmap as we stream the meshes
+TODO: 18/08/18  sun                 sun should not be visible during 'night'
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -109,4 +112,5 @@ TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
 TODO: 05/08/18  terrain             when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
-TODO: 09/08/18  procedural scenery  p_instantiate indexmap bilear crashed on the edge of the map
+TODO: 18/08/18  player              BUG: player can drop off the map on the north-west & south-west edges of the map
+TODO: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map

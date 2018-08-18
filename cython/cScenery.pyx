@@ -227,10 +227,10 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
 
         cdef int _p2x = px + size
         cdef int _p2y = py + size
-        if _p2x >= terrain.size:
-            _p2x = terrain.size - 1
-        if _p2y >= terrain.size:
-            _p2y = terrain.size - 1
+        if _p2x >= terrain_size:
+            _p2x = terrain_size - 1
+        if _p2y >= terrain_size:
+            _p2y = terrain_size - 1
 
         cdef object geometries = [assets.get(asset_name).geometry for asset_name in ("grass", "high grass", "grass", "forest", "forest1", 'forest2')]
 
