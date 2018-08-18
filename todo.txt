@@ -32,12 +32,12 @@
 25/02/18: 18/02/18  scenery             use displacement map to distribute grass blades
 26/02/18: 25/02/18  OO                  refactor indexmap class
 01/03/18: 25/02/18  OO                  refactor Asset class
-17/01/18: 15/04/18  camera              engine crash if camera if outside of the heightmap
-14/04/18: 15/04/18  procedural scenery  engine crashes when reaching the heightmap border
-14/04/18: 15/04/18  player              engine crashed when player outside of the heightmap
+15/04/18; 17/01/18   camera              engine crash if camera if outside of the heightmap
+15/04/18: 14/04/18  procedural scenery  engine crashes when reaching the heightmap border
+15/04/18: 14/04/18  player              engine crashed when player outside of the heightmap
 22/04/18: 18/04/18  scenery             use better assets for trees, with LOD
 06/02/18: 29/04/18  terrain             stiching: use only one vertex out of 2 on a border if a tile touch a tile with lower resolution. Reindex vertex
-29/04/18: 07/05/18  terrain             enforce 1 level difference between 2 tiles next to each other.
+07/05/18: 29/04/18  terrain             enforce 1 level difference between 2 tiles next to each other.
 13/05/18: 07/05/18  terrain quad        speed up the new algo
 14/05/18: 18/04/18  terrain class       refactor the class to move the build part to a dedicated file
 14/05/18: 07/05/18  terrain quad        do not keep the tile grid square. Move the point inside the grid to the highest point in the sub-tile
@@ -46,18 +46,18 @@
 28/05/18: 01/05/18  gui                 add a FPS widget
 29/05/18: 01/05/18  init                add a loading GUI
 22/06/18:           procedural scenery  reimplement the generation process. Fast and better
-23/06/18: 26/06/18  scenery             lighting is wrong for some models because of normal vectors not normalized
-24/06/18: 25/06/18  terrain shader      use only 1 image instead of 6 images for the terrain textures
+26/06/18: 23/06/18   scenery             lighting is wrong for some models because of normal vectors not normalized
+25/06/18: 24/06/18  terrain shader      use only 1 image instead of 6 images for the terrain textures
 28/06/18: 24/06/18  terrain shader      use 2 levels of images based on distance
-28/06/18: 30/06/18  engine              move shaders & texture to configuration files
-30/06/18: 04/07/18  sun                 move the sun from an mesh object to the skycube
+30/06/18: 28/06/18   engine              move shaders & texture to configuration files
+04/07/18: 30/06/18   sun                 move the sun from an mesh object to the skycube
 10/02/18            light               instances objects lightning is wrong
 30/06/18            procedural scenery  grass disapear sometimes (add dual face quads ?)
 07/07/18            lightning           update the sun shader on the skybox
 08/07/18: 30/06/18  sun lighting        adapt sun color based on time
 08/07/18: 03/07/18  light               add ambient color. Back color of objects is all black
 15/07/18: 09/07/18  terrain             add bumpmap to terrain tiles
-21/04/18: 03/07/18  post processing     reimplement mesh streaming
+03/07/18: 21/04/18  post processing     reimplement mesh streaming
 23/07/18: 24/02/18  terrain             frustrum culling is visible on the edge
 24/07/18: 23/07/18  terrain             roads are not draws on top of terrain texture
 24/07/18: 23/07/18  engine              completely split the build_engine from the display_engine
@@ -74,6 +74,8 @@
 17/08/18: 16/08/18  player              implement the color temperature on the player & scenery objects
 18/08/18: 05/08/18  procedural scenery  BUG: c_instantiate loops when approaching the the road
 18/08/18: 09/08/18  procedural scenery  BUG: p_instantiate indexmap bilear / nearest crashed on the edge of the map
+18/08/18: 18/08/18  player              BUG: player can drop off the map on the north-west & south-west edges of the map
+18/08/18: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -99,6 +101,8 @@ TODO: 16/08/18  scenery             do we need all the classes (Scenery, Tree, E
 TODO: 18/08/18  gui                 display player's position
 TODO: 18/08/18  heightmap           stream heightmap, normalmap as we stream the meshes
 TODO: 18/08/18  sun                 sun should not be visible during 'night'
+TODO: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
+TODO: 18/08/18  player              improve the ambient color for the player's back when facing the sun
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -111,6 +115,4 @@ TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
-TODO: 05/08/18  terrain             when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
-TODO: 18/08/18  player              BUG: player can drop off the map on the north-west & south-west edges of the map
-TODO: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map
+TODO: 05/08/18  terrain             BUG: when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)

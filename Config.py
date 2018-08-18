@@ -2,7 +2,7 @@
 """
 
 Config = {
-    'folder': 'c:/dev/pyworld',
+    'folder': 'e:/dev/pyworld',
     'pseudo_random': True,
     'pseudo_random_seed': 5454334,
 

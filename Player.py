@@ -222,8 +222,8 @@ class Player(Actor):
             d.multiplyScalar(1.5)
             p.add(d)
 
-        size = self.terrain.size
-        if -size < p.x <= size and -size < p.y <= size:
+        size = self.terrain.size / 2 - 2
+        if -size < p.x < size and -size < p.y < size:
             self.position.copy(p)
 
             if Config['player']['debug']['direction']:
@@ -273,15 +273,19 @@ class Player(Actor):
             d.multiplyScalar(1.5)
             p.sub(d)
         
-        self.position.copy(p)
-        
-        if Config['player']['debug']['direction']:
-            self.helper.position.copy(p)
+        size = self.terrain.size /2 - 2
+        if -size < p.x < size and -size < p.y < size:
+            self.position.copy(p)
 
-        if Config['player']['debug']['collision']:
-            self.aabb.position.copy(p)
+            if Config['player']['debug']['direction']:
+                self.helper.position.copy(p)
 
-        return True
+            if Config['player']['debug']['collision']:
+                self.aabb.position.copy(p)
+
+            return True
+
+        return False
 
     def turn_left(self,delta, run):
         """
