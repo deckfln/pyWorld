@@ -263,6 +263,7 @@ def c_instantiate(object self, int px, int py, object terrain, object assets):
 
                         # do not put scenery on roads or rivers
                         if terrain.isRiverOrRoad(_tm):
+                            y += 1
                             continue
 
                         # get the density of each ground type

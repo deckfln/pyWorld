@@ -72,6 +72,7 @@
 16/08/18: 08/07/18  light               dim sun intensity at sunrise and sunset (simulate night/day cycle)
 17/08/18: 16/08/18  VectorMap           BUG: cVectorMap_billinear is all wrong (forest not generated, nomalMap wrong). bug was in cVector3_copy
 17/08/18: 16/08/18  player              implement the color temperature on the player & scenery objects
+18/08/18: 05/08/18  procedural scenery  BUG: c_instantiate loops when approaching the the road
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -107,6 +108,5 @@ TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
-TODO: 05/08/18  procedural scenery  c_instantiate loops when approaching the the road
 TODO: 05/08/18  terrain             when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
 TODO: 09/08/18  procedural scenery  p_instantiate indexmap bilear crashed on the edge of the map

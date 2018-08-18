@@ -251,6 +251,7 @@ class ProceduralScenery:
 
                         # do not put scenery on roads or rivers
                         if terrain.isRiverOrRoad(_tm):
+                            y += 1
                             continue
 
                         # get the density of each ground type
