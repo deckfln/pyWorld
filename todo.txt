@@ -76,6 +76,7 @@
 18/08/18: 09/08/18  procedural scenery  BUG: p_instantiate indexmap bilear / nearest crashed on the edge of the map
 18/08/18: 18/08/18  player              BUG: player can drop off the map on the north-west & south-west edges of the map
 18/08/18: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map
+19/08/18: 01/07/18  post processing     add haze
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -91,7 +92,6 @@ TODO: 22/06/18  procedural scenery  implement multiple textures for grass blades
 TODO: 22/06/18  terrain generation  simplify mesh per quad: keep the borders but simplify inside
 TODO: 30/06/18  skycube             move clouds on the skycube
 TODO: 30/06/18  clouds              display clouds shadow on the terrain
-TODO: 01/07/18  post processing     add haze
 TODO: 03/07/18  init                add some spining cube during the loading screen
 TODO: 20/07/18  terrain             textures are too repetitive
 TODO: 28/07/18  engine              move shader configuration to config file
