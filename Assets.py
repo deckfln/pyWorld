@@ -122,10 +122,11 @@ class Assets:
         mesh.frustumCulled = False
 
     def load(self, name, level, model, vscale, dynamic=False):
+        cwd = Config["folder"]
         if model in self.cache:
             mesh = self.cache[model].clone()
         else:
-            cache = pyCache("%s.obj" % model)
+            cache = pyCache(cwd, "%s.obj" % model)
             mesh = cache.load()
             if mesh is None:
                 asset = self._load(model)

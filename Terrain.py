@@ -42,7 +42,6 @@ class Terrain:
         self.onscreen = onscreen
         self.heightmap = Heightmap(size, height)
         self.nb_levels = 6
-        self.lod = 2**(self.nb_levels-1)   # // 2^5
         self.heightmaps = [None]*self.nb_levels
         self.quad_lod = [None]*self.nb_levels
         self.tiles = [None]*self.nb_levels
@@ -133,16 +132,17 @@ class Terrain:
             :return:
             """
             loader = THREE.TextureLoader()
+            folder = Config['folder']
 
-            indexmap = loader.load("img/indexmap.png")
+            indexmap = loader.load(folder + "/img/indexmap.png")
             indexmap.magFilter = THREE.NearestFilter
             indexmap.minFilter = THREE.NearestFilter
             self.indexmap.texture = indexmap
 
-            self.terrain_textures = loader.load("img/terrain_d.png")
-            normalMap = loader.load("img/terrain_n.png")
+            self.terrain_textures = loader.load(folder + "/img/terrain_d.png")
+            normalMap = loader.load(folder + "/img/terrain_n.png")
 
-            self.blendmap.texture = loader.load("img/blendmap.png")
+            self.blendmap.texture = loader.load(folder + "/img/blendmap.png")
 
             floader = THREE.FileLoader()
             uniforms = {
@@ -166,12 +166,12 @@ class Terrain:
 
             self.material = THREE.ShaderMaterial( {
                 'uniforms': uniforms,
-                'vertexShader': floader.load('shaders/vertex.glsl'),
-                'fragmentShader': floader.load('shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_far = loader.load("img/terrain_far_d.png")
+            terrain_far = loader.load(folder + "/img/terrain_far_d.png")
 
             uniforms_far = {
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
@@ -188,12 +188,12 @@ class Terrain:
             }
             self.material_far = THREE.ShaderMaterial( {
                 'uniforms': uniforms_far,
-                'vertexShader': floader.load('shaders/vertex.glsl'),
-                'fragmentShader': floader.load('shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_very_far = loader.load("img/terrain_very_far_d.png")
+            terrain_very_far = loader.load(folder + "/img/terrain_very_far_d.png")
 
             uniforms_very_far = {
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
@@ -210,8 +210,8 @@ class Terrain:
             }
             self.material_very_far = THREE.ShaderMaterial( {
                 'uniforms': uniforms_very_far,
-                'vertexShader': floader.load('shaders/vertex.glsl'),
-                'fragmentShader': floader.load('shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
@@ -225,15 +225,16 @@ class Terrain:
         :return:
         """
         self.light = sun.light
+        folder = Config["folder"]
 
         self.shaders(sun)
-        with open("bin/heightmap.pkl", "rb") as f:
+        with open(folder + "/bin/heightmap.pkl", "rb") as f:
             self.heightmap = pickle.load(f)
 
-        with open("bin/normalmap.pkl", "rb") as f:
+        with open(folder + "/bin/normalmap.pkl", "rb") as f:
             self.normalMap = pickle.load(f)
 
-        with open("bin/worldmap.pkl", "rb") as f:
+        with open(folder + "/bin/worldmap.pkl", "rb") as f:
             quads = pickle.load(f)
             self.quadtree = quads[0]
             quads[0].build_index(self.quadtree_index)
@@ -241,8 +242,8 @@ class Terrain:
             Quadtree.material_far = self.material_far
             Quadtree.material_very_far = self.material_very_far
 
-        self.indexmap.load("img/indexmap.png")
-        self.blendmap.load("img/blendmap.png")
+        self.indexmap.load(folder + "/img/indexmap.png")
+        self.blendmap.load(folder + "/img/blendmap.png")
 
         self.loader = QuadtreeManager()
 

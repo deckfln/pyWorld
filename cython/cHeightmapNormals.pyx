@@ -11,7 +11,8 @@ from libc.math cimport sqrt, floor
 from cVectorMap import *
 from progress import *
 
-from THREE.Vector3 import *
+from THREE.math.Vector3 import *
+from THREE.math.Vector2 import *
 
 
 cpdef float cHeightmap_get(np.ndarray[float, ndim=1] map, int size, int x, int y):
@@ -73,11 +74,11 @@ def cbuild_normalmap(terrain, np.ndarray[float, ndim=1] heightmap, int heightmap
     ratio = terrain.ratio_screen_2_map
     half = terrain.half
 
-    pA = THREE.Vector3()
-    pB = THREE.Vector3()
-    pC = THREE.Vector3()
-    cb = THREE.Vector3()
-    ab = THREE.Vector3()
+    pA = Vector3()
+    pB = Vector3()
+    pC = Vector3()
+    cb = Vector3()
+    ab = Vector3()
 
     cdef np.ndarray[float, ndim=1] pAnp = pA.np
     cdef np.ndarray[float, ndim=1] pBnp = pB.np
@@ -91,9 +92,9 @@ def cbuild_normalmap(terrain, np.ndarray[float, ndim=1] heightmap, int heightmap
     total = heightmap_size * heightmap_size
 
     # // for each vertex, compute the face normal, and add to the vertex normal
-    mA = THREE.Vector2()
-    mB = THREE.Vector2()
-    mC = THREE.Vector2()
+    mA = Vector2()
+    mB = Vector2()
+    mC = Vector2()
 
     cdef np.ndarray[float, ndim=1] mAnp = mA.np
     cdef np.ndarray[float, ndim=1] mBnp = mB.np

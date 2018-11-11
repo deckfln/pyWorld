@@ -14,7 +14,7 @@ from datetime import datetime
 from THREE import *
 from THREE.pyOpenGL.pyOpenGL import *
 from THREE.controls.TrackballControls import *
-from THREE.TextureLoader import *
+from THREE.loaders.TextureLoader import *
 
 from Terrain import *
 from Player import *
@@ -357,9 +357,10 @@ def animate(p):
                         p.assets.instantiate(asset)
 
         # build procedural scenery around the player, on even frame
-        if p.renderer._infoRender.frame % 5:
-            p.assets.reset_dynamic_instances()
-            p.procedural_scenery.instantiate(p.player, p.terrain, p.assets)
+        if Config['terrain']['display_grass']:
+            if p.renderer.info.render.frame % 5:
+                p.assets.reset_dynamic_instances()
+                p.procedural_scenery.instantiate(p.player, p.terrain, p.assets)
 
     # Check player direction
     # p.player.update(delta, p.gamepad.move_direction, p.gamepad.run, p.terrain)

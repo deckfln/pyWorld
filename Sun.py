@@ -4,9 +4,9 @@
 
 import math
 
-from THREE.Color import *
-from THREE.DirectionalLight import *
-from THREE.MeshBasicMaterial import *
+from THREE.math.Color import *
+from THREE.lights.DirectionalLight import *
+from THREE.materials.MeshBasicMaterial import *
 from Config import *
 
 

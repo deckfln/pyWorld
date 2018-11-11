@@ -287,4 +287,5 @@ void main()
 
     // debug normalmap
     // gl_FragColor = vec4(finalNormal, 1.0);
+
 }

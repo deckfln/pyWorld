@@ -4,8 +4,8 @@
 import numpy as np
 import os, sys
 
-from THREE.Vector3 import *
-from THREE.DataTexture import *
+from THREE.math.Vector3 import *
+from THREE.textures.DataTexture import *
 from Array2D import *
 
 mango_dir = os.path.dirname(__file__) + '/cython/'

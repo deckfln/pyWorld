@@ -20,8 +20,8 @@ _v3d1_static = THREE.Vector3()
 
 
 class Player(Actor):
-    def __init__(self, position, scene, terrain):
-        super().__init__("models/marie-jane.dae")
+    def __init__(self, cwd, file, position, scene, terrain):
+        super().__init__(cwd, file)
 
         self.status = "drop"
         self.direction = THREE.Vector3(0.3, 0, 0).normalize()     # direction face the player is moving to

@@ -11,7 +11,7 @@ import time
 
 import THREE
 import Utils as THREE_utils
-import THREE.ShaderLib as THREE_ShaderLib
+import THREE.renderers.shaders.ShaderLib as THREE_ShaderLib
 
 from Config import *
 from progress import *
@@ -24,7 +24,7 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
             'transparent': True,
             'wireframe': False})
 
-_material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/evergreen.png')})
+# _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/evergreen.png')})
 
 
 def _loadMeshIO(name):

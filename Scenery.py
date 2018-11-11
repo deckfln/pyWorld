@@ -4,8 +4,8 @@
 """
 from Config import*
 
-from THREE.Loader import *
-from THREE.Group import *
+from THREE.loaders.Loader import *
+from THREE.objects.Group import *
 from THREE.javascriparray import *
 from Assets import *
 

@@ -7,8 +7,8 @@
 
 cimport cython
 
-from THREE.Vector2 import *
-from THREE.Vector3 import *
+from THREE.math.Vector2 import *
+from THREE.math.Vector3 import *
 from prng import *
 
 import sys

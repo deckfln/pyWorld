@@ -1,7 +1,7 @@
 """
 """
 import THREE
-from THREE.Camera import *
+from THREE.cameras.Camera import *
 
 from Config import *
 

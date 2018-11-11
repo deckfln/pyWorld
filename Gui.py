@@ -24,11 +24,11 @@ class GUI:
             return False
 
         self.last_time = t
-        fps = self.renderer._infoRender.frame - self.last_frame
+        fps = self.renderer.info.render.frame - self.last_frame
         if fps > 30:
             fps = 30
 
-        self.last_frame = self.renderer._infoRender.frame
+        self.last_frame = self.renderer.info.render.frame
 
         for i in range(29):
             self.history[i] = self.history[i+1]

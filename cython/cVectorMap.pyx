@@ -7,7 +7,7 @@
 
 cimport cython
 
-from THREE.Vector3 import *
+from THREE.math.Vector3 import *
 
 import sys
 import numpy as np
@@ -19,10 +19,10 @@ from libc.stdlib cimport malloc, free
 
 from THREE.cython.cthree import *
 
-cdef _z1 = THREE.Vector3()
-cdef _z2 = THREE.Vector3()
-cdef _z3 = THREE.Vector3()
-cdef _z4 = THREE.Vector3()
+cdef _z1 = Vector3()
+cdef _z2 = Vector3()
+cdef _z3 = Vector3()
+cdef _z4 = Vector3()
 
 cpdef void cVectorMap_get(np.ndarray[float, ndim=1] map , int size, float x, float y,  np.ndarray[float, ndim=1] vec3 ):
     cdef int p = 3 * (int(x) + int(y)*size)
@@ -105,7 +105,7 @@ cpdef void cVectorMap_empty(np.ndarray[float, ndim=1] map , int size):
 cpdef void cVectorMap_normalize(np.ndarray[float, ndim=1] map , int size):
     cdef np.ndarray[float, ndim=1] np
     cdef int total = size * size * 3
-    _z1 = THREE.Vector3()
+    _z1 = Vector3()
     np = _z1.np
 
     for i in range(0, total, 3):

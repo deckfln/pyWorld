@@ -22,7 +22,7 @@ class _actor:
 
 
 class Actor:
-    def __init__(self, file=None):
+    def __init__(self, cwd, file=None):
         self.animate = 0
         self.animate_direction = 0.05
         self.current_animation = None
@@ -32,7 +32,7 @@ class Actor:
         self.actor_mesh = None
 
         if file:
-            cache = pyCache(file)
+            cache = pyCache(cwd, file)
             actor = cache.load()
             if actor is None:
                 loader = ColladaLoader()

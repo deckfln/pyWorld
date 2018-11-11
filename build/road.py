@@ -114,10 +114,9 @@ class Road:
                 THREE.Triangle(points[1], points[2], points[3])
             ]
 
-            planes = [
-                triangles[0].plane(),
-                triangles[1].plane()
-            ]
+            planes = [THREE.Plane(), THREE.Plane()]
+            triangles[0].getPlane(planes[0])
+            triangles[1].getPlane(planes[1])
 
             # // apply a mask on the triangles
             pmin.x = int(pmin.x)
