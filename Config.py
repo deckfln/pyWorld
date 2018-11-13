@@ -61,6 +61,7 @@ Config = {
     "benchmark": False,
 
     "engine": {
+        "player": "models/marie-jane.dae",
         "assets": {
             'evergreen': [
                 "models/anime_tree/1/model",

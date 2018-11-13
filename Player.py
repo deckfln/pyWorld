@@ -79,12 +79,12 @@ class Player(Actor):
             # * @property {type} last_colision
             self.last_colision = None
 
-    def draw(self):
+    def add2scene(self, scene):
         """
          * @description put the player on screen
          * @returns {undefined}
         """
-        self.add2scene(self.scene)
+        super().add2scene(self.scene)
         if Config['player']['debug']['direction']:
             self.scene.add(self.helper)
         

@@ -40,7 +40,7 @@ class InitThread(Thread):
         p.sun.add2scene(p.scene)
 
         # cubemap
-        print("Init CubeMaself...")
+        print("Init Skybox...")
         loader = FileLoader()
 
         background = CubeTextureLoader().load(Config['engine']['skycube'])
@@ -124,7 +124,8 @@ class InitThread(Thread):
 
         print("Init Player...")
         cwd = Config["folder"]
-        p.player = Player(cwd, cwd + "/models/marie-jane.dae", THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
+        p.player = Player(cwd, Config['engine']['player'], THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
+        p.player.add2scene(p.scene)
         p.actors.append(p.player)
         p.load_percentage += 5
 
