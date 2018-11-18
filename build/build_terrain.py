@@ -15,7 +15,7 @@ def build():
         terrain.perlin_generate()
         terrain.build_normalmap()
 
-    terrain.build()
+    terrain.buildIndexmap()
 
     if Config['terrain']['roads']:
         terrain.build_roads()

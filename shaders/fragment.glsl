@@ -119,7 +119,12 @@ vec4 colorAt(sampler2D map, vec2 in_map)
 
   vec2 rvv =  vUv*indexmap_repeat;
   vec2 vv = fract(rvv);
-  return texture2D(map, vec2(tileID / 8.0 + vv.x / 8, vv.y));
+
+    // textureMap is 4 textures x 4 textures
+  float row = (tileID >> 2) / 4.0;
+  float column = (tileID & 0x3) / 4.0;
+
+  return texture2D(map, vec2(column + vv.x / 4.0, row + vv.y / 4.0));
   /*
   return getIndex(tileID, vv);
 
@@ -153,16 +158,6 @@ vec4 colorAt(sampler2D map, vec2 in_map)
  *******/
 void main()
 {
-    /*
-//     * if config.terrain.debug_flatness
-
-    gl_FragColor.r = texture2D(indexmap, vUv).r*10.0;
-    gl_FragColor.g = 0.0;
-    gl_FragColor.b = 0.0;
-    gl_FragColor.a = 1.0;
-
-        return;
-        */
     // position in the atlasmap
     vec2 mapvUv = vUv*indexmap_size;
     vec2 center_of_tile = floor(mapvUv) + 0.5;
@@ -214,8 +209,12 @@ void main()
     vec3 normal = mix(t1_n, t2_n, blend4tex.y);
 
     // path & river extracted from the blendmap
+    int tileID = 7;     // if of the road
+    float row = (tileID >> 2) / 4.0;
+    float column = (tileID & 0x3) / 4.0;
+
     vec2 blend_uv = fract(vUv * blendmap_repeat);
-    blend_uv.x = 7.0/8.0 + blend_uv.x/8.0;
+    blend_uv = vec2(column + blend_uv.x / 4.0, row + blend_uv.y / 4.0);
     vec4 paving = texture2D(terrain_textures, blend_uv);
     vec3 blend_normal = normalize(texture2D(normalMap, blend_uv).xyz);
     // vec4 riverbed = texture2D(textures[riverbed_png], blend_uv);
@@ -262,30 +261,22 @@ void main()
     gl_FragColor.a = 1.0;
 #endif
 
-    // for debug, tint the pixel with the indexmap first value
-//    gl_FragColor.r *= (texture2D(indexmap, vUv).g*50.0);
-
-    // debug indexmap
-    /*
-    gl_FragColor.r = texture2D(indexmap, vUv).r;
-    if (int(gl_FragColor.r * 255.0)==grass_png) {
-        gl_FragColor.r = 1.0;
-    }
-    else {
-        gl_FragColor.r = 0.25;
-    }
+#ifdef DEBUG_INDEXMAP
+    gl_FragColor.r *= (texture2D(indexmap, vUv).g*50.0);
+#endif
+#ifdef DEBUG_SHADOWMAP
+    gl_FragColor = texture2D(shadowmap, vUv);
+#endif
+#ifdef DEBUG_BLENDMAP
+    gl_FragColor = red*blendIndex.x;
+#endif
+#ifdef DEBUG_NORMALMAP
+    gl_FragColor = vec4(finalNormal, 1.0);
+#endif
+#ifdef DEBUG_FLATNESS
+    gl_FragColor.r = texture2D(indexmap, vUv).r*10.0;
     gl_FragColor.g = 0.0;
     gl_FragColor.b = 0.0;
     gl_FragColor.a = 1.0;
-    */
-
-    // debug shadowmap
-    //    gl_FragColor = texture2D(shadowmap, vUv);
-
-    // debug indexmap
-    //gl_FragColor = red*blendIndex.x;
-
-    // debug normalmap
-    // gl_FragColor = vec4(finalNormal, 1.0);
-
+#endif
 }

@@ -302,6 +302,9 @@ class TerrainBuilder(Terrain):
         forest_create(trees, self)
         self.scenery.extend(trees)
 
+    def buildIndexmap(self):
+        self.indexmap.build()
+
     def dump(self):
         """
         Save all data of the terrain

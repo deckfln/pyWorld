@@ -46,8 +46,8 @@ class Terrain:
         self.quad_lod = [None]*self.nb_levels
         self.tiles = [None]*self.nb_levels
         self.normalMap = None
-        self.indexmap = IndexMap(32, 128)
-        self.blendmap = TextureMap(256, 1)
+        self.indexmap = IndexMap(Config["terrain"]["indexmap"]["size"], Config["terrain"]["indexmap"]["repeat"])
+        self.blendmap = TextureMap(Config["terrain"]["blendmap"]["size"], 1)
         self.scenery = []
         self.radiuses = [0] * self.nb_levels
 
@@ -214,9 +214,6 @@ class Terrain:
                 'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
-
-    def build(self):
-        self.indexmap.build()
 
     def load(self, sun):
         """
