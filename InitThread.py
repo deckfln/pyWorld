@@ -111,7 +111,7 @@ class InitThread(Thread):
             p.load_percentage += 5
 
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
-        # p.assets.add_2_scene(p.scene)
+        p.assets.add_2_scene(p.scene)
 
         # init the terrain
         print("Init Terrain...")

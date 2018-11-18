@@ -169,7 +169,7 @@ class Assets:
     def add_2_scene(self, scene):
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
         for mesh in self.assets.values():
-           scene.add_instance(mesh)
+           scene.customInstances.append(mesh)
 
     def reset_instances(self):
         for asset in self.assets.values():
