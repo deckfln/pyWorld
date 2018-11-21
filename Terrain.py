@@ -947,7 +947,11 @@ class Terrain:
         check the frustrum culling
         """
         def isInFront(a, b, c):
+            """
+            https://math.stackexchange.com/questions/274712/calculate-on-which-side-of-a-straight-line-is-a-given-point-located
+            """
             return ((b.np[0] - a.np[0]) * (c.np[1] - a.np[1]) - (b.np[1] - a.np[1]) * (c.np[0] - a.np[0])) < 0
+            #return ((p.np[0] - a.np[0]) * (b.np[1] - a.np[1]) - (p.np[1] - a.np[1]) * (b.np[0] - a.np[0])) < 0
 
         def distance2(a, b, c, distance):
             a1 = abs((b.np[1] - a.np[1]) * c.np[0] - (b.np[0] - a.np[0]) * c.np[1] + b.np[0] * a.np[1] - b.np[1] * a.np[0])
@@ -981,33 +985,30 @@ class Terrain:
             self.scene.add(player.frustrum1)
 
         # check if the object is behind the player
-        p = THREE.Vector2(position.x, position.y)
+        p = THREE.Vector2()
         for quad in self.tiles_onscreen:
-            # if p.distanceTo(quad.center) < quad.visibility_radius:
-            #    print("debug")
-            self.screen2map(quad.center, _vector2)
+            self.screen2map(quad.center, p)
             hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
-            # if isLeft(hm, hm_behind, hm_quad) and isLeft(hm, left, hm_quad) and not isLeft(hm, right, hm_quad):
-            #    quad.mesh.visible = True
-            if isInFront(hm, hm_behind, _vector2) :
+
+            if isInFront(hm, hm_behind, p):
                 quad.mesh.visible = True
-            elif distance2(hm, hm_behind, _vector2, hm_quad_radius):
+            elif distance2(hm, hm_behind, p, hm_quad_radius):
                 quad.mesh.visible = True
             else:
                 quad.mesh.visible = False
 
             if quad.mesh.visible:
-                if isInFront(hm, left, _vector2):
+                if isInFront(hm, left, p):
                     quad.mesh.visible = True
-                elif distance2(hm, left, _vector2, hm_quad_radius):
+                elif distance2(hm, left, p, hm_quad_radius):
                     quad.mesh.visible = True
                 else:
                    quad.mesh.visible = False
 
             if quad.mesh.visible:
-                if not isInFront(hm, right, _vector2):
+                if not isInFront(hm, right, p):
                     quad.mesh.visible = True
-                elif distance2(hm, right, _vector2, hm_quad_radius):
+                elif distance2(hm, right, p, hm_quad_radius):
                     quad.mesh.visible = True
                 else:
                     quad.mesh.visible = False

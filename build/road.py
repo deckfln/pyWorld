@@ -1,5 +1,5 @@
-from AStar import *
-from Mask import *
+from build.AStar import *
+from build.Mask import *
 
 
 class Road:

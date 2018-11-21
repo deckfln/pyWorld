@@ -29,14 +29,14 @@ Config = {
             "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
         },
-        'display_scenary': False,
-        'display_grass': False,
+        'display_scenary': True,
+        'display_grass': True,
         "indexmap": {
-            "size": 64,
+            "size": 32,
             "repeat": 128
         },
         "blendmap": {
-            "size": 64
+            "size": 256
         }
 
     },

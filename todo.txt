@@ -77,6 +77,7 @@
 18/08/18: 18/08/18  player              BUG: player can drop off the map on the north-west & south-west edges of the map
 18/08/18: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map
 19/08/18: 01/07/18  post processing     add haze
+21/11/18: 18/11/18  terrain             tiles behind the player are displayed
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -103,6 +104,8 @@ TODO: 18/08/18  heightmap           stream heightmap, normalmap as we stream the
 TODO: 18/08/18  sun                 sun should not be visible during 'night'
 TODO: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
 TODO: 18/08/18  player              improve the ambient color for the player's back when facing the sun
+TODO: 18/11/18  terrain             implement the tiles as heightmap bitmaps
+TODO: 18/11/18  indexmap            using a 1 char bitmap
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -115,4 +118,6 @@ TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
-TODO: 05/08/18  terrain             BUG: when reaching the corner of the map, gets prints (258, 198, 32.062255859375, 3.680419921875)
+TODO: 21/11/18  gui                 progress bar is not displayed during init
+TODO: 21/11/18  gui                 FPS counter is not displayed during run
+TODO: 21/11/18  character           running backward is all broken

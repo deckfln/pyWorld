@@ -2,10 +2,10 @@
 
 """
 
-from PerlinSimplexNoise import *
-from roads import *
-from Forest import *
-from city import *
+from build.PerlinSimplexNoise import *
+from build.roads import *
+from build.Forest import *
+from build.city import *
 from Terrain import *
 import time
 
