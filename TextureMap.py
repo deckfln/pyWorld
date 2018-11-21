@@ -16,7 +16,7 @@ class TextureMap:
     """
     Image storage for textures
     """
-    def __init__(self, size, repeat):
+    def __init__(self, size, repeat, depth=4):
         """
 
         :param size:
@@ -24,7 +24,8 @@ class TextureMap:
         """
         self.size = size
         self.repeat = repeat
-        self.data = np.zeros(size * size * 4, np.uint8)  # unsigned char RGBA
+        self.depth = depth
+        self.data = np.zeros(size * size * depth, np.uint8)  # unsigned char RGBA
         self.texture = None
         self.vector4 = THREE.Vector4()
 
@@ -32,28 +33,37 @@ class TextureMap:
         self.setXY(v.x, v.y, rgba)
 
     def setXY(self, x, y, rgba):
-        p = int(x)*4 + int(y)*self.size*4
+        depth = self.depth
+        p = int(x) * depth + int(y) * self.size * depth
 
         self.data[p] = rgba[0]
-        self.data[p + 1] = rgba[1]
-        self.data[p + 2] = rgba[2]
-        self.data[p + 3] = rgba[3]
+        if depth > 1:
+            self.data[p + 1] = rgba[1]
+            if depth > 2:
+                self.data[p + 2] = rgba[2]
+                if depth > 3:
+                    self.data[p + 3] = rgba[3]
 
     def get(self, v):
         return self.getXY(v.x, v.y)
 
     def getXY(self, x, y):
-        d = int(x)*4 + int(y)*self.size*4
+        depth = self.depth
+        d = int(x) * depth + int(y) * self.size * depth
 
         self.vector4.x = self.data[d]        # layer1
-        self.vector4.y = self.data[d + 1]    #
-        self.vector4.z = self.data[d + 2]    # layer2
-        self.vector4.w = self.data[d + 3]    # blending value
+        if depth > 1:
+            self.vector4.y = self.data[d + 1]    #
+            if depth > 2:
+                self.vector4.z = self.data[d + 2]    # layer2
+                if depth > 3:
+                    self.vector4.w = self.data[d + 3]    # blending value
 
         return self.vector4
 
     def get_layer1(self, x, y):
-        d = int(x)*4 + int(y)*self.size*4
+        depth = self.depth
+        d = int(x) * depth + int(y) * self.size * depth
 
         r = self.data[d]        # layer1
 
@@ -61,7 +71,15 @@ class TextureMap:
 
     def generate(self, file):
         bytes = self.data.tobytes()
-        im = PIL.Image.frombytes("RGBA", (self.size, self.size), bytes)
+        depth = self.depth
+        if depth == 1:
+            mode = "L"
+        elif depth == 3:
+            mode = "RGB"
+        else:
+            mode = "RGBA"
+
+        im = PIL.Image.frombytes(mode, (self.size, self.size), bytes)
         if os.path.exists(file):
             os.remove(file)
         im.save(file)

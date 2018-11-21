@@ -9,7 +9,7 @@ import Terrain
 
 class IndexMap(TextureMap):
     def __init__(self, size, repeat):
-        super().__init__(size, repeat)
+        super().__init__(size, repeat, 1)
         self.grounds = np.zeros(11, np.float32)
 
     def build(self):
@@ -25,7 +25,7 @@ class IndexMap(TextureMap):
         i = 0
         for y in range(size):
             for x in range(size):
-                rand = perlin.noise(x/8,y/8)
+                rand = perlin.noise(x/8, y/8)
                 diversity = int((perlin.noise(x/16, y/16) + 1)*1.5)
                 if rand > 0:
                     first = Terrain.TILE_grass_png + diversity
@@ -33,11 +33,8 @@ class IndexMap(TextureMap):
                     first = Terrain.TILE_forest_png + diversity
 
                 data[i] = first     # // first layer texture index
-                data[i+1] = 255     # // second layer texture index
-                data[i+2] = 255     # // not in use
-                data[i+3] = 255     # // blending value of the 2 layers
 
-                i += 4
+                i += 1
 
     def bilinear_density(self, x, y):
         if not (0 <= x < self.size and 0 <= y < self.size):

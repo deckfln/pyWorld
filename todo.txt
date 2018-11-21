@@ -78,6 +78,7 @@
 18/08/18: 18/08/18  player              BUG: player can slighly walk off the map on the south & est sides of the map
 19/08/18: 01/07/18  post processing     add haze
 21/11/18: 18/11/18  terrain             tiles behind the player are displayed
+21/11/18: 18/11/18  indexmap            using a 1 char bitmap
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -105,7 +106,6 @@ TODO: 18/08/18  sun                 sun should not be visible during 'night'
 TODO: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
 TODO: 18/08/18  player              improve the ambient color for the player's back when facing the sun
 TODO: 18/11/18  terrain             implement the tiles as heightmap bitmaps
-TODO: 18/11/18  indexmap            using a 1 char bitmap
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
