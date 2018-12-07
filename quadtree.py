@@ -12,19 +12,23 @@ import time
 import THREE
 import Utils as THREE_utils
 import THREE.renderers.shaders.ShaderLib as THREE_ShaderLib
+from THREE.textures.DataTexture import *
 
 from Config import *
 from progress import *
 from THREE.javascriparray import *
 import math
+from DataMap import *
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
-            'color': 0x0000ff,
-            'opacity': 0.2,
-            'transparent': True,
-            'wireframe': False})
+    'color': 0x0000ff,
+    'opacity': 0.2,
+    'transparent': False,
+    'wireframe': True
+})
+_spheregeometry = THREE.SphereBufferGeometry(0.7, 32, 32)
 
-# _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/evergreen.png')})
+# _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/UV_Grid_Sm.jpg')})
 
 
 def _loadMeshIO(name):
@@ -73,6 +77,7 @@ class Quadtree:
         self.south = None
         self.west = None
         self.east = None
+        self.datamap = None
 
         self.sub = [None]*4
 
@@ -81,6 +86,51 @@ class Quadtree:
 
         if Config['terrain']['debug']['boundingsphere']:
             self.boundingsphere = None
+
+    def init_mesh(self, quad_width):
+        v2 = self.center.clone()
+        total_size = self.size * 2**self.level
+        v2.x += total_size/2
+        v2.y += total_size/2
+        v2.divideScalar(total_size)
+
+        if Config['terrain']['debug']['uv']:
+            """
+            material = self.material.clone()
+            material.uniforms.datamap.value = self.datamap
+            material.uniforms.centerVuv.value.copy(v2)
+            material.uniforms.level.value = 2**self.level
+            material.uniforms.light.value = self.material.uniforms.light.value
+            """
+            material = THREE.RawShaderMaterial({
+                'uniforms': {
+                    'datamap': {'type': "t", 'value': self.datamap},
+                    'map': {'type': 't', 'value': self.material.map},
+                    'centerVuv': {'type': 'v2', 'value': v2},
+                    'level': {'type': 'f', 'value': 2**self.level},
+                    'light': {'type': 'v3', 'value': self.material.uniforms.light.value}
+                },
+                'vertexShader': self.material.vertexShader,
+                'fragmentShader': self.material.fragmentShader,
+                'color': 0x000ff,
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
+        else:
+            material = self.material.clone()
+            material.uniforms.datamap.value = self.datamap
+            material.uniforms.centerVuv.value.copy(v2)
+            material.uniforms.level.value = 2**self.level
+            material.uniforms.light.value = self.material.uniforms.light.value
+
+        #TODO: use a the same geometry for each block because the boundinSphere is uniq to each tile
+        #TODO: but find how to have different boundingSpheres for the same geometry
+        s = self.size - 1
+        geometry = THREE.PlaneBufferGeometry(1, 1, s, s)
+        plane = THREE.Mesh(geometry, material)
+        plane.castShadow = True
+        plane.receiveShadow = True
+
+        return plane
 
     def toJSON(self):
         if self.sub[0] is None:
@@ -104,7 +154,7 @@ class Quadtree:
     def dump(self, t):
         # j = self.toJSON()
         # t.append(j)
-        self.mesh = self.scenary_meshes = None
+        self.datamap = self.mesh = self.scenary_meshes = None
         t.append(self)
 
         if not self.sub[0] is None:
@@ -120,15 +170,55 @@ class Quadtree:
             for q in self.sub:
                 q.dump_mesh()
 
+    def dump_datamap(self):
+        file = Config['folder']+"/bin/" + self.name
+        if self.datamap is None:
+            raise Exception("not good")
+        self.datamap.save(file)
+
+        if not self.sub[0] is None:
+            for q in self.sub:
+                q.dump_datamap()
+
     def load(self):
         """
-        @param {type} scene
-        @returns {undefined}
         """
         with open(Config['folder']+"/bin/" + self.name + ".terrain.pkl", "rb") as f:
             mesh = pickle.load(f)
             mesh.rebuild_id()
             self._record_mesh(mesh)
+
+    def load_datamap(self):
+        """
+        """
+        file = Config['folder']+"/bin/" + self.name +".npy"
+        datamap = DataMap(0)
+        datamap.load(file)
+
+        # find the average Z for the boundingsphere
+        z = datamap.average()
+
+        self.datamap = datamap.DataTexture()
+        self.datamap.needsUpdate = True
+
+        scale = 2 ** (9 - self.level)
+        mesh = self.init_mesh(datamap.size - 1)
+        mesh.scale.set(scale, scale, 1.0)
+        mesh.position.x = self.center.x
+        mesh.position.y = self.center.y
+        mesh.geometry.computeBoundingSphere()
+        mesh.geometry.boundingSphere.center.z = z
+
+        if Config['terrain']['debug']['boundingsphere']:
+            # TODO : how do you draw the bounding spheres of an instance ?
+            radius = mesh.geometry.boundingSphere.radius
+            boundingsphere = THREE.Mesh(_spheregeometry, _BoundingSphereMaterial)
+            boundingsphere.scale.set(1.0, 1.0, scale)
+            boundingsphere.position.z = z
+            mesh.add(boundingsphere)
+            self.bs = boundingsphere
+
+        self.mesh = mesh
 
     def loadChildren(self, p):
         """
@@ -136,16 +226,21 @@ class Quadtree:
         @returns {undefined}
         """
         p.load_percentage += 0.1
-        self.load()
+        self.load_datamap()
         if self.sub[0] is not None:
             for child in self.sub:
                 child.loadChildren(p)
 
-    def notTraversed(self):
-        """
+    #def add2scene(self, list):
+    #    list.append(self)
+    #    if self.sub[0] is not None:
+    #        for child in self.sub:
+    #            child.add2scene(list)
+    def add2scene(self, scene):
+        scene.add(self.mesh)
+        self.added = True
 
-        :return:
-        """
+    def notTraversed(self):
         self.traversed = False
         if self.sub[0] is not None:
             for child in self.sub:
@@ -153,26 +248,21 @@ class Quadtree:
                     child.notTraversed()
 
     def build_index(self, index):
-        """
-
-        :return:
-        """
         idx = "%d-%d-%d" % (self.level, self.center.x, self.center.y)
         index[idx] = self
         if self.sub[0] is not None:
             for child in self.sub:
                 child.build_index(index)
 
-    def display(self):
-        """
+    def display(self, scene):
+        if not self.added:
+            self.add2scene(scene)
 
-        :return:
-        """
         self.visible = self.mesh.visible = True
         self.last_on_screen = time.clock()
 
         if Config['terrain']['debug']['boundingsphere']:
-            self.boundingsphere.visible = True
+            self.bs.visible = True
 
     def hide(self):
         """
@@ -185,7 +275,7 @@ class Quadtree:
         self.visible = self.mesh.visible = False
 
         if Config['terrain']['debug']['boundingsphere']:
-            self.boundingsphere.visible = False
+            self.bs.visible = False
 
     def _record_mesh(self, terrain_mesh):
         """
@@ -394,8 +484,7 @@ class QuadtreeReader(Thread):
             if quadtree is None:
                 break
 
-            # print("quadtreeReader:%s" % quadtree.name)
-            quadtree.load()
+            quadtree.load_datamap()
             queue.task_done()
 
             # register the mesh in memory and the time of load

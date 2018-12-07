@@ -11,12 +11,14 @@ import os
 
 import THREE
 
+_vector4 = THREE.Vector4()
+
 
 class TextureMap:
     """
     Image storage for textures
     """
-    def __init__(self, size, repeat, depth=4):
+    def __init__(self, size, repeat, depth=4, cell=np.uint8):
         """
 
         :param size:
@@ -25,9 +27,11 @@ class TextureMap:
         self.size = size
         self.repeat = repeat
         self.depth = depth
-        self.data = np.zeros(size * size * depth, np.uint8)  # unsigned char RGBA
         self.texture = None
-        self.vector4 = THREE.Vector4()
+        if size > 0:
+            self.data = np.zeros(size * size * depth, cell)  # unsigned char RGBA
+        else:
+            self.data = None
 
     def set(self, v, rgba):
         self.setXY(v.x, v.y, rgba)
@@ -51,15 +55,15 @@ class TextureMap:
         depth = self.depth
         d = int(x) * depth + int(y) * self.size * depth
 
-        self.vector4.x = self.data[d]        # layer1
+        _vector4.x = self.data[d]        # layer1
         if depth > 1:
-            self.vector4.y = self.data[d + 1]    #
+            _vector4.y = self.data[d + 1]    #
             if depth > 2:
-                self.vector4.z = self.data[d + 2]    # layer2
+                _vector4.z = self.data[d + 2]    # layer2
                 if depth > 3:
-                    self.vector4.w = self.data[d + 3]    # blending value
+                    _vector4.w = self.data[d + 3]    # blending value
 
-        return self.vector4
+        return _vector4
 
     def get_layer1(self, x, y):
         depth = self.depth

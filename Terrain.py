@@ -119,13 +119,32 @@ class Terrain:
         :return:
         """
         if Config['terrain']['debug']['uv']:
+            _folder = Config['folder']
+
             loader = THREE.TextureLoader()
-            self.material = THREE.MeshPhongMaterial({
-                'map': loader.load('img/UV_Grid_Sm.jpg'),
-                'wireframe': False
+            mymap = loader.load(_folder + '/img/UV_Grid_Sm.jpg')
+
+            _floader = THREE.FileLoader()
+            _vertexShader = _floader.load(_folder + "/shaders/terrain/debug/vertex.glsl")
+            _fragmentShader = _floader.load(_folder + "/shaders/terrain/debug/fragment.glsl")
+
+            self.material = THREE.RawShaderMaterial({
+                'uniforms': {
+                    'datamap': {'type': "t", 'value': None},
+                    'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
+                    'level': {'type': 'f', 'value': 0},
+                    'light': {'type': 'v3', 'value': sun.light.position}
+                },
+                'map': mymap,
+                'vertexShader': _vertexShader,
+                'fragmentShader': _fragmentShader,
+                'color': 0x000ff,
+                'wireframe': Config['terrain']['debug']['wireframe']
             })
+
         elif Config['terrain']['debug']['lod']:
             self.material = None
+
         else:
             """
             Initialize the various maps
@@ -622,7 +641,8 @@ class Terrain:
         self.quadtree_mesh_indexes = [None for i in range(16)]
 
         # load the root quadtree to have a template
-        self.quadtree.load()
+        self.quadtree.load_datamap()
+        self.quadtree.init_mesh(self.quadtree.size)
 
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
@@ -938,7 +958,8 @@ class Terrain:
             if tile.east:
                 code |= 8
 
-            tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
+            #FIXME add back stiching
+            # tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
 
             tile.debug = code
 
@@ -1020,6 +1041,15 @@ class Terrain:
         :return:
         """
 
+        # add newly loaded tiles
+        scene = self.scene
+        for i in range(len(self.loader_queue) - 1, -1, -1):
+            quad = self.loader_queue[i]
+            if quad.mesh:
+                self.tiles_onscreen.append(quad)
+                quad.display(scene)
+                del self.loader_queue[i]
+
         # remove tiles no more on screen
         for i in range(len(self.removal_queue)-1, -1, -1):
             quad = self.removal_queue[i]
@@ -1032,20 +1062,10 @@ class Terrain:
                 for j in range(len(self.tiles_onscreen) - 1, -1, -1):
                     if self.tiles_onscreen[j] == quad:
                         del self.tiles_onscreen[j]
-                quad.hide()
+                        quad.hide()
+                        break
                 del self.removal_queue[i]
-                # else keep the tile on screen until ALL sub tiles are loaded
-
-        for i in range(len(self.loader_queue) - 1, -1, -1):
-            quad = self.loader_queue[i]
-            if quad.mesh and quad.parent.visible is False:
-                if quad.added is False:
-                    quad.added = True
-                    self.scene.add(quad.mesh)
-
-                self.tiles_onscreen.append(quad)
-                quad.display()
-                del self.loader_queue[i]
+            # else keep the tile on screen until ALL sub tiles are loaded
 
     def _build_tiles_onscreen(self, position):
         """
@@ -1087,6 +1107,7 @@ class Terrain:
 
         # add missing tiles
         self.loader_queue.clear()
+        scene = self.scene
         for quad in tiles_2_display:
             if quad not in self.tiles_onscreen:
                 if quad.mesh and quad.parent.visible is False:
@@ -1095,7 +1116,7 @@ class Terrain:
                         self.scene.add(quad.mesh)
 
                     self.tiles_onscreen.append(quad)
-                    quad.display()
+                    quad.display(scene)
                 else:
                     self.loader_queue.append(quad)
 
@@ -1122,7 +1143,7 @@ class Terrain:
         if not position.equals(self.cache_position) or not direction.equals(self.cache_direction):
             self._build_tiles_onscreen(position)
             self._frustrum_culling(player, position, direction)
-            self._stich_neighbours()
+            #self._stich_neighbours()
 
             self.cache_position.copy(position)
             self.cache_direction.copy(direction)
@@ -1131,7 +1152,7 @@ class Terrain:
         self._display_async_loader()
 
         # clean up old quad meshes
-        self.loader.cleanup(self.scene)
+        # self.loader.cleanup(self.scene)
 
     def colisionObjects(self, footprint, debug=None):
         """

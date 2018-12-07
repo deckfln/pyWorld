@@ -29,7 +29,9 @@ def build():
     if not Config['terrain']['flat']:
         terrain.build_normalmap()
 
-    terrain.build_mesh()
+    terrain.build_tiles_datamaps()
+
+    #terrain.build_mesh()
     terrain.build_mesh_scenery()
 
     terrain.dump()

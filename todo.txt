@@ -105,7 +105,7 @@ TODO: 18/08/18  heightmap           stream heightmap, normalmap as we stream the
 TODO: 18/08/18  sun                 sun should not be visible during 'night'
 TODO: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
 TODO: 18/08/18  player              improve the ambient color for the player's back when facing the sun
-TODO: 18/11/18  terrain             implement the tiles as heightmap bitmaps
+TODO: 24/11/18  terrain             store the heightmap datamaps in one big file instead of many small ones
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree
@@ -121,3 +121,4 @@ TODO: 23/07/18  terrain             multiple textures are displayed on the same 
 TODO: 21/11/18  gui                 progress bar is not displayed during init
 TODO: 21/11/18  gui                 FPS counter is not displayed during run
 TODO: 21/11/18  character           running backward is all broken
+TODO: 24/11/18  terrain             at load time the full terrain is display, there is no frustrum culling

@@ -40,23 +40,26 @@ class InitThread(Thread):
         p.sun.add2scene(p.scene)
 
         # cubemap
-        print("Init Skybox...")
-        loader = FileLoader()
+        if Config["skybox"]:
+            print("Init Skybox...")
+            loader = FileLoader()
 
-        background = CubeTextureLoader().load(Config['engine']['skycube'])
-        background.format = THREE.RGBFormat
+            background = CubeTextureLoader().load(Config['engine']['skycube'])
+            background.format = THREE.RGBFormat
 
-        p.renderer.background.boxMesh_vertex = loader.load(folder + '/shaders/skybox/vertex.glsl')
-        p.renderer.background.boxMesh_fragment = loader.load(folder + '/shaders/skybox/fragment.glsl')
-        p.renderer.background.boxMesh_uniforms = {
-                    'tCube': UniformValue(None),
-                    'tFlip': UniformValue(- 1),
-                    'opacity': UniformValue(1.0),
-                    'light': {'type': "v3", 'value': p.sun.light.position},
-                    'sunColor': {'type': "v3", 'value': p.sun.color}
-        }
+            p.renderer.background.boxMesh_vertex = loader.load(folder + '/shaders/skybox/vertex.glsl')
+            p.renderer.background.boxMesh_fragment = loader.load(folder + '/shaders/skybox/fragment.glsl')
+            p.renderer.background.boxMesh_uniforms = {
+                        'tCube': UniformValue(None),
+                        'tFlip': UniformValue(- 1),
+                        'opacity': UniformValue(1.0),
+                        'light': {'type': "v3", 'value': p.sun.light.position},
+                        'sunColor': {'type': "v3", 'value': p.sun.color}
+            }
 
-        p.load_percentage += 5
+            p.load_percentage += 5
+            p.scene.background = background
+
 
         # sun imposter
         """
@@ -64,9 +67,6 @@ class InitThread(Thread):
         m_sun = THREE.Mesh(g_sun, _material)
         self.sun.add(m_sun)
         """
-
-        # init the scene
-        p.scene.background = background
 
         # init the shadowmap
         if Config['shadow']['enabled']:
@@ -130,7 +130,8 @@ class InitThread(Thread):
         p.load_percentage += 5
 
         print("Init meshes...")
-        #self.terrain.quadtree.loadChildren(p)
-        p.terrain.build_quadtre_indexes()
+        # p.terrain.quadtree.loadChildren(p)
+        #FIXME add it back
+        #p.terrain.build_quadtre_indexes()
         p.load_percentage += 5
         print("End init")
