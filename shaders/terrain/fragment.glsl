@@ -1,6 +1,5 @@
 varying vec2 vUv;
-varying float z;
-varying vec3 vertexNormal;
+varying vec3 vNormal;
 varying vec3 vViewPosition;
 
 // chunk(packing)
@@ -230,7 +229,7 @@ void main()
     normal = mix(normal, blend_normal, blend_idx);
 
     // perturb the normal vector
-    vec3 finalNormal = perturbNormal2Arb( -vViewPosition, vertexNormal, normal );
+    vec3 finalNormal = perturbNormal2Arb( -vViewPosition, vNormal, normal );
 
     // Add directional light
     vec3 nlight = normalize(light);
@@ -262,7 +261,7 @@ void main()
 #endif
 
 #ifdef DEBUG_INDEXMAP
-    gl_FragColor.r *= (texture2D(indexmap, vUv).g*50.0);
+    gl_FragColor.r = (texture2D(indexmap, vUv).r*50.0);
 #endif
 #ifdef DEBUG_SHADOWMAP
     gl_FragColor = texture2D(shadowmap, vUv);
@@ -274,7 +273,7 @@ void main()
     gl_FragColor = vec4(finalNormal, 1.0);
 #endif
 #ifdef DEBUG_FLATNESS
-    gl_FragColor.r = texture2D(indexmap, vUv).r*10.0;
+    gl_FragColor.r = texture2D(indexmap, vUv).r*50.0;
     gl_FragColor.g = 0.0;
     gl_FragColor.b = 0.0;
     gl_FragColor.a = 1.0;

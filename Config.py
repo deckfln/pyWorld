@@ -17,9 +17,9 @@ Config = {
 
     "terrain": {
         "flat": False,               # do not generate noise
-        "forest": False,             # display forest
-        "city": False,               # generate a city
-        "roads": False,
+        "forest": True,             # display forest
+        "city": True,               # generate a city
+        "roads": True,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,
         "debug": {
@@ -27,7 +27,7 @@ Config = {
             "boundingsphere": False, # display the boundingSphere around the tiles
             "wireframe": False,      # display terrain meshes as wireframe
             "lod": False,            # display meshes LOD as colored wireframe
-            'uv': True              # use a standard shader with an UV texture
+            'uv': False              # use a standard shader with an UV texture
         },
         'display_scenary': False,
         'display_grass': False,
@@ -48,7 +48,8 @@ Config = {
         }
     },
 
-    "skybox": False,
+    "skybox": True,                 # display the skybox
+    'time': False,                  # time passes
 
     "player": {
         "debug": {

@@ -165,6 +165,9 @@ class Terrain:
 
             floader = THREE.FileLoader()
             uniforms = {
+                'datamap': {'type': "t", 'value': None},
+                'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
+                'level': {'type': 'f', 'value': 0},
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': self.terrain_textures},
                 'light': {'type': "v3", 'value': sun.light.position},
@@ -183,16 +186,19 @@ class Terrain:
                 uniforms['directionalShadowMatrix'] = {'type': 'm4', 'value': sun.light.shadow.matrix}
                 uniforms['directionalShadowSize'] = {'type': 'v2', 'value': sun.light.shadow.mapSize}
 
-            self.material = THREE.ShaderMaterial( {
+            self.material = THREE.RawShaderMaterial( {
                 'uniforms': uniforms,
-                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
             terrain_far = loader.load(folder + "/img/terrain_far_d.png")
 
             uniforms_far = {
+                'datamap': {'type': "t", 'value': None},
+                'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
+                'level': {'type': 'f', 'value': 0},
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': terrain_far},
                 'light': {'type': "v3", 'value': sun.light.position},
@@ -205,16 +211,19 @@ class Terrain:
                 'sunColor': {'type': "v3", 'value': sun.color},
                 'normalMap': {'type': "t", 'value': normalMap}
             }
-            self.material_far = THREE.ShaderMaterial( {
+            self.material_far = THREE.RawShaderMaterial( {
                 'uniforms': uniforms_far,
-                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
             terrain_very_far = loader.load(folder + "/img/terrain_very_far_d.png")
 
             uniforms_very_far = {
+                'datamap': {'type': "t", 'value': None},
+                'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
+                'level': {'type': 'f', 'value': 0},
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
                 'terrain_textures': {'type': "t", 'value': terrain_very_far},
                 'light': {'type': "v3", 'value': sun.light.position},
@@ -227,10 +236,10 @@ class Terrain:
                 'sunColor': {'type': "v3", 'value': sun.color},
                 'normalMap': {'type': "t", 'value': normalMap}
             }
-            self.material_very_far = THREE.ShaderMaterial( {
+            self.material_very_far = THREE.RawShaderMaterial( {
                 'uniforms': uniforms_very_far,
-                'vertexShader': floader.load(folder + '/shaders/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/fragment.glsl'),
+                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
+                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 

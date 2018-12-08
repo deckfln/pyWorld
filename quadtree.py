@@ -95,13 +95,6 @@ class Quadtree:
         v2.divideScalar(total_size)
 
         if Config['terrain']['debug']['uv']:
-            """
-            material = self.material.clone()
-            material.uniforms.datamap.value = self.datamap
-            material.uniforms.centerVuv.value.copy(v2)
-            material.uniforms.level.value = 2**self.level
-            material.uniforms.light.value = self.material.uniforms.light.value
-            """
             material = THREE.RawShaderMaterial({
                 'uniforms': {
                     'datamap': {'type': "t", 'value': self.datamap},
@@ -116,11 +109,25 @@ class Quadtree:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
         else:
-            material = self.material.clone()
-            material.uniforms.datamap.value = self.datamap
-            material.uniforms.centerVuv.value.copy(v2)
-            material.uniforms.level.value = 2**self.level
-            material.uniforms.light.value = self.material.uniforms.light.value
+            material = THREE.RawShaderMaterial( {
+                'uniforms': {
+                    'datamap': {'type': "t", 'value': self.datamap},
+                    'centerVuv': {'type': 'v2', 'value': v2},
+                    'level': {'type': 'f', 'value': 2**self.level},
+                    'blendmap_texture': {'type': "t", 'value': self.material.uniforms.blendmap_texture.value},
+                    'terrain_textures': {'type': "t", 'value': self.material.uniforms.terrain_textures.value},
+                    'light': {'type': "v3", 'value': self.material.uniforms.light.value},
+                    'indexmap': {'type': "t", 'value': self.material.uniforms.indexmap.value},
+                    'indexmap_size': {'type': "f", 'value': self.material.uniforms.indexmap_size.value},
+                    'indexmap_repeat': {'type': "f", 'value': self.material.uniforms.indexmap_repeat.value},
+                    'blendmap_repeat': {'type': "f", 'value': 64},
+                    'ambientCoeff': {'type': "float", 'value': self.material.uniforms.ambientCoeff.value},
+                    'sunColor': {'type': "v3", 'value': self.material.uniforms.sunColor.value},
+                    },
+                'vertexShader': self.material.vertexShader,
+                'fragmentShader': self.material.fragmentShader,
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
 
         #TODO: use a the same geometry for each block because the boundinSphere is uniq to each tile
         #TODO: but find how to have different boundingSpheres for the same geometry

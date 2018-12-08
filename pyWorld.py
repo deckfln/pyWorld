@@ -37,7 +37,7 @@ class PYWorld:
         self.actors = []
         self.sun = None
         self.clock = None
-        self.hour = 0
+        self.hour = math.pi/2
         self.keymap = {
             110: 0,     # N
             273: 0,     # up
@@ -225,9 +225,10 @@ class PYWorld:
         # time passes
         # complete half-circle in 5min = 9000 frames
         # 1 frame = pi/9000
-        self.hour += delta * (math.pi / 4000)
-        if self.hour > math.pi:
-            self.hour = 0
+        if Config['time']:
+            self.hour += delta * (math.pi / 4000)
+            if self.hour > math.pi:
+                self.hour = 0
 
         self.render()
         # c = time.time() - t
