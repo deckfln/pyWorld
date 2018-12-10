@@ -651,41 +651,103 @@ class Terrain:
 
         # load the root quadtree to have a template
         self.quadtree.load_datamap()
-        self.quadtree.init_mesh(self.quadtree.size)
 
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
         index = geometry.index
-        row = int(geometry.parameters['widthSegments'] * 2 * 3)
+        row = int(geometry.parameters['widthSegments'])
 
         for i in range(16):
-            self.quadtree_mesh_indexes[i] = index.clone()
+            ind = []
+
+            # fill the inner triangles
+            for y in range(1, row - 1):
+                for x in range(1, row - 1):
+                    ind.append(y*row + x)
+                    ind.append((y + 1) * row + x)
+                    ind.append(y * row + x + 1)
+
+                    ind.append((y + 1) * row + x)
+                    ind.append((y + 1) * row + x + 1)
+                    ind.append(y * row + x + 1)
 
             array = self.quadtree_mesh_indexes[i].array
 
+            # top row
             if i & 1:
-                for k in range(len(array) - row, len(array), 12):
-                    array[k + 4] = array[k + 10]
-                    array[k + 7] = array[k + 10]
-                    array[k + 9] = array[k + 10]
+                # top: k = 0
+                for k in range(2, row-3, 2):
+                    # t1
+                    ind.append(k)
+                    ind.append(k+row)
+                    ind.append(k+1)
+                    # t2
+                    ind.append(k+row)
+                    ind.append(k+row+2)
+                    ind.append(k+1)
+                    # t3
+                    ind.append(k+row+2)
+                    ind.append(k+2)
+                    ind.append(k+1)
+            else:
+                for x in range(1, row - 1):
+                    ind.append(x)
+                    ind.append(row + x)
+                    ind.append(x + 1)
+
+                    ind.append(row + x)
+                    ind.append(row + x + 1)
+                    ind.append(x + 1)
 
             if i & 2:
-                for k in range(0, row, 12):
-                    array[k + 2] = array[k]
-                    array[k + 5] = array[k]
-                    array[k + 6] = array[k]
+                # bottom: k = 14*16
+                for k in range(0, row, 2):
+                    # t1
+                    ind.append(k)
+                    ind.append(k+row)
+                    ind.append(k+row+1)
+                    # t2
+                    ind.append(k)
+                    ind.append(k+row+2)
+                    ind.append(k+2)
+                    # t3
+                    ind.append(k+row+1)
+                    ind.append(k+row+2)
+                    ind.append(k+2)
 
             if i & 4:
-                for k in range(0, len(array), row * 2):
-                    array[k + 1] = array[k]
-                    array[k + 3] = array[k]
-                    array[k + row] = array[k]
+                # left: k = 0
+                for k in range(0, len(array), 2*row):
+                    # t1
+                    ind.append(k)
+                    ind.append(k+row+1)
+                    ind.append(k+1)
+                    # t2
+                    ind.append(k)
+                    ind.append(k+2*row)
+                    ind.append(k+row+1)
+                    # t3
+                    ind.append(k+2*row)
+                    ind.append(k+2*row+1)
+                    ind.append(k+row+1)
 
             if i & 8:
+                # right: k = 15
                 for k in range(row - 6, len(array), row * 2):
-                    array[k + 4] = array[k + row + 4]
-                    array[k + row + 2] = array[k + row + 4]
-                    array[k + row + 5] = array[k + row + 4]
+                    # t1
+                    ind.append(k)
+                    ind.append(k+row)
+                    ind.append(k+1)
+                    # t2
+                    ind.append(k+row)
+                    ind.append(k+2*row+1)
+                    ind.append(k+1)
+                    # t3
+                    ind.append(k+row)
+                    ind.append(k+2*row)
+                    ind.append(k+2*row+1)
+
+            self.quadtree_mesh_indexes[i] = []
 
     def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
         """

@@ -132,6 +132,6 @@ class InitThread(Thread):
         print("Init meshes...")
         # p.terrain.quadtree.loadChildren(p)
         #FIXME add it back
-        #p.terrain.build_quadtre_indexes()
+        p.terrain.build_quadtre_indexes()
         p.load_percentage += 5
         print("End init")

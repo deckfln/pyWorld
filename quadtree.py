@@ -132,7 +132,7 @@ class Quadtree:
         #TODO: use a the same geometry for each block because the boundinSphere is uniq to each tile
         #TODO: but find how to have different boundingSpheres for the same geometry
         s = self.size - 1
-        geometry = THREE.PlaneBufferGeometry(1, 1, s, s)
+        geometry = THREE.PlaneBufferGeometry(1, 1, quad_width, quad_width)
         plane = THREE.Mesh(geometry, material)
         plane.castShadow = True
         plane.receiveShadow = True
