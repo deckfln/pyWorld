@@ -457,10 +457,10 @@ class TerrainBuilder(Terrain):
         """
         quad_width = 16
         progress(count, self.nb_tiles, "Build tile map")
-        geometry = THREE.PlaneBufferGeometry(size, size, quad_width-1, quad_width-1)
+        geometry = THREE.PlaneBufferGeometry(size, size, quad_width, quad_width)
         positions = geometry.attributes.position.array
 
-        datamap = DataMap(quad_width)
+        datamap = DataMap(quad_width+1)
 
         screen = THREE.Vector2()
         normal = THREE.Vector3()
@@ -477,62 +477,22 @@ class TerrainBuilder(Terrain):
         pmin = size/2
 
         p = 0
-        #sy = - size / 2
-        for y in range(quad_width):
-            #sx = - size / 2
-            for x in range(quad_width):
+        for y in range(quad_width+1):
+            for x in range(quad_width+1):
                 sx = positions[p]
                 sy = positions[p + 1]
 
-                screen_x = sx + lx
-                screen_y = sy + ly
+                screen.x = sx + lx
+                screen.y = sy + ly
 
-                # leave the borders alone ! they are needed for continuity between 2 tiles
-                if half_quad_size >= 1 and -pmin < sx < pmin and -pmin < sy < pmin:
-                    # find the most visible point in the sub-quad
-                    max_x = -1
-                    max_y = -1
-                    max_z = -99999999
+                self.screen2map(screen, hm)
+                max_z = heightmap.bilinear(hm.x, hm.y)
 
-                    screen.x = screen_x
-                    screen.y = screen_y
-                    self.screen2map(screen, hm)
-                    max_z = heightmap.bilinear(hm.x, hm.y)
-                    max_x = hm.x
-                    max_y = hm.y
-                    """
-                    py = screen_y - half_quad_size
-                    while py < screen_y + half_quad_size:
-                        px = screen_x - half_quad_size
-                        while px < screen_x + half_quad_size:
-                            screen.x = px
-                            screen.y = py
-                            self.screen2map(screen, hm)
-                            z = heightmap.bilinear(hm.x, hm.y)
-                            if z > max_z:
-                                max_z = z
-                                max_x = hm.x
-                                max_y = hm.y
-                            px += ratio_screenmap_2_hm
-                        py += ratio_screenmap_2_hm
-                    """
-                else:
-                    screen.x = screen_x
-                    screen.y = screen_y
-                    self.screen2map(screen, hm)
-                    max_z = heightmap.bilinear(hm.x, hm.y)
-                    max_x = hm.x
-                    max_y = hm.y
+                normalMap.bilinear(hm.x, hm.y, normal)
 
-                if max_x > 511 or max_y > 511:
-                    raise Exception("bad value")
-                normalMap.bilinear(max_x, max_y, normal)
-
-                datamap.setXY(x, quad_width - 1 - y, normal, max_z)
+                datamap.setXY(x, quad_width - y, normal, max_z)
 
                 p += 3
-                #sx += steps
-            #sy += steps
 
         quad.datamap = datamap
         quad.center = THREE.Vector2(lx, ly)

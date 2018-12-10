@@ -209,7 +209,7 @@ class Quadtree:
         self.datamap.needsUpdate = True
 
         scale = 2 ** (9 - self.level)
-        mesh = self.init_mesh(datamap.size - 1)
+        mesh = self.init_mesh(datamap.size-1)
         mesh.scale.set(scale, scale, 1.0)
         mesh.position.x = self.center.x
         mesh.position.y = self.center.y

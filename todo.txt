@@ -79,6 +79,7 @@
 19/08/18: 01/07/18  post processing     add haze
 21/11/18: 18/11/18  terrain             tiles behind the player are displayed
 21/11/18: 18/11/18  indexmap            using a 1 char bitmap
+10/12/18: 18/11/18  terrain             implement the tiles as heightmap bitmaps instead of meshes
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one

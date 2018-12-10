@@ -655,99 +655,36 @@ class Terrain:
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
         index = geometry.index
-        row = int(geometry.parameters['widthSegments'])
+        row = int(geometry.parameters['widthSegments'] * 2 * 3)
 
         for i in range(16):
-            ind = []
-
-            # fill the inner triangles
-            for y in range(1, row - 1):
-                for x in range(1, row - 1):
-                    ind.append(y*row + x)
-                    ind.append((y + 1) * row + x)
-                    ind.append(y * row + x + 1)
-
-                    ind.append((y + 1) * row + x)
-                    ind.append((y + 1) * row + x + 1)
-                    ind.append(y * row + x + 1)
+            self.quadtree_mesh_indexes[i] = index.clone()
 
             array = self.quadtree_mesh_indexes[i].array
 
-            # top row
             if i & 1:
-                # top: k = 0
-                for k in range(2, row-3, 2):
-                    # t1
-                    ind.append(k)
-                    ind.append(k+row)
-                    ind.append(k+1)
-                    # t2
-                    ind.append(k+row)
-                    ind.append(k+row+2)
-                    ind.append(k+1)
-                    # t3
-                    ind.append(k+row+2)
-                    ind.append(k+2)
-                    ind.append(k+1)
-            else:
-                for x in range(1, row - 1):
-                    ind.append(x)
-                    ind.append(row + x)
-                    ind.append(x + 1)
-
-                    ind.append(row + x)
-                    ind.append(row + x + 1)
-                    ind.append(x + 1)
+                for k in range(len(array) - row, len(array), 12):
+                    array[k + 4] = array[k + 10]
+                    array[k + 7] = array[k + 10]
+                    array[k + 9] = array[k + 10]
 
             if i & 2:
-                # bottom: k = 14*16
-                for k in range(0, row, 2):
-                    # t1
-                    ind.append(k)
-                    ind.append(k+row)
-                    ind.append(k+row+1)
-                    # t2
-                    ind.append(k)
-                    ind.append(k+row+2)
-                    ind.append(k+2)
-                    # t3
-                    ind.append(k+row+1)
-                    ind.append(k+row+2)
-                    ind.append(k+2)
+                for k in range(0, row, 12):
+                    array[k + 2] = array[k]
+                    array[k + 5] = array[k]
+                    array[k + 6] = array[k]
 
             if i & 4:
-                # left: k = 0
-                for k in range(0, len(array), 2*row):
-                    # t1
-                    ind.append(k)
-                    ind.append(k+row+1)
-                    ind.append(k+1)
-                    # t2
-                    ind.append(k)
-                    ind.append(k+2*row)
-                    ind.append(k+row+1)
-                    # t3
-                    ind.append(k+2*row)
-                    ind.append(k+2*row+1)
-                    ind.append(k+row+1)
+                for k in range(0, len(array), row * 2):
+                    array[k + 1] = array[k]
+                    array[k + 3] = array[k]
+                    array[k + row] = array[k]
 
             if i & 8:
-                # right: k = 15
                 for k in range(row - 6, len(array), row * 2):
-                    # t1
-                    ind.append(k)
-                    ind.append(k+row)
-                    ind.append(k+1)
-                    # t2
-                    ind.append(k+row)
-                    ind.append(k+2*row+1)
-                    ind.append(k+1)
-                    # t3
-                    ind.append(k+row)
-                    ind.append(k+2*row)
-                    ind.append(k+2*row+1)
-
-            self.quadtree_mesh_indexes[i] = []
+                    array[k + 4] = array[k + row + 4]
+                    array[k + row + 2] = array[k + row + 4]
+                    array[k + row + 5] = array[k + row + 4]
 
     def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
         """
@@ -1029,8 +966,8 @@ class Terrain:
             if tile.east:
                 code |= 8
 
-            #FIXME add back stiching
-            # tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
+            tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
+            tile.mesh.geometry.index.needsUpdate = True
 
             tile.debug = code
 
@@ -1214,7 +1151,7 @@ class Terrain:
         if not position.equals(self.cache_position) or not direction.equals(self.cache_direction):
             self._build_tiles_onscreen(position)
             self._frustrum_culling(player, position, direction)
-            #self._stich_neighbours()
+            self._stich_neighbours()
 
             self.cache_position.copy(position)
             self.cache_direction.copy(direction)
