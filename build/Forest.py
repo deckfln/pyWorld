@@ -84,6 +84,10 @@ def forest_create(trees, terrain):
         if normal.z < 0.75:
             continue
 
+        # if the ground is a bit steep, dig the tree more in the ground
+        if normal.z < 0.98:
+            z -= 0.5
+
         world = terrain.map2screen(hm)
 
         # convert the indexmap radius to a world radius
