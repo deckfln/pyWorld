@@ -57,7 +57,7 @@ class InitThread(Thread):
                         'sunColor': {'type': "v3", 'value': p.sun.color}
             }
 
-            p.load_percentage += 5
+            p.load_percentage[0] += 5
             p.scene.background = background
 
 
@@ -102,13 +102,13 @@ class InitThread(Thread):
             models = Config['engine']['assets'][name]
             for lod in range(5):
                 p.assets.load(name, lod+1, models[lod], THREE.Vector2(1, 1))
-                p.load_percentage += 1
+                p.load_percentage[0] += 1
 
         # dynamic assets (sceneries)
         for name in Config['engine']['dynamic_asset']:
             model = Config['engine']['dynamic_asset'][name]
             p.assets.load(name, None, model, THREE.Vector2(1, 1), True)
-            p.load_percentage += 5
+            p.load_percentage[0] += 5
 
         # add them to the scene, as each asset as a instancecount=0, none will be displayed
         p.assets.add_2_scene(p.scene)
@@ -118,20 +118,19 @@ class InitThread(Thread):
         p.terrain = Terrain(512, 25, 512)
         p.terrain.load(p.sun)
         p.assets.set_sun(p.sun)
-        p.load_percentage += 5
         p.terrain.scene = p.scene
-        p.load_percentage += 5
+        p.load_percentage[0] += 5
 
         print("Init meshes...")
         # p.terrain.quadtree.loadChildren(p)
         p.terrain.build_quadtre_indexes()
-        p.load_percentage += 5
+        p.load_percentage[0] += 5
 
         print("Init Player...")
         cwd = Config["folder"]
         p.player = Player(cwd, Config['engine']['player'], THREE.Vector3(Config['player']['position'][0], Config['player']['position'][1], 0), p.scene, p.terrain)
         p.player.add2scene(p.scene)
         p.actors.append(p.player)
-        p.load_percentage += 5
+        p.load_percentage[0] += 5
 
         print("End init")

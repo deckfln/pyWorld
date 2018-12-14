@@ -59,7 +59,7 @@ class PYWorld:
         self.gui = None
         self.init_thread = None
         self.queue = queue.Queue()
-        self.load_percentage = 0
+        self.load_percentage = [0]
 
     def init(self):
         """

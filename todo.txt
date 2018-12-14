@@ -83,6 +83,7 @@
 11/12/18: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
 14/12/18: 24/11/18  terrain             BUG: at load time the full terrain is display, there is no frustrum culling.
                                         BUG: tiles where 'flickering' when LOD was changing
+14/12/18: 21/11/18  gui                 BUG: progress bar is not displayed during init
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -121,7 +122,6 @@ TODO: 09/02/18  shadows             tree foliage transparency casts shadow
 TODO: 25/06/18  animation	        character is blinking when running
 TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
-TODO: 21/11/18  gui                 progress bar is not displayed during init
 TODO: 21/11/18  gui                 FPS counter is not displayed during run
 TODO: 21/11/18  character           running backward is all broken
 TODO: 14/12/18  opengl              meshes are sometimes display with wrong matrices
