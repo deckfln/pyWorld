@@ -57,6 +57,9 @@ class Quadtree:
     material_far = None
     material_very_far = None
     asyncIO = None
+    NOT_LOADED = 0
+    LOADING = 1
+    LOADED = 2
 
     def __init__(self, level, center, size, parent):
         self.name = ""
@@ -78,6 +81,7 @@ class Quadtree:
         self.west = None
         self.east = None
         self.datamap = None
+        self.status = Quadtree.NOT_LOADED
 
         self.sub = [None]*4
 
@@ -244,8 +248,10 @@ class Quadtree:
     #        for child in self.sub:
     #            child.add2scene(list)
     def add2scene(self, scene):
-        scene.add(self.mesh)
-        self.added = True
+        if not self.added:
+            self.mesh.visible = self.visible
+            scene.add(self.mesh)
+            self.added = True
 
     def notTraversed(self):
         self.traversed = False
@@ -261,11 +267,10 @@ class Quadtree:
             for child in self.sub:
                 child.build_index(index)
 
-    def display(self, scene):
-        if not self.added:
-            self.add2scene(scene)
-
-        self.visible = self.mesh.visible = True
+    def display(self):
+        self.visible = True
+        if self.mesh:
+            self.mesh.visible = True
         self.last_on_screen = time.clock()
 
         if Config['terrain']['debug']['boundingsphere']:
@@ -276,10 +281,10 @@ class Quadtree:
         @param {type} scene
         @returns {undefined}
         """
-        if self.mesh is None:
+        self.visible = False
+        if self.mesh:
+            self.mesh.visible = False
             return
-
-        self.visible = self.mesh.visible = False
 
         if Config['terrain']['debug']['boundingsphere']:
             self.bs.visible = False
@@ -491,7 +496,10 @@ class QuadtreeReader(Thread):
             if quadtree is None:
                 break
 
+            quadtree.status = Quadtree.LOADING
             quadtree.load_datamap()
+            quadtree.status = Quadtree.LOADED
+
             queue.task_done()
 
             # register the mesh in memory and the time of load

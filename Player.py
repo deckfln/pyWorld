@@ -184,7 +184,7 @@ class Player(Actor):
          * @param {float} delta
          * @param {Boolean} run
         """
-        if self.colision(self.direction, self.scene):
+        if self.collision(self.direction, self.scene):
             return False
         
         # forward speed depend of the steep and the run param
@@ -242,7 +242,7 @@ class Player(Actor):
          * @param {float} delta
          * @param {boolean} run
         """
-        if self.colision(self.direction.clone().negate()):
+        if self.collision(self.direction.clone().negate()):
             return False
 
         # forward speed depend of the steep
@@ -334,11 +334,14 @@ class Player(Actor):
             super().stop()
     """
 
-    def colision(self,direction, debug=None):
+    def collision(self,direction, debug=None):
         """
          * @param {THREE.Vector3} direction
          * @returns {Boolean}
         """
+        if not Config['player']['collision']:
+            return False
+
         next_position = self.position.clone().add(direction)
         footprint = self.footprint.clone(next_position)
         

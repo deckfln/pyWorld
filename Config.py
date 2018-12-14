@@ -29,7 +29,7 @@ Config = {
             "lod": False,            # display meshes LOD as colored wireframe
             'uv': False              # use a standard shader with an UV texture
         },
-        'display_scenary': True,
+        'display_scenary': False,
         'display_grass': False,
         "indexmap": {
             "size": 32,
@@ -58,7 +58,9 @@ Config = {
             "boundingsphere": False,
             "frustrum": False
         },
-        "tps": True
+        "tps": True,
+        "position": [22.8510658816, -11.0726747753],
+        "collision": False
     },
 
     'shadow': {

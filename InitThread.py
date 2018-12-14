@@ -122,16 +122,16 @@ class InitThread(Thread):
         p.terrain.scene = p.scene
         p.load_percentage += 5
 
+        print("Init meshes...")
+        # p.terrain.quadtree.loadChildren(p)
+        p.terrain.build_quadtre_indexes()
+        p.load_percentage += 5
+
         print("Init Player...")
         cwd = Config["folder"]
-        p.player = Player(cwd, Config['engine']['player'], THREE.Vector3(27.8510658816, -11.0726747753, 0), p.scene, p.terrain)
+        p.player = Player(cwd, Config['engine']['player'], THREE.Vector3(Config['player']['position'][0], Config['player']['position'][1], 0), p.scene, p.terrain)
         p.player.add2scene(p.scene)
         p.actors.append(p.player)
         p.load_percentage += 5
 
-        print("Init meshes...")
-        # p.terrain.quadtree.loadChildren(p)
-        #FIXME add it back
-        p.terrain.build_quadtre_indexes()
-        p.load_percentage += 5
         print("End init")

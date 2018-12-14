@@ -207,7 +207,7 @@ class PYWorld:
             self.assets.reset_instances()
     
             for quad in self.terrain.tiles_onscreen:
-                if quad.mesh.visible:
+                if quad.visible:
                     # build instances from teh tiles
                     for asset in quad.assets.values():
                         if len(asset.offset) > 0:
@@ -241,6 +241,7 @@ class PYWorld:
     def render(self):
         """
     
+        :param p:
         :param p:
         :return:
         """

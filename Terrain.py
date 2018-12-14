@@ -935,7 +935,7 @@ class Terrain:
         self.tiles_onscreen.sort(key=lambda x: x.size)
 
         for tile in self.tiles_onscreen:
-            if not tile.mesh.visible:
+            if not tile.visible or tile.mesh is None:
                 continue
 
             if not hasattr(tile, 'debug'):
@@ -1020,42 +1020,53 @@ class Terrain:
             hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
 
             if isInFront(hm, hm_behind, p):
-                quad.mesh.visible = True
+                quad.display()
             elif distance2(hm, hm_behind, p, hm_quad_radius):
-                quad.mesh.visible = True
+                quad.display()
             else:
-                quad.mesh.visible = False
+                quad.hide()
 
-            if quad.mesh.visible:
+            if quad.visible:
                 if isInFront(hm, left, p):
-                    quad.mesh.visible = True
+                    quad.display()
                 elif distance2(hm, left, p, hm_quad_radius):
-                    quad.mesh.visible = True
+                    quad.display()
                 else:
-                   quad.mesh.visible = False
+                   quad.hide()
 
-            if quad.mesh.visible:
+            if quad.visible:
                 if not isInFront(hm, right, p):
-                    quad.mesh.visible = True
+                    quad.display()
                 elif distance2(hm, right, p, hm_quad_radius):
-                    quad.mesh.visible = True
+                    quad.display()
                 else:
-                    quad.mesh.visible = False
+                    quad.hide()
 
-    def _display_async_loader(self):
+    def _display_async_loader(self, position):
         """
         Manager the loader queue.
         If a tile is loaded and the parent has been removed, add to the scene
         :return:
         """
+        position2D = THREE.Vector2(position.x, position.y)
+
+        # sort the loading priority by distance
+        def _sort(quad):
+            return quad.center.distanceToSquared(position2D)
+
+        self.loader_queue.sort(key=_sort)
+
+        # load the tile in background for next frame
+        for quad in self.loader_queue:
+            if quad.status == Quadtree.NOT_LOADED:
+                self.loader.read(quad)
 
         # add newly loaded tiles
         scene = self.scene
         for i in range(len(self.loader_queue) - 1, -1, -1):
             quad = self.loader_queue[i]
-            if quad.mesh:
-                self.tiles_onscreen.append(quad)
-                quad.display(scene)
+            if quad.status == Quadtree.LOADED:
+                quad.add2scene(self.scene)
                 del self.loader_queue[i]
 
         # remove tiles no more on screen
@@ -1064,9 +1075,11 @@ class Terrain:
             # hide tile => the sub-tiles need to be loaded first
             loaded = 0
             for sub in quad.sub:
-                if sub.mesh is not None:
+                if sub is None or sub.added:
                     loaded += 1
-            if loaded == 4:
+            if quad.parent is None or quad.parent.added:
+                loaded += 1
+            if loaded == 5:
                 for j in range(len(self.tiles_onscreen) - 1, -1, -1):
                     if self.tiles_onscreen[j] == quad:
                         del self.tiles_onscreen[j]
@@ -1097,46 +1110,19 @@ class Terrain:
         for i in range(len(self.tiles_onscreen)-1, -1, -1):
             quad = self.tiles_onscreen[i]
             if quad not in tiles_2_display:
-                if quad.traversed:
-                    # hide tile => the sub-tiles need to be loaded first
-                    loaded = 0
-                    for sub in quad.sub:
-                        if sub.mesh is not None:
-                            loaded += 1
-                    if loaded == 4:
-                        del self.tiles_onscreen[i]
-                        quad.hide()
-                    else:
-                        # else keep the tile on screen until ALL sub tiles are loaded
-                        self.removal_queue.append(quad)
-                else:
-                    del self.tiles_onscreen[i]
-                    quad.hide()
+                # hide tile => the sub-tiles need to be loaded first
+                self.removal_queue.append(quad)
 
         # add missing tiles
-        self.loader_queue.clear()
         scene = self.scene
         for quad in tiles_2_display:
             if quad not in self.tiles_onscreen:
-                if quad.mesh and quad.parent.visible is False:
-                    if quad.added is False:
-                        quad.added = True
-                        self.scene.add(quad.mesh)
-
-                    self.tiles_onscreen.append(quad)
-                    quad.display(scene)
-                else:
+                if quad.status == Quadtree.NOT_LOADED and quad not in self.loader_queue:
                     self.loader_queue.append(quad)
+                elif quad.status == Quadtree.LOADED:
+                    quad.display()
 
-        # sort the loading priority by distance
-        def _sort(quad):
-            return quad.center.distanceToSquared(position2D)
-
-        self.loader_queue.sort(key=_sort)
-
-        # load the tile in background for next frame
-        for quad in self.loader_queue:
-            self.loader.read(quad)
+                self.tiles_onscreen.append(quad)
 
     def draw(self, player):
         """
@@ -1157,7 +1143,7 @@ class Terrain:
             self.cache_direction.copy(direction)
 
         # review tiles loaded last frame
-        self._display_async_loader()
+        self._display_async_loader(position)
 
         # clean up old quad meshes
         # self.loader.cleanup(self.scene)

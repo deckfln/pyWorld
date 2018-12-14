@@ -81,6 +81,8 @@
 21/11/18: 18/11/18  indexmap            using a 1 char bitmap
 10/12/18: 18/11/18  terrain             implement the tiles as heightmap bitmaps instead of meshes
 11/12/18: 18/08/18  trees               on sloppy terrain, put the trees deepaer in the ground to avoid ther base floating in the air
+14/12/18: 24/11/18  terrain             BUG: at load time the full terrain is display, there is no frustrum culling.
+                                        BUG: tiles where 'flickering' when LOD was changing
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -122,4 +124,4 @@ TODO: 23/07/18  terrain             multiple textures are displayed on the same 
 TODO: 21/11/18  gui                 progress bar is not displayed during init
 TODO: 21/11/18  gui                 FPS counter is not displayed during run
 TODO: 21/11/18  character           running backward is all broken
-TODO: 24/11/18  terrain             at load time the full terrain is display, there is no frustrum culling
+TODO: 14/12/18  opengl              meshes are sometimes display with wrong matrices
