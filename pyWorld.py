@@ -117,6 +117,7 @@ class PYWorld:
             self.init_thread = None
             self.container.addEventListener('animationRequest', self.animate)
             self.gui.reset()
+            self.gui.add(Stats())
             if Config["benchmark"]:
                 self.container.start_benchmark()
             return
@@ -230,7 +231,7 @@ class PYWorld:
             if self.hour > math.pi:
                 self.hour = 0
 
-        self.render()
+        self.render(self)
         # c = time.time() - t
         # print(c, self.player.vcamera.position.x, self.player.vcamera.position.y, self.player.vcamera.position.z)
         # if c > 0.033:
@@ -238,6 +239,7 @@ class PYWorld:
     
         # self.queue.put(1)
 
+    @staticmethod
     def render(self):
         """
     
