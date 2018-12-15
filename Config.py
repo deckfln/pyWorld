@@ -16,6 +16,7 @@ Config = {
     "terrain_width": 512,
 
     "terrain": {
+        "tile_width": 16,
         "flat": False,               # do not generate noise
         "forest": True,             # display forest
         "city": True,               # generate a city
@@ -73,6 +74,43 @@ Config = {
 
     "engine": {
         "player": "models/marie-jane.dae",
+        "shaders": {
+            "terrain": {
+                "vertex": "shaders/terrain/vertex.glsl",
+                "fragment": "shaders/terrain/fragment.glsl",
+                "textures": {
+                    "indexmap": "img/indexmap.png",
+                    "blendmap": "img/blendmap.png",
+                    "terrain_d": "img/terrain_d.png",
+                    "terrain_far_d": "img/terrain_far_d.png",
+                    "terrain_very_far_d": "img/terrain_very_far_d.png",
+                    "terrain_n": "img/terrain_n.png"
+                }
+            },
+            "terrain_debug": {
+                "vertex": "shaders/terrain/debug/vertex.glsl",
+                "fragment": "shaders/terrain/debug/fragment.glsl",
+                "textures": {
+                    "uv": "img/UV_Grid_Sm.jpg"
+                }
+            },
+            'asset': {
+                'vertex': 'shaders/instances/vertex.glsl',
+                'fragment': 'shaders/instances/fragment.glsl'
+            },
+            'asset_depth': {
+                'vertex': 'shaders/instances/depth_vertex.glsl',
+                'fragment': 'shaders/instances/depth_fragment.glsl'
+            },
+            'grass': {
+                'vertex': 'shaders/dynamic_instances/vertex_grass.glsl',
+                'fragment': 'shaders/dynamic_instances/fragment.glsl'
+            },
+            'skybox': {
+                'vertex': 'shaders/skybox/vertex.glsl',
+                'fragment': 'shaders/skybox/fragment.glsl'
+            }
+        },
         "assets": {
             'evergreen': [
                 "models/anime_tree/1/model",
@@ -114,3 +152,39 @@ Config = {
         ]
     }
 }
+
+
+def full_path(folder, file):
+    if ':/' not in file:
+        return folder + file
+
+
+def update_config():
+    folder = Config['folder'] + '/'
+
+    skycube = Config["engine"]["skycube"]
+    for i in range(len(skycube)):
+        skycube[i] = full_path(folder, skycube[i])
+
+    assets = Config["engine"]["assets"]
+    for asset in assets.values():
+        for i in range(len(asset)):
+            asset[i] = full_path(folder, asset[i])
+
+    assets = Config["engine"]["dynamic_asset"]
+    for asset in assets:
+        assets[asset] = full_path(folder, assets[asset])
+
+    shaders = Config["engine"]["shaders"]
+    for shader in shaders.values():
+        shader["vertex"] = full_path(folder, shader["vertex"])
+        shader["fragment"] = full_path(folder, shader["fragment"])
+        if 'textures' in shader:
+            textures = shader["textures"]
+            for texture in textures:
+                textures[texture] = full_path(folder, textures[texture])
+
+    Config["engine"]["player"] = full_path(folder, Config["engine"]["player"])
+
+
+update_config()

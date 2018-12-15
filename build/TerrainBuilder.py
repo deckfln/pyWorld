@@ -455,7 +455,7 @@ class TerrainBuilder(Terrain):
         :param size:
         :return:
         """
-        quad_width = 16
+        quad_width = Config['terrain']['tile_width']
         progress(count, self.nb_tiles, "Build tile map")
         geometry = THREE.PlaneBufferGeometry(size, size, quad_width, quad_width)
         positions = geometry.attributes.position.array

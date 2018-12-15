@@ -119,14 +119,14 @@ class Terrain:
         :return:
         """
         if Config['terrain']['debug']['uv']:
-            _folder = Config['folder']
+            _shader = Config['engine']['shaders']['terrain_debug']
 
             loader = THREE.TextureLoader()
-            mymap = loader.load(_folder + '/img/UV_Grid_Sm.jpg')
+            mymap = loader.load(_shader['texture']['uv'])
 
             _floader = THREE.FileLoader()
-            _vertexShader = _floader.load(_folder + "/shaders/terrain/debug/vertex.glsl")
-            _fragmentShader = _floader.load(_folder + "/shaders/terrain/debug/fragment.glsl")
+            _vertexShader = _floader.load(_shader["vertex"])
+            _fragmentShader = _floader.load(_shader["fragment"])
 
             self.material = THREE.RawShaderMaterial({
                 'uniforms': {
@@ -151,17 +151,18 @@ class Terrain:
             :return:
             """
             loader = THREE.TextureLoader()
-            folder = Config['folder']
+            _shader = Config['engine']['shaders']['terrain']
+            _textures = _shader['textures']
 
-            indexmap = loader.load(folder + "/img/indexmap.png")
+            indexmap = loader.load(_textures["indexmap"])
             indexmap.magFilter = THREE.NearestFilter
             indexmap.minFilter = THREE.NearestFilter
             self.indexmap.texture = indexmap
 
-            self.terrain_textures = loader.load(folder + "/img/terrain_d.png")
-            normalMap = loader.load(folder + "/img/terrain_n.png")
+            self.terrain_textures = loader.load(_textures["terrain_d"])
+            normalMap = loader.load(_textures["terrain_n"])
 
-            self.blendmap.texture = loader.load(folder + "/img/blendmap.png")
+            self.blendmap.texture = loader.load(_textures["blendmap"])
 
             floader = THREE.FileLoader()
             uniforms = {
@@ -188,12 +189,12 @@ class Terrain:
 
             self.material = THREE.RawShaderMaterial( {
                 'uniforms': uniforms,
-                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
+                'vertexShader': floader.load(_shader["vertex"]),
+                'fragmentShader': floader.load(_shader["fragment"]),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_far = loader.load(folder + "/img/terrain_far_d.png")
+            terrain_far = loader.load(_textures["terrain_far_d"])
 
             uniforms_far = {
                 'datamap': {'type': "t", 'value': None},
@@ -213,12 +214,12 @@ class Terrain:
             }
             self.material_far = THREE.RawShaderMaterial( {
                 'uniforms': uniforms_far,
-                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
+                'vertexShader': floader.load(_shader["vertex"]),
+                'fragmentShader': floader.load(_shader["fragment"]),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_very_far = loader.load(folder + "/img/terrain_very_far_d.png")
+            terrain_very_far = loader.load(_textures["terrain_very_far_d"])
 
             uniforms_very_far = {
                 'datamap': {'type': "t", 'value': None},
@@ -238,8 +239,8 @@ class Terrain:
             }
             self.material_very_far = THREE.RawShaderMaterial( {
                 'uniforms': uniforms_very_far,
-                'vertexShader': floader.load(folder + '/shaders/terrain/vertex.glsl'),
-                'fragmentShader': floader.load(folder + '/shaders/terrain/fragment.glsl'),
+                'vertexShader': floader.load(_shader["vertex"]),
+                'fragmentShader': floader.load(_shader["fragment"]),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 

@@ -85,6 +85,7 @@
                                         BUG: tiles where 'flickering' when LOD was changing
 14/12/18: 21/11/18  gui                 BUG: progress bar is not displayed during init
 14/12/18: 21/11/18  gui                 BUG: FPS counter is not displayed during run
+15/12/18: 28/07/18  engine              move shader configuration to config file
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -102,7 +103,6 @@ TODO: 30/06/18  skycube             move clouds on the skycube
 TODO: 30/06/18  clouds              display clouds shadow on the terrain
 TODO: 03/07/18  init                add some spining cube during the loading screen
 TODO: 20/07/18  terrain             textures are too repetitive
-TODO: 28/07/18  engine              move shader configuration to config file
 TODO: 09/08/18  procedural scenery  draw vegetation on a block in front of the camera, not a circle around the player
 TODO: 14/08/18  scenery             use checkerboard to avoind different LOD pop ins
 TODO: 16/08/18  scenery             do we need all the classes (Scenery, Tree, Evergreen, House)

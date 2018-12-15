@@ -29,7 +29,6 @@ class InitThread(Thread):
     def run(self):
         """Code à exécuter pendant l'exécution du thread."""
         p = self.p
-        folder = Config["folder"]
         p.controls = TrackballControls(p.camera, p.container)
         p.camera.controls = p.controls
 
@@ -47,8 +46,9 @@ class InitThread(Thread):
             background = CubeTextureLoader().load(Config['engine']['skycube'])
             background.format = THREE.RGBFormat
 
-            p.renderer.background.boxMesh_vertex = loader.load(folder + '/shaders/skybox/vertex.glsl')
-            p.renderer.background.boxMesh_fragment = loader.load(folder + '/shaders/skybox/fragment.glsl')
+            shader = Config['engine']['shaders']['skybox']
+            p.renderer.background.boxMesh_vertex = loader.load(shader['vertex'])
+            p.renderer.background.boxMesh_fragment = loader.load(shader['fragment'])
             p.renderer.background.boxMesh_uniforms = {
                         'tCube': UniformValue(None),
                         'tFlip': UniformValue(- 1),
