@@ -11,27 +11,34 @@ import os
 
 from TextureMap import *
 from THREE.textures.DataTexture import *
+from Config import *
+import pickle
 
 
 class DataMap(TextureMap):
     """
     Data storage for textures
     """
-    def __init__(self, size: int):
+    def __init__(self, size, datamaps=None):
+        name = None
+        if size is not int:
+            name = size
+            size = 0
         super(DataMap, self).__init__(size, 0, 4, np.float32)
+
+        if name is not None:
+            self.load(datamaps, name)
 
     def setXY(self, x, y, normal, z):
         super().setXY(x, y, (normal.x, normal.y, normal.z, z))
 
-    def save(self, file):
-        if os.path.exists(file):
-            os.remove(file)
+    def save(self, datamaps, name):
+        size = self.data.size * self.data.dtype.itemsize
+        datamaps.save(self.data, size, name)
 
-        np.save(file, self.data)
-
-    def load(self, file):
-        self.data = np.load(file)
-        self.size = int(math.sqrt(self.data.size / 4))
+    def load(self, datamaps, name):
+        self.data = datamaps.load(name)
+        self.size = int(math.sqrt(self.data.size/4))
 
     def average(self):
         z = 0

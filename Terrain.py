@@ -5,7 +5,7 @@ from quadtree import *
 from VectorMap import *
 from IndexMap import *
 from Heightmap import *
-
+from DataMaps import *
 
 myrandom = Random(5454334)
 
@@ -42,15 +42,13 @@ class Terrain:
         self.onscreen = onscreen
         self.heightmap = Heightmap(size, height)
         self.nb_levels = 6
-        self.heightmaps = [None]*self.nb_levels
-        self.quad_lod = [None]*self.nb_levels
-        self.tiles = [None]*self.nb_levels
         self.normalMap = None
         self.indexmap = IndexMap(Config["terrain"]["indexmap"]["size"], Config["terrain"]["indexmap"]["repeat"])
         self.blendmap = TextureMap(Config["terrain"]["blendmap"]["size"], 1)
         self.scenery = []
         self.radiuses = [0] * self.nb_levels
 
+        self.datamaps = DataMaps()
         self.ratio = (self.size-1)/self.onscreen
         self.ratio_screen_2_map = self.onscreen / self.size
         self.half = self.onscreen/2
@@ -618,31 +616,6 @@ class Terrain:
         """
         return v.x >= 0 and v.x <= self.indexmap.size and v.y >= 0 and v.y <= self.indexmap.size
 
-    def _check_quad_lod(self, position: Vector2, quad: Quadtree, tiles_2_display: list):
-        """
-        @description Recursively check the tiles quadtree to find what is on scree,
-        @param {type} position
-        @param {type} quad
-        @param {type} tiles_2_display
-        @returns {undefined}
-        """
-        quad.traversed = True
-
-        # detect end of tree
-        if not quad.sub[0]:
-            tiles_2_display.append(quad)
-            return
-
-        distance = position.distanceTo(quad.center)
-        if distance <= (math.sqrt(quad.size*quad.size + quad.size*quad.size)):    # lod_radius:
-            # check the sub tiles
-            for i in range(4):
-                self._check_quad_lod(position, quad.sub[i], tiles_2_display)
-        else:
-            # The tile is far away, so display it
-            # add the tile on the display list if needed
-            tiles_2_display.append(quad)
-
     def build_quadtre_indexes(self):
         """
         Build an array of openGL indexes to tbe used be tiles stitching
@@ -651,7 +624,7 @@ class Terrain:
         self.quadtree_mesh_indexes = [None for i in range(16)]
 
         # load the root quadtree to have a template
-        self.quadtree.load_datamap()
+        self.quadtree.load_datamap(self.datamaps)
 
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
@@ -1062,7 +1035,7 @@ class Terrain:
         scene = self.scene
         if len(loader_queue) > 0:
             q = loader_queue.pop()
-            q.load_datamap()
+            q.load_datamap(self.datamaps)
             q.add2scene(scene)
         """
         # load the tile in background for next frame
@@ -1109,7 +1082,6 @@ class Terrain:
         tiles_2_display = []
 
         position2D = THREE.Vector2(position.x, position.y)
-        # self._check_quad_lod(position2D, self.quadtree, tiles_2_display)
         if not self._build_view(position2D, tiles_2_display, -1):
             # there is no change
             return

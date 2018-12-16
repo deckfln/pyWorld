@@ -86,6 +86,7 @@
 14/12/18: 21/11/18  gui                 BUG: progress bar is not displayed during init
 14/12/18: 21/11/18  gui                 BUG: FPS counter is not displayed during run
 15/12/18: 28/07/18  engine              move shader configuration to config file
+16/12/18: 24/11/18  terrain             store the datamaps in one big file instead of many small ones
 
 --TO DO--
 TODO: 30/12/17  animation           use smooth transition from one animation to the next one
@@ -110,7 +111,8 @@ TODO: 18/08/18  gui                 display player's position
 TODO: 18/08/18  heightmap           stream heightmap, normalmap as we stream the meshes
 TODO: 18/08/18  sun                 sun should not be visible during 'night'
 TODO: 18/08/18  player              improve the ambient color for the player's back when facing the sun
-TODO: 24/11/18  terrain             store the heightmap datamaps in one big file instead of many small ones
+TODO: 16/12/18  terrain             compute the tile size based on a number of LOD rather than a fixed value
+TODO: 16/12/18  terrain             display the tiles as instances of a plane mesh
 
 -- BUGS --
 TODO: 17/01/18  collision           can be stuck in a tree

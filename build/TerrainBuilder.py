@@ -9,6 +9,7 @@ from build.city import *
 from Terrain import *
 import time
 from DataMap import *
+from DataMaps import *
 
 mango_dir = os.path.dirname(__file__) + '/../cython/'
 sys.path.append(mango_dir)
@@ -579,7 +580,9 @@ class TerrainBuilder(Terrain):
             pickle.dump(self.normalMap, f)
 
         # dump the meshes
-        self.quadtree.dump_datamap()
+        datamaps = DataMaps('wb')
+        self.quadtree.dump_datamap(datamaps)
+        datamaps.close()
 
         # pack the quad into an array
         # this will DELETE the meshes so they are NOT in the pickle

@@ -184,15 +184,12 @@ class Quadtree:
             for q in self.sub:
                 q.dump_mesh()
 
-    def dump_datamap(self):
-        file = Config['folder']+"/bin/" + self.name
-        if self.datamap is None:
-            raise Exception("not good")
-        self.datamap.save(file)
+    def dump_datamap(self, datamaps):
+        self.datamap.save(datamaps, self.name)
 
         if not self.sub[0] is None:
             for q in self.sub:
-                q.dump_datamap()
+                q.dump_datamap(datamaps)
 
     def load(self):
         """
@@ -202,13 +199,11 @@ class Quadtree:
             mesh.rebuild_id()
             self._record_mesh(mesh)
 
-    def load_datamap(self):
+    def load_datamap(self, datamaps):
         """
         """
         self.status = LOADING
-        file = Config['folder']+"/bin/" + self.name +".npy"
-        datamap = DataMap(0)
-        datamap.load(file)
+        datamap = DataMap(self.name, datamaps)
 
         # find the average Z for the boundingsphere
         z = datamap.average()
