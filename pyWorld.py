@@ -87,7 +87,7 @@ class PYWorld:
         self.gui.add(Stats())
         self.gui.add(LoadBar(self.load_percentage))
 
-        self.camera = THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000)
+        self.camera = THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 4000)
         self.camera.position.set(0, 0, 100)
         self.camera.up.set(0, 0, 1)
     

@@ -20,12 +20,12 @@ _v3d1_static = THREE.Vector3()
 
 
 class Player(Actor):
-    def __init__(self, cwd, file, position, scene, terrain):
+    def __init__(self, cwd, file, position, direction, scene, terrain):
         super().__init__(cwd, file)
 
         self.status = "drop"
-        self.direction = THREE.Vector3(0.3, 0, 0).normalize()     # direction face the player is moving to
-        self.action = THREE.Vector2()                             # action the controler is given (forward, left, right, backward)
+        self.direction = direction.normalize()     # direction face the player is moving to
+        self.action = THREE.Vector2()              # action the controler is given (forward, left, right, backward)
         self.rotation_speed = math.pi/128
         self.rotation = 0
         self.terrain = terrain

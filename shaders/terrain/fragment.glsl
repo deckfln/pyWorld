@@ -247,11 +247,11 @@ void main()
     color = clamp(brightness + ambientCoeff, 0.0, 1.0) * color;
 
     // tend to blue haze over distance
-    float z = clamp(gl_FragCoord.z / gl_FragCoord.w, 0.0, 512.0);
+    float z = clamp(gl_FragCoord.z / gl_FragCoord.w, 0.0, 8192.0);
     float fogAmount = 1.0 - exp( -z * 0.005 );
     vec4  fogColor  = vec4(0.5, 0.6, 0.7, 1.0);
 
-    color = mix( color, fogColor, fogAmount );
+    // color = mix( color, fogColor, fogAmount );
 
     // tint the whole color
     color = vec4(sunColor, 1.0) * color;

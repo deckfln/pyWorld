@@ -124,3 +124,5 @@ TODO: 20/07/18  terrain             texture far away is all wrong
 TODO: 23/07/18  terrain             multiple textures are displayed on the same tiles (low res AND high res) next to the cabins
 TODO: 21/11/18  character           running backward is all broken
 TODO: 14/12/18  opengl              meshes are all over the screen (probably a bug in THREEpy)
+TODO: 16/12/18  camera              if player direction starts with x < 0, the camera is always facing the player
+TODO: 16/12/18  quadloader          for 2048x2048 loading in a dedicated thread doesn't work well

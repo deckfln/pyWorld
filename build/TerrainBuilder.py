@@ -448,7 +448,7 @@ class TerrainBuilder(Terrain):
         self._build_tiled_datamap(self.quadtree, 0, 0, 0, 0, 0, self.size, 1)
         progress(0, 0)
 
-    def _build_tile_map(self, quad, level, lx, ly, size, material, count):
+    def _build_tile_map(self, quad, level, lx, ly, size, onscreen, material, count):
         """
 
         :param center:
@@ -500,10 +500,12 @@ class TerrainBuilder(Terrain):
         quad.visibility_radius = math.sqrt(2)*size/2
         quad.size = size
         quad.level = level
+        quad.onscreen = onscreen
         quad.name = "%d-%d-%d" % (level, lx, ly)
 
         # sub-divide
         quadSize = size / 4
+        halfOnscreen = onscreen / 2
 
         if level < self.nb_levels - 1:
             quad.sub[0] = Quadtree( -1, -1, -1, quad)     # nw
@@ -511,10 +513,10 @@ class TerrainBuilder(Terrain):
             quad.sub[2] = Quadtree( -1, -1, -1, quad)     # sw
             quad.sub[3] = Quadtree( -1, -1, -1, quad)     # se
 
-            count = self._build_tile_map(quad.sub[0], level + 1, lx - quadSize, ly - quadSize, halfSize, material, count + 1)
-            count = self._build_tile_map(quad.sub[1], level + 1, lx + quadSize, ly - quadSize, halfSize, material, count + 1)
-            count = self._build_tile_map(quad.sub[2], level + 1, lx - quadSize, ly + quadSize, halfSize, material, count + 1)
-            count = self._build_tile_map(quad.sub[3], level + 1, lx + quadSize, ly + quadSize, halfSize, material, count + 1)
+            count = self._build_tile_map(quad.sub[0], level + 1, lx - quadSize, ly - quadSize, halfSize, halfOnscreen, material, count + 1)
+            count = self._build_tile_map(quad.sub[1], level + 1, lx + quadSize, ly - quadSize, halfSize, halfOnscreen, material, count + 1)
+            count = self._build_tile_map(quad.sub[2], level + 1, lx - quadSize, ly + quadSize, halfSize, halfOnscreen, material, count + 1)
+            count = self._build_tile_map(quad.sub[3], level + 1, lx + quadSize, ly + quadSize, halfSize, halfOnscreen, material, count + 1)
 
         return count
 
@@ -523,7 +525,7 @@ class TerrainBuilder(Terrain):
         Build the LOD meshes and the Quad Tree
         :return:
         """
-        self._build_tile_map(self.quadtree, 0, 0, 0, self.size, None, 1)
+        self._build_tile_map(self.quadtree, 0, 0, 0, self.size, self.onscreen, None, 1)
         progress(0, 0)
 
     def build_mesh_scenery(self):

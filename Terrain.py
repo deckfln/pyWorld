@@ -764,7 +764,7 @@ class Terrain:
 
         return None,None
 
-    def _build_view(self, position: Vector2, tiles_2_display: list,max_depth: int):
+    def _build_view(self, position: Vector2, tiles_2_display: list, max_depth: int):
         """
 
         :return:
@@ -1050,43 +1050,53 @@ class Terrain:
         :return:
         """
         position2D = THREE.Vector2(position.x, position.y)
+        loader_queue = self.loader_queue
+        loader = self.loader
 
         # sort the loading priority by distance
         def _sort(quad):
             return quad.center.distanceToSquared(position2D)
 
-        self.loader_queue.sort(key=_sort)
+        loader_queue.sort(key=_sort, reverse=True)
 
+        scene = self.scene
+        if len(loader_queue) > 0:
+            q = loader_queue.pop()
+            q.load_datamap()
+            q.add2scene(scene)
+        """
         # load the tile in background for next frame
-        for quad in self.loader_queue:
-            if quad.status == Quadtree.NOT_LOADED:
-                self.loader.read(quad)
+        for quad in loader_queue:
+            if quad.status == NOT_LOADED:
+                loader.read(quad)
 
         # add newly loaded tiles
-        scene = self.scene
-        for i in range(len(self.loader_queue) - 1, -1, -1):
-            quad = self.loader_queue[i]
-            if quad.status == Quadtree.LOADED:
-                quad.add2scene(self.scene)
-                del self.loader_queue[i]
+        for i in range(len(loader_queue) - 1, -1, -1):
+            quad = loader_queue[i]
+            if quad.status == LOADED:
+                quad.add2scene(scene)
+                del loader_queue[i]
+        """
 
         # remove tiles no more on screen
-        for i in range(len(self.removal_queue)-1, -1, -1):
-            quad = self.removal_queue[i]
+        removal_queue = self.removal_queue
+        tiles_onscreen = self.tiles_onscreen
+        for i in range(len(removal_queue)-1, -1, -1):
+            quad = removal_queue[i]
             # hide tile => the sub-tiles need to be loaded first
             loaded = 0
             for sub in quad.sub:
-                if sub is None or sub.added:
+                if sub is None or sub.status == ADDED:
                     loaded += 1
-            if quad.parent is None or quad.parent.added:
+            if quad.parent is None or quad.parent.status == ADDED:
                 loaded += 1
             if loaded == 5:
-                for j in range(len(self.tiles_onscreen) - 1, -1, -1):
-                    if self.tiles_onscreen[j] == quad:
-                        del self.tiles_onscreen[j]
+                for j in range(len(tiles_onscreen) - 1, -1, -1):
+                    if tiles_onscreen[j] == quad:
+                        del tiles_onscreen[j]
                         quad.hide()
                         break
-                del self.removal_queue[i]
+                del removal_queue[i]
             # else keep the tile on screen until ALL sub tiles are loaded
 
     def _build_tiles_onscreen(self, position):
@@ -1115,12 +1125,11 @@ class Terrain:
                 self.removal_queue.append(quad)
 
         # add missing tiles
-        scene = self.scene
         for quad in tiles_2_display:
             if quad not in self.tiles_onscreen:
-                if quad.status == Quadtree.NOT_LOADED and quad not in self.loader_queue:
+                if quad.status == NOT_LOADED and quad not in self.loader_queue:
                     self.loader_queue.append(quad)
-                elif quad.status == Quadtree.LOADED:
+                elif quad.status == LOADED:
                     quad.display()
 
                 self.tiles_onscreen.append(quad)
@@ -1138,7 +1147,7 @@ class Terrain:
         if not position.equals(self.cache_position) or not direction.equals(self.cache_direction):
             self._build_tiles_onscreen(position)
             self._frustrum_culling(player, position, direction)
-            self._stich_neighbours()
+            # self._stich_neighbours()
 
             self.cache_position.copy(position)
             self.cache_direction.copy(direction)

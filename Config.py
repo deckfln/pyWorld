@@ -61,6 +61,7 @@ Config = {
         },
         "tps": True,
         "position": [22.8510658816, -11.0726747753],
+        "direction": [0.3, 0],
         "collision": False
     },
 

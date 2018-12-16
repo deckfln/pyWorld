@@ -115,7 +115,7 @@ class InitThread(Thread):
 
         # init the terrain
         print("Init Terrain...")
-        p.terrain = Terrain(512, 25, 512)
+        p.terrain = Terrain(Config["terrain_size"], 25, Config["terrain_width"])
         p.terrain.load(p.sun)
         p.assets.set_sun(p.sun)
         p.terrain.scene = p.scene
@@ -128,7 +128,12 @@ class InitThread(Thread):
 
         print("Init Player...")
         cwd = Config["folder"]
-        p.player = Player(cwd, Config['engine']['player'], THREE.Vector3(Config['player']['position'][0], Config['player']['position'][1], 0), p.scene, p.terrain)
+        play = Config['player']
+        p.player = Player(cwd,
+                          Config['engine']['player'],
+                          THREE.Vector3(play['position'][0], play['position'][1], 0),
+                          THREE.Vector3(play['direction'][0], play['direction'][1], 0),
+                          p.scene, p.terrain)
         p.player.add2scene(p.scene)
         p.actors.append(p.player)
         p.load_percentage[0] += 5

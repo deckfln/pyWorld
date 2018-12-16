@@ -52,22 +52,26 @@ class _instance:
         self.scale = []
 
 
+NOT_LOADED = 0
+LOADING = 1
+LOADED = 2
+ADDED = 3
+
+
 class Quadtree:
     material = None
     material_far = None
     material_very_far = None
     asyncIO = None
-    NOT_LOADED = 0
-    LOADING = 1
-    LOADED = 2
 
     def __init__(self, level, center, size, parent):
         self.name = ""
         self.level = level
         self.center = center
+        self.onscreen = 0         # on screen pixel size
         self.lod_radius = 0       # LOD radius load the tile
         self.visibility_radius = 0  # frustrum visibility radius
-        self.size = size
+        self.size = size          # heightmap size
         self.objects = []         # // scenary objects
         self.assets = {}       # // scenary meshes
         self.mesh = None          # // terrain mesh
@@ -75,13 +79,12 @@ class Quadtree:
         self.traversed = False    # was the node traversed during a recursive pass
         self.visible = False      # display or not the tile
         self.parent = parent      #
-        self.added = False        # is the tile added to the Scene ?
         self.north = None         # neighbors on screen
         self.south = None
         self.west = None
         self.east = None
         self.datamap = None
-        self.status = Quadtree.NOT_LOADED
+        self.status = NOT_LOADED
 
         self.sub = [None]*4
 
@@ -202,6 +205,7 @@ class Quadtree:
     def load_datamap(self):
         """
         """
+        self.status = LOADING
         file = Config['folder']+"/bin/" + self.name +".npy"
         datamap = DataMap(0)
         datamap.load(file)
@@ -212,7 +216,7 @@ class Quadtree:
         self.datamap = datamap.DataTexture()
         self.datamap.needsUpdate = True
 
-        scale = 2 ** (9 - self.level)
+        scale = self.onscreen
         mesh = self.init_mesh(datamap.size-1)
         mesh.scale.set(scale, scale, 1.0)
         mesh.position.x = self.center.x
@@ -230,6 +234,7 @@ class Quadtree:
             self.bs = boundingsphere
 
         self.mesh = mesh
+        self.status = LOADED
 
     def loadChildren(self, p):
         """
@@ -248,10 +253,10 @@ class Quadtree:
     #        for child in self.sub:
     #            child.add2scene(list)
     def add2scene(self, scene):
-        if not self.added:
+        if self.status != ADDED:
             self.mesh.visible = self.visible
             scene.add(self.mesh)
-            self.added = True
+            self.status = ADDED
 
     def notTraversed(self):
         self.traversed = False
@@ -268,6 +273,8 @@ class Quadtree:
                 child.build_index(index)
 
     def display(self):
+        #if self.status != ADDED:
+        #    print(self.name)
         self.visible = True
         if self.mesh:
             self.mesh.visible = True
@@ -496,9 +503,7 @@ class QuadtreeReader(Thread):
             if quadtree is None:
                 break
 
-            quadtree.status = Quadtree.LOADING
             quadtree.load_datamap()
-            quadtree.status = Quadtree.LOADED
 
             queue.task_done()
 
