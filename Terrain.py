@@ -48,7 +48,6 @@ class Terrain:
         self.scenery = []
         self.radiuses = [0] * self.nb_levels
 
-        self.datamaps = DataMaps()
         self.ratio = (self.size-1)/self.onscreen
         self.ratio_screen_2_map = self.onscreen / self.size
         self.half = self.onscreen/2
@@ -624,7 +623,7 @@ class Terrain:
         self.quadtree_mesh_indexes = [None for i in range(16)]
 
         # load the root quadtree to have a template
-        self.quadtree.load_datamap(self.datamaps)
+        self.loader.read(self.quadtree)
 
         mesh = self.quadtree.mesh
         geometry = mesh.geometry
@@ -1033,10 +1032,7 @@ class Terrain:
         loader_queue.sort(key=_sort, reverse=True)
 
         scene = self.scene
-        if len(loader_queue) > 0:
-            q = loader_queue.pop()
-            q.load_datamap(self.datamaps)
-            q.add2scene(scene)
+        loader.load(loader_queue, scene)
         """
         # load the tile in background for next frame
         for quad in loader_queue:

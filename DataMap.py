@@ -21,7 +21,7 @@ class DataMap(TextureMap):
     """
     def __init__(self, size, datamaps=None):
         name = None
-        if size is not int:
+        if  isinstance(size, str):
             name = size
             size = 0
         super(DataMap, self).__init__(size, 0, 4, np.float32)

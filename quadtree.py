@@ -19,6 +19,8 @@ from progress import *
 from THREE.javascriparray import *
 import math
 from DataMap import *
+from DataMaps import *
+
 
 _BoundingSphereMaterial = THREE.MeshLambertMaterial({
     'color': 0x0000ff,
@@ -516,12 +518,23 @@ class QuadtreeManager:
         self.queue = queue.Queue()
         self.loaded = 0
         self.inmemory = []
+        self.datamaps = DataMaps()
 
         self.thread = QuadtreeReader(self)
         self.thread.start()
 
-    def read(self, quadtree):
-        self.queue.put(quadtree)
+    def load(self, queue, scene=None):
+        if len(queue) > 0:
+            q = queue.pop()
+            q.load_datamap(self.datamaps)
+            if scene is not None:
+                q.add2scene(scene)
+            self.inmemory.append(q)
+            self.loaded += 1
+
+    def read(self, q):
+        q.load_datamap(self.datamaps)
+        self.inmemory.append(q)
         self.loaded += 1
 
     def cleanup(self, scene):
