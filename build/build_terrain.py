@@ -8,7 +8,7 @@ from TerrainBuilder import *
 
 
 def build():
-    terrain = TerrainBuilder(512, 25, 512)
+    terrain = TerrainBuilder(Config["terrain"])
     terrain.init()
 
     if not Config['terrain']['flat']:

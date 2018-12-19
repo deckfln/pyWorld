@@ -115,7 +115,7 @@ class InitThread(Thread):
 
         # init the terrain
         print("Init Terrain...")
-        p.terrain = Terrain(Config["terrain_size"], 25, Config["terrain_width"])
+        p.terrain = Terrain(Config["terrain"])
         p.terrain.load(p.sun)
         p.assets.set_sun(p.sun)
         p.terrain.scene = p.scene

@@ -11,15 +11,15 @@ Config = {
     },
 
     # Terrainc configuration
-    "terrain_size": 512,
-    "terrain_maxheight": 18,
-    "terrain_width": 512,
-
     "terrain": {
-        "tile_width": 16,
+        "size": 512,         # heightmap size
+        "max_height": 18,
+        "width": 512,        # terrain size onscreen
+        "lods": 6,           # #level of details
+
         "flat": False,               # do not generate noise
-        "forest": True,             # display forest
-        "city": True,               # generate a city
+        "forest": True,              # display forest
+        "city": True,                # generate a city
         "roads": True,
         "debug_flatness": False,     # help position procedural city by findind a flat place
         "download": True,

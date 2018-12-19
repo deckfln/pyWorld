@@ -515,27 +515,39 @@ class QuadtreeManager:
     """
     def __init__(self):
         # Establish communication queues
-        self.queue = queue.Queue()
+        self.queue = [] # queue.Queue()
         self.loaded = 0
         self.inmemory = []
         self.datamaps = DataMaps()
 
-        self.thread = QuadtreeReader(self)
-        self.thread.start()
+        #self.thread = QuadtreeReader(self)
+        #self.thread.start()
 
-    def load(self, queue, scene=None):
-        if len(queue) > 0:
-            q = queue.pop()
-            q.load_datamap(self.datamaps)
-            if scene is not None:
-                q.add2scene(scene)
-            self.inmemory.append(q)
-            self.loaded += 1
+    def load(self, scene=None):
+        if len(self.queue) > 0:
+            q = self.queue.pop()
+            if q.status < LOADED:
+                q.load_datamap(self.datamaps)
+                if scene is not None:
+                    q.add2scene(scene)
+                self.inmemory.append(q)
+                self.loaded += 1
 
     def read(self, q):
         q.load_datamap(self.datamaps)
         self.inmemory.append(q)
         self.loaded += 1
+
+        # preload children and parent
+        if q.parent and q.parent.status == NOT_LOADED:
+            q.parent.status = LOADING
+            self.queue.append(q.parent)
+
+        if q.sub[0] is not None:
+            for child in q.sub:
+                if child.status == NOT_LOADED:
+                    child.status = LOADING
+                    self.queue.append(child)
 
     def cleanup(self, scene):
         """
@@ -564,6 +576,6 @@ class QuadtreeManager:
                 count -= 1
 
     def terminate(self):
-        self.queue.put(None)
-        self.thread.join()
+        #self.queue.put(None)
+        #self.thread.join()
         return
