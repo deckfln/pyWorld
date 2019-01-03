@@ -40,10 +40,11 @@ class PYWorld:
         self.hour = math.pi/2
         self.keymap = {
             110: 0,     # N
-            273: 0,     # up
-            274: 0,     # down
-            275: 0,     # left
-            276: 0      # right
+            265: 0,     # up
+            264: 0,     # down
+            263: 0,     # left
+            262: 0,     # right
+            32: 0       # space
         }
         self.shift = False
         self.free_camera = False
@@ -231,6 +232,8 @@ class PYWorld:
             if self.hour > math.pi:
                 self.hour = 0
 
+        self.renderer.background.boxMesh.rotation.z += 0.1
+
         self.render(self)
         # c = time.time() - t
         # print(c, self.player.vcamera.position.x, self.player.vcamera.position.y, self.player.vcamera.position.z)
@@ -262,30 +265,33 @@ class PYWorld:
         down = (event.type == 'keydown' ) * 1
     
         # change status of SHIFT
-        if keyCode == 304:
+        if keyCode == 340:
             self.shift = down
             self.player.set_run(down)
     
-        if keyCode == 97:   # Q
+        if keyCode == 65:   # Q
             self.container.quit()
-        elif keyCode == 99:   # C
+        elif keyCode == 67:   # C
             self.free_camera = not self.free_camera
-        elif keyCode == 116:  # T
+        elif keyCode == 83:  # T
             if down:
                 print("[%f, %f]," %(self.player.position.x, self.player.position.y))
-        elif keyCode == 115:  # S
+        elif keyCode == 78:  # S
             self.frame_by_frame = True
             self.suspended = True
         elif keyCode == 110:  # N
             if not self.keymap[keyCode]:
                 self.suspended = False
             self.keymap[keyCode] = down
-    
         elif keyCode in self.keymap:
             self.keymap[keyCode] = down
     
-            self.player.action.x = self.keymap[273] or -self.keymap[274]  # up / down
-            self.player.action.y = self.keymap[275] or -self.keymap[276]  # left / right
+            self.player.action.x = self.keymap[265] or -self.keymap[264]  # up / down
+            self.player.action.y = self.keymap[262] or -self.keymap[263]  # left / right
+
+            if self.keymap[32] == down:
+                self.player.jump()
+
         else:
             print("keyCode:", keyCode)
 

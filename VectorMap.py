@@ -13,7 +13,7 @@ sys.path.append(mango_dir)
 
 from cVectorMap import *
 
-cython = True
+_cython = True
 
 # reusable vectors
 _v1_static = THREE.Vector3()
@@ -62,11 +62,11 @@ class VectorMap:
 
     def add(self, x, y, vec3):
         if cython:
-            cVectorMap_add(self.map, self.size, x, y, vec3.np)
+            cVectorMap_add(self, x, y, vec3)
         else:
             self._padd(x, y, vec3)
 
-    def _pget(self, x, y, v):
+    def _get(self, x, y, v):
         if x < 0 or y < 0 or x > self.size or y > self.size:
             return None
 
@@ -80,10 +80,11 @@ class VectorMap:
         return v
 
     def get(self, x, y , v):
-        if cython:
-            cVectorMap_get(self.map, self.size, x, y, v.np)
+        global _cython
+        if _cython:
+            cVectorMap_get(self, x, y, v)
         else:
-            return self._pget(x, y, v)
+            return self._get(x, y, v)
         return v
 
     def getV(self, v, vec3):
@@ -96,7 +97,7 @@ class VectorMap:
             map[i + 1] = 0
             map[i + 2] = 1
 
-    def _pbilinear(self, x, y, vec3):
+    def _bilinear(self, x, y, vec3):
         global _z1, _z2, _z3, _z4
 
         size = self.size
@@ -139,13 +140,14 @@ class VectorMap:
         return vec3
 
     def bilinear(self, x, y, vec3):
-        if cython:
-            cVectorMap_bilinear(self.map, self. size, x, y, vec3.np)
+        global _cython
+        if _cython:
+            cVectorMap_bilinear(self, x, y, vec3)
         else:
-            self._pbilinear(x, y, vec3)
+            self._bilinear(x, y, vec3)
         return vec3
 
-    def _pnearest(self, x, y, vec3):
+    def _nearest(self, x, y, vec3):
         size = self.size
 
         if not (0 <= x < size and 0 <= y < size):
@@ -172,23 +174,28 @@ class VectorMap:
         return self.get(gridx, gridy, vec3)
 
     def nearest(self, x, y, vec3):
-        if cython:
-            cVectorMap_nearest(self.map, self.size, x, y, vec3.np)
+        global _cython
+        if _cython:
+            cVectorMap_nearest(self, x, y, vec3)
         else:
             self._pnearest(x, y, vec3)
         return vec3
 
     def normalize(self):
-        map = self.map
-        np = _z1.np
-        for i in range(0, self.size*self.size*3, 3):
-            np[0] = map[i]
-            np[1] = map[i + 1]
-            np[2] = map[i + 2]
-            _z1.normalize()
-            map[i] = np[0]
-            map[i + 1] = np[1]
-            map[i + 2] = np[2]
+        global _cython
+        if _cython:
+            cVectorMap_normalize(self)
+        else:
+            map = self.map
+            np = _z1.np
+            for i in range(0, self.size*self.size*3, 3):
+                np[0] = map[i]
+                np[1] = map[i + 1]
+                np[2] = map[i + 2]
+                _z1.normalize()
+                map[i] = np[0]
+                map[i + 1] = np[1]
+                map[i + 2] = np[2]
 
     def export2texture(self):
         data = np.zeros(self.size * self.size * 3, np.float32)

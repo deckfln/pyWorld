@@ -37,10 +37,10 @@ void main() {
     vNormal.y = data.y;
     vNormal.z = data.z;
 
-    gl_Position = projectionMatrix * modelViewMatrices[objectID] * vec4( vPosition, 1.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
 
     //chunk(worldPosition_vertex)
-    vec4 worldPosition = modelMatrices[objectID] * vec4( vPosition, 1.0 );
+    vec4 worldPosition = modelMatrix * vec4( vPosition, 1.0 );
     //chunk(worldPosition_vertex)
 
     // chunk(shadowmap_vertex);

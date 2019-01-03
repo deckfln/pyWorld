@@ -23,7 +23,7 @@ class Player(Actor):
     def __init__(self, cwd, file, position, direction, scene, terrain):
         super().__init__(cwd, file)
 
-        self.status = "drop"
+        self.status = "stick"
         self.direction = direction.normalize()     # direction face the player is moving to
         self.action = THREE.Vector2()              # action the controler is given (forward, left, right, backward)
         self.rotation_speed = math.pi/128
@@ -32,6 +32,10 @@ class Player(Actor):
         self.animation = "stop"
         self.scene = scene
         self.vcamera = PlayerCamera()
+        # values to compye the trajectory
+        self.time = None
+        self.v0 = Vector3()
+        self.p0 = Vector3()
         
         # pre-compute the bounding sphere
         #    player.geometry.computeBoundingSphere()
@@ -119,12 +123,55 @@ class Player(Actor):
     
     def setZ(self):
         """
-        Set okayer position based on the heightmap it stand on
+        Set pkayer position based on the heightmap it stand on if status is 'move'
+        compute pkayer position based on time and v0 if status is 'free'
+
         :return:
         """
-        # force the player to stick to the surface
+        # find if there is a terrain below our feet
         self.terrain.screen2map(self.position, _v2d_static)
-        self.position.z = self.terrain.get(_v2d_static.x, _v2d_static.y)
+        z = self.terrain.get(_v2d_static.x, _v2d_static.y)
+        d = self.position.z - z
+
+        if d > 10 or self.status == 'free':
+            # free fall
+            g = -10
+
+            if self.status == "stick":
+                # start the formula
+                self.status = 'free'
+                self.time = time.time()
+                self.p0.copy(self.position)
+                self.v0.copy(self.direction).multiplyScalar(10)
+                self.v0.z = 0
+
+            # evaluate the formula
+            p = _v3d_static
+            t = time.time() - self.time
+            p.copy(self.v0).multiplyScalar(t).add(self.p0)
+            p.z += 1/2 * g * t*t
+
+            # collision with the ground
+            if p.z < z:
+                self.position.z = z
+                self.status = 'stick'
+            else:
+                self.position.z = p.z
+
+        elif d >= 0:
+            # stick to the ground
+            self.position.z = z
+            self.status = 'stick'
+        else:
+            # walking up
+            self.position.z = z
+
+    def jump(self):
+        self.status = 'free'
+        self.time = time.time()
+        self.p0.copy(self.position)
+        self.v0.copy(self.direction).multiplyScalar(10)
+        self.v0.z = 3
 
     def move(self, delta, terrain):
         """
@@ -136,24 +183,28 @@ class Player(Actor):
         run = self.run
         direction = self.action
         if direction.x == 0 and direction.y == 0:
-            # test the terrain
-            self.terrain.screen2map(self.position, _v2d_static)
-            normal = self.terrain.get_normalV(_v2d_static)
-            if normal.z < 0.7:
-                # steep slope
-                # for the player to slip down tje slope
-                self.position.x += normal.x/4
-                self.position.y += normal.y/4
+            if self.status == 'free':
+                # the player is driven by phisix
                 self.setZ()
-                """
-                old_direction = _v3d_static.copy(self.direction)
-                self.direction.set(normal.x, normal.y, 0).normalize()
-                self.mesh.quaternion.setFromUnitVectors(old_direction, self.direction)
-                """
-                self.define("wobbly")
             else:
-                self.define("lookaround")
-                self.vcamera.set_distance_walk()
+                # test the terrain
+                self.terrain.screen2map(self.position, _v2d_static)
+                normal = self.terrain.get_normalV(_v2d_static)
+                if normal.z < 0.7:
+                    # steep slope
+                    # for the player to slip down tje slope
+                    self.position.x += normal.x/4
+                    self.position.y += normal.y/4
+                    self.setZ()
+                    """
+                    old_direction = _v3d_static.copy(self.direction)
+                    self.direction.set(normal.x, normal.y, 0).normalize()
+                    self.mesh.quaternion.setFromUnitVectors(old_direction, self.direction)
+                    """
+                    self.define("wobbly")
+                else:
+                    self.define("lookaround")
+                    self.vcamera.set_distance_walk()
 
         else:
             if run:
