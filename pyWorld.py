@@ -262,7 +262,7 @@ class PYWorld:
         :return:
         """
         keyCode = event.keyCode
-        down = (event.type == 'keydown' ) * 1
+        down = (event.type == 'keydown') * 1
     
         # change status of SHIFT
         if keyCode == 340:

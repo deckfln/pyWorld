@@ -13,6 +13,9 @@ import THREE
 import Utils as THREE_utils
 import THREE.renderers.shaders.ShaderLib as THREE_ShaderLib
 from THREE.textures.DataTexture import *
+from THREE.geometries.TextGeometry import *
+from THREE.loaders.FontLoader import *
+from THREE.objects.Mesh import *
 
 from Config import *
 from progress import *
@@ -29,6 +32,9 @@ _BoundingSphereMaterial = THREE.MeshLambertMaterial({
     'wireframe': True
 })
 _spheregeometry = THREE.SphereBufferGeometry(0.7, 32, 32)
+_loader = FontLoader()
+_font = _loader.load('../THREEpy/examples/fonts/helvetiker_bold.typeface.json')
+
 
 # _material = THREE.MeshBasicMaterial({'map': THREE.TextureLoader().load(Config['folder']+'/img/UV_Grid_Sm.jpg')})
 
@@ -103,7 +109,20 @@ class Quadtree:
         v2.y += total_size/2
         v2.divideScalar(total_size)
 
-        if Config['terrain']['debug']['uv']:
+        if Config['terrain']['debug']['lod']:
+            material = THREE.RawShaderMaterial({
+                'uniforms': {
+                    'datamap': {'type': "t", 'value': self.datamap},
+                    'centerVuv': {'type': 'v2', 'value': v2},
+                    'level': {'type': 'f', 'value': 2**self.level},
+                    'light': {'type': 'v3', 'value': self.material.uniforms.light.value}
+                },
+                'vertexShader': self.material.vertexShader,
+                'fragmentShader': self.material.fragmentShader,
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
+
+        elif Config['terrain']['debug']['uv']:
             material = THREE.RawShaderMaterial({
                 'uniforms': {
                     'datamap': {'type': "t", 'value': self.datamap},
@@ -117,15 +136,17 @@ class Quadtree:
                 'color': 0x000ff,
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
+
         else:
             material = THREE.RawShaderMaterial( {
                 'uniforms': {
                     'datamap': {'type': "t", 'value': self.datamap},
+                    'map': {'type': 't', 'value': self.material.map},
                     'centerVuv': {'type': 'v2', 'value': v2},
                     'level': {'type': 'f', 'value': 2**self.level},
+                    'light': {'type': "v3", 'value': self.material.uniforms.light.value},
                     'blendmap_texture': {'type': "t", 'value': self.material.uniforms.blendmap_texture.value},
                     'terrain_textures': {'type': "t", 'value': self.material.uniforms.terrain_textures.value},
-                    'light': {'type': "v3", 'value': self.material.uniforms.light.value},
                     'indexmap': {'type': "t", 'value': self.material.uniforms.indexmap.value},
                     'indexmap_size': {'type': "f", 'value': self.material.uniforms.indexmap_size.value},
                     'indexmap_repeat': {'type': "f", 'value': self.material.uniforms.indexmap_repeat.value},
@@ -145,7 +166,7 @@ class Quadtree:
         plane = THREE.Mesh(geometry, material)
         plane.castShadow = True
         plane.receiveShadow = True
-
+        plane.name = self.name
         return plane
 
     def toJSON(self):
@@ -220,6 +241,18 @@ class Quadtree:
         mesh.position.y = self.center.y
         mesh.geometry.computeBoundingSphere()
         mesh.geometry.boundingSphere.center.z = z
+
+        """
+        txt = TextBufferGeometry(self.name, {
+            'font': _font,
+
+            'size': 1,
+            'height': 0.1
+        })
+        self.lod_radius = Mesh(txt, _BoundingSphereMaterial)
+        self.lod_radius.position = Vector3(self.center.x, self.center.y, z)
+        self.lod_radius.frustumCulled = False
+        """
 
         if Config['terrain']['debug']['boundingsphere']:
             # TODO : how do you draw the bounding spheres of an instance ?

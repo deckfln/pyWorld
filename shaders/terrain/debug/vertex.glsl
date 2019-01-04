@@ -1,11 +1,7 @@
 precision mediump float;
 precision mediump int;
 
-layout (std140) uniform modelMatricesBlock
-{
-    uniform mat4 modelMatrices[1024];
-};
-
+uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix; // optional
 uniform mat4 projectionMatrix; // optional
 uniform sampler2D datamap;

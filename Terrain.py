@@ -141,7 +141,23 @@ class Terrain:
             })
 
         elif Config['terrain']['debug']['lod']:
-            self.material = None
+            _shader = Config['engine']['shaders']['terrain_lod']
+
+            _floader = THREE.FileLoader()
+            _vertexShader = _floader.load(_shader["vertex"])
+            _fragmentShader = _floader.load(_shader["fragment"])
+
+            self.material = THREE.RawShaderMaterial({
+                'uniforms': {
+                    'datamap': {'type': "t", 'value': None},
+                    'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
+                    'level': {'type': 'f', 'value': 0},
+                    'light': {'type': 'v3', 'value': sun.light.position},
+                },
+                'vertexShader': _vertexShader,
+                'fragmentShader': _fragmentShader,
+                'wireframe': Config['terrain']['debug']['wireframe']
+            })
 
         else:
             """
@@ -688,6 +704,8 @@ class Terrain:
                 if quad.status < LOADED :
                     self.loader.read(quad)
                     self.scene.add(quad.mesh)
+                    #if quad.lod_radius != 0:
+                    #    self.scene.add(quad.lod_radius)
                 tiles_2_display.append(quad)
 
         # register stitching on borders

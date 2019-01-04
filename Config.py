@@ -95,6 +95,10 @@ Config = {
                     "uv": "img/UV_Grid_Sm.jpg"
                 }
             },
+            "terrain_lod": {
+                "vertex": "shaders/terrain/debug/vertex.glsl",
+                "fragment": "shaders/terrain/debug/fragment_lod.glsl"
+            },
             'asset': {
                 'vertex': 'shaders/instances/vertex.glsl',
                 'fragment': 'shaders/instances/fragment.glsl'
