@@ -289,7 +289,7 @@ class PYWorld:
             self.player.action.x = self.keymap[265] or -self.keymap[264]  # up / down
             self.player.action.y = self.keymap[262] or -self.keymap[263]  # left / right
 
-            if self.keymap[32] == down:
+            if self.keymap[32]:
                 self.player.jump()
 
         else:

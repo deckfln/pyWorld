@@ -144,6 +144,7 @@ class Player(Actor):
                 self.p0.copy(self.position)
                 self.v0.copy(self.direction).multiplyScalar(10)
                 self.v0.z = 0
+                self.freeze()
 
             # evaluate the formula
             p = _v3d_static
@@ -155,6 +156,7 @@ class Player(Actor):
             if p.z < z:
                 self.position.z = z
                 self.status = 'stick'
+                self.unfreeze()
             else:
                 self.position.z = p.z
 
@@ -162,16 +164,19 @@ class Player(Actor):
             # stick to the ground
             self.position.z = z
             self.status = 'stick'
+            self.unfreeze()
         else:
             # walking up
             self.position.z = z
 
     def jump(self):
-        self.status = 'free'
-        self.time = time.time()
-        self.p0.copy(self.position)
-        self.v0.copy(self.direction).multiplyScalar(10)
-        self.v0.z = 3
+        if self.status != 'free':
+            self.status = 'free'
+            self.time = time.time()
+            self.p0.copy(self.position)
+            self.v0.copy(self.direction).multiplyScalar(10 + 10*self.run)
+            self.v0.z = 5 + 5*self.run
+            self.freeze()
 
     def move(self, delta, terrain):
         """
