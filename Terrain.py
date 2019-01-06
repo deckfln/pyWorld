@@ -7,6 +7,8 @@ from IndexMap import *
 from Heightmap import *
 from DataMaps import *
 
+from THREE.textures.TextureArray import *
+
 myrandom = Random(5454334)
 
 
@@ -58,8 +60,6 @@ class Terrain:
         # THREE objects
         self.scene = None
         self.material = None
-        self.material_far = None
-        self.material_very_far = None
         self.textures = []
         self.light = None
         self.terrain_textures = None
@@ -162,19 +162,24 @@ class Terrain:
         else:
             """
             Initialize the various maps
-            :return:
             """
             loader = THREE.TextureLoader()
             _shader = Config['engine']['shaders']['terrain']
             _textures = _shader['textures']
+            _textureArrays = _shader['texture_arrays']
 
             indexmap = loader.load(_textures["indexmap"])
             indexmap.magFilter = THREE.NearestFilter
             indexmap.minFilter = THREE.NearestFilter
             self.indexmap.texture = indexmap
 
-            self.terrain_textures = loader.load(_textures["terrain_d"])
-            normalMap = loader.load(_textures["terrain_n"])
+            _texArray = _textureArrays["terrain_d"]
+            tex = loader.load(_texArray["texture"])
+            self.terrain_textures = TextureArray.fromTexture(tex, _texArray["layers"], _texArray["mimaps"])
+
+            _texArray = _textureArrays["terrain_n"]
+            tex = loader.load(_texArray["texture"])
+            normalMap = TextureArray.fromTexture(tex, _texArray["layers"], _texArray["mimaps"])
 
             self.blendmap.texture = loader.load(_textures["blendmap"])
 
@@ -208,56 +213,6 @@ class Terrain:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
 
-            terrain_far = loader.load(_textures["terrain_far_d"])
-
-            uniforms_far = {
-                'datamap': {'type': "t", 'value': None},
-                'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
-                'level': {'type': 'f', 'value': 0},
-                'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
-                'terrain_textures': {'type': "t", 'value': terrain_far},
-                'light': {'type': "v3", 'value': sun.light.position},
-                'water_shift': {'type': "f", 'value': 0},
-                'indexmap': {'type': "t", 'value': self.indexmap.texture},
-                'indexmap_size': {'type': "f", 'value': self.indexmap.size},
-                'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {'type': "f", 'value': 64},
-                'ambientCoeff': {'type': "float", 'value': sun.ambientCoeff},
-                'sunColor': {'type': "v3", 'value': sun.color},
-                'normalMap': {'type': "t", 'value': normalMap}
-            }
-            self.material_far = THREE.RawShaderMaterial( {
-                'uniforms': uniforms_far,
-                'vertexShader': floader.load(_shader["vertex"]),
-                'fragmentShader': floader.load(_shader["fragment"]),
-                'wireframe': Config['terrain']['debug']['wireframe']
-            })
-
-            terrain_very_far = loader.load(_textures["terrain_very_far_d"])
-
-            uniforms_very_far = {
-                'datamap': {'type': "t", 'value': None},
-                'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
-                'level': {'type': 'f', 'value': 0},
-                'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
-                'terrain_textures': {'type': "t", 'value': terrain_very_far},
-                'light': {'type': "v3", 'value': sun.light.position},
-                'water_shift': {'type': "f", 'value': 0},
-                'indexmap': {'type': "t", 'value': self.indexmap.texture},
-                'indexmap_size': {'type': "f", 'value': self.indexmap.size},
-                'indexmap_repeat': {'type': "f", 'value': self.indexmap.repeat},
-                'blendmap_repeat': {'type': "f", 'value': 64},
-                'ambientCoeff': {'type': "float", 'value': sun.ambientCoeff},
-                'sunColor': {'type': "v3", 'value': sun.color},
-                'normalMap': {'type': "t", 'value': normalMap}
-            }
-            self.material_very_far = THREE.RawShaderMaterial( {
-                'uniforms': uniforms_very_far,
-                'vertexShader': floader.load(_shader["vertex"]),
-                'fragmentShader': floader.load(_shader["fragment"]),
-                'wireframe': Config['terrain']['debug']['wireframe']
-            })
-
     def load(self, sun):
         """
         Load the quad tile pickles and initialize the shaders
@@ -279,8 +234,6 @@ class Terrain:
             self.quadtree = quads[0]
             quads[0].build_index(self.quadtree_index)
             Quadtree.material = self.material
-            Quadtree.material_far = self.material_far
-            Quadtree.material_very_far = self.material_very_far
 
         self.indexmap.load(folder + "/img/indexmap.png")
         self.blendmap.load(folder + "/img/blendmap.png")

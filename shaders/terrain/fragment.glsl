@@ -71,7 +71,6 @@ float unpackRGBAToDepth( const in vec4 v ) {
 /*
  *
  */
-uniform sampler2D normalMap;
 vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 normal ) {
     vec3 q0 = vec3( dFdx( eye_pos.x ), dFdx( eye_pos.y ), dFdx( eye_pos.z ) );
     vec3 q1 = vec3( dFdy( eye_pos.x ), dFdy( eye_pos.y ), dFdy( eye_pos.z ) );
@@ -87,7 +86,8 @@ vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 normal ) {
 }
 
 uniform sampler2D blendmap_texture;
-uniform sampler2D terrain_textures;
+uniform sampler2DArray terrain_textures;
+uniform sampler2DArray normalMap;
 uniform sampler2D indexmap;
 uniform sampler2D shadowmap;
 uniform float indexmap_repeat;
@@ -109,6 +109,27 @@ vec4 hash4( vec2 p ) { return fract(sin(vec4( 1.0+dot(p,vec2(37.0,17.0)),
                                               3.0+dot(p,vec2(41.0,29.0)),
                                               4.0+dot(p,vec2(23.0,31.0))))*103.0); }
 
+/**
+ *
+ * use a texture array
+ */
+vec4 colorAtArray(sampler2DArray map, vec2 in_map)
+{
+  vec2 p = in_map/indexmap_size;
+
+  vec4 tile = texture2D(indexmap, p);
+  float tileID = tile.r * 255.0;
+
+  vec2 rvv =  vUv*indexmap_repeat;
+  vec2 vv = fract(rvv);
+
+  return texture(map, vec3(vv.x, vv.y, tileID));
+}
+
+/**
+ *
+ * use a traditionnal texture
+ */
 vec4 colorAt(sampler2D map, vec2 in_map)
 {
   vec2 p = in_map/indexmap_size;
@@ -183,10 +204,10 @@ void main()
     */
 
     // texture from atlas maps at each corner of the box
-    vec4 bottomleft_c = colorAt(terrain_textures, bottomleft);
-    vec4 bottomright_c= colorAt(terrain_textures, bottomleft + vec2(1,0));
-    vec4 topleft_c= colorAt(terrain_textures, bottomleft + vec2(0,1));
-    vec4 topright_c= colorAt(terrain_textures, bottomleft + vec2(1,1));
+    vec4 bottomleft_c = colorAtArray(terrain_textures, bottomleft);
+    vec4 bottomright_c= colorAtArray(terrain_textures, bottomleft + vec2(1,0));
+    vec4 topleft_c= colorAtArray(terrain_textures, bottomleft + vec2(0,1));
+    vec4 topright_c= colorAtArray(terrain_textures, bottomleft + vec2(1,1));
 
     vec4 t1 = mix(bottomleft_c, bottomright_c, blend4tex.x);
     vec4 t2 = mix(topleft_c, topright_c, blend4tex.x);
@@ -198,24 +219,22 @@ void main()
 
     // do the same with the normalmap
     // normal from atlas maps at each corner of the box
-    vec3 bottomleft_n = normalize(colorAt(normalMap, bottomleft).xyz);
-    vec3 bottomright_n= normalize(colorAt(normalMap, bottomleft + vec2(1,0)).xyz);
-    vec3 topleft_n= normalize(colorAt(normalMap, bottomleft + vec2(0,1)).xyz);
-    vec3 topright_n= normalize(colorAt(normalMap, bottomleft + vec2(1,1)).xyz);
+    vec3 bottomleft_n = normalize(colorAtArray(normalMap, bottomleft).xyz);
+    vec3 bottomright_n= normalize(colorAtArray(normalMap, bottomleft + vec2(1,0)).xyz);
+    vec3 topleft_n= normalize(colorAtArray(normalMap, bottomleft + vec2(0,1)).xyz);
+    vec3 topright_n= normalize(colorAtArray(normalMap, bottomleft + vec2(1,1)).xyz);
 
     vec3 t1_n = mix(bottomleft_n, bottomright_n, blend4tex.x);
     vec3 t2_n = mix(topleft_n, topright_n, blend4tex.x);
     vec3 normal = mix(t1_n, t2_n, blend4tex.y);
 
     // path & river extracted from the blendmap
-    int tileID = 7;     // if of the road
-    float row = (tileID >> 2) / 4.0;
-    float column = (tileID & 0x3) / 4.0;
+    float tileID = 7;     // if of the road
 
     vec2 blend_uv = fract(vUv * blendmap_repeat);
-    blend_uv = vec2(column + blend_uv.x / 4.0, row + blend_uv.y / 4.0);
-    vec4 paving = texture2D(terrain_textures, blend_uv);
-    vec3 blend_normal = normalize(texture2D(normalMap, blend_uv).xyz);
+    vec3 blend_uvz = vec3(blend_uv.x, blend_uv.y, tileID);
+    vec4 paving = texture(terrain_textures, blend_uvz);
+    vec3 blend_normal = normalize(texture(normalMap, blend_uvz).xyz);
     // vec4 riverbed = texture2D(textures[riverbed_png], blend_uv);
 
     vec4 blendIndex = texture2D(blendmap_texture, vUv);

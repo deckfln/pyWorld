@@ -82,10 +82,18 @@ Config = {
                 "textures": {
                     "indexmap": "img/indexmap.png",
                     "blendmap": "img/blendmap.png",
-                    "terrain_d": "img/terrain_d.png",
-                    "terrain_far_d": "img/terrain_far_d.png",
-                    "terrain_very_far_d": "img/terrain_very_far_d.png",
-                    "terrain_n": "img/terrain_n.png"
+                },
+                "texture_arrays": {
+                    "terrain_d": {
+                        'texture': "img/terrain_d.png",
+                        'layers': 16,
+                        'mimaps': 6
+                    },
+                    "terrain_n": {
+                        'texture': 'img/terrain_n.png',
+                        'layers': 16,
+                        'mimaps': 6
+                    }
                 }
             },
             "terrain_debug": {

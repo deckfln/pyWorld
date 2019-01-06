@@ -68,8 +68,6 @@ ADDED = 3
 
 class Quadtree:
     material = None
-    material_far = None
-    material_very_far = None
     asyncIO = None
 
     def __init__(self, level, center, size, parent):
@@ -339,12 +337,7 @@ class Quadtree:
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
         else:
-            if self.level < 3:
-                terrain_mesh.material = self.material_very_far
-            elif self.level < 5:
-                terrain_mesh.material = self.material_far
-            else:
-                terrain_mesh.material = self.material
+            terrain_mesh.material = self.material
 
         # if Config['terrain']['debug']['boundingsphere']:
         # TODO : how do you draw the bounding spheres of an instance ?
