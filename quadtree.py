@@ -110,7 +110,7 @@ class Quadtree:
         if Config['terrain']['debug']['lod']:
             material = THREE.RawShaderMaterial({
                 'uniforms': {
-                    'datamap': {'type': "t", 'value': self.datamap},
+                    'datamaps': {'type': "t", 'value': self.material.uniforms.datamaps.value},
                     'centerVuv': {'type': 'v2', 'value': v2},
                     'level': {'type': 'f', 'value': 2**self.level},
                     'light': {'type': 'v3', 'value': self.material.uniforms.light.value}
@@ -123,7 +123,7 @@ class Quadtree:
         elif Config['terrain']['debug']['uv']:
             material = THREE.RawShaderMaterial({
                 'uniforms': {
-                    'datamap': {'type': "t", 'value': self.datamap},
+                    'datamaps': {'type': "t", 'value': self.material.uniforms.datamaps.value},
                     'map': {'type': 't', 'value': self.material.map},
                     'centerVuv': {'type': 'v2', 'value': v2},
                     'level': {'type': 'f', 'value': 2**self.level},
@@ -138,7 +138,7 @@ class Quadtree:
         else:
             material = THREE.RawShaderMaterial( {
                 'uniforms': {
-                    'datamap': {'type': "t", 'value': self.datamap},
+                    'datamaps': {'type': "t", 'value': self.material.uniforms.datamaps.value},
                     'map': {'type': 't', 'value': self.material.map},
                     'centerVuv': {'type': 'v2', 'value': v2},
                     'level': {'type': 'f', 'value': 2**self.level},
@@ -165,6 +165,10 @@ class Quadtree:
         plane.castShadow = True
         plane.receiveShadow = True
         plane.name = self.name
+
+        if plane.id == 185:
+            print("quadtree:init_mesh")
+
         return plane
 
     def toJSON(self):
@@ -224,7 +228,7 @@ class Quadtree:
         """
         """
         self.status = LOADING
-        datamap = DataMap(self.name, datamaps)
+        self._datamap = datamap = DataMap(self.name, datamaps)
 
         # find the average Z for the boundingsphere
         z = datamap.average()
@@ -564,6 +568,7 @@ class QuadtreeManager:
         self.inmemory.append(q)
         self.loaded += 1
 
+        """
         # preload children and parent
         if q.parent and q.parent.status == NOT_LOADED:
             q.parent.status = LOADING
@@ -574,6 +579,7 @@ class QuadtreeManager:
                 if child.status == NOT_LOADED:
                     child.status = LOADING
                     self.queue.append(child)
+        """
 
     def cleanup(self, scene):
         """

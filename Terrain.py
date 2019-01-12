@@ -8,6 +8,7 @@ from Heightmap import *
 from DataMaps import *
 
 from THREE.textures.TextureArray import *
+from THREE.textures.DataTextureArray import *
 
 myrandom = Random(5454334)
 
@@ -92,6 +93,7 @@ class Terrain:
         """
         self.quadtree = Quadtree(-1, -1, -1, None)
         self.quadtree_index = {}
+        self.DataMapArray = DataTextureArray([None for i in range(1024)], 9, 9, 1024)
 
         # cache player position and direction
         self.cache_position = THREE.Vector3(-10000, -10000, -10000)
@@ -185,7 +187,7 @@ class Terrain:
 
             floader = THREE.FileLoader()
             uniforms = {
-                'datamap': {'type': "t", 'value': None},
+                'datamaps': {'type': "t", 'value': self.DataMapArray},
                 'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
                 'level': {'type': 'f', 'value': 0},
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
@@ -657,6 +659,7 @@ class Terrain:
                 if quad.status < LOADED :
                     self.loader.read(quad)
                     self.scene.add(quad.mesh)
+                    self.DataMapArray.updateData(quad.mesh.id, quad._datamap.data)
                     #if quad.lod_radius != 0:
                     #    self.scene.add(quad.lod_radius)
                 tiles_2_display.append(quad)
@@ -1044,8 +1047,10 @@ class Terrain:
             self.cache_position.copy(position)
             self.cache_direction.copy(direction)
 
+        """
         # preload
         self.loader.load(self.scene)
+        """
 
         # clean up old quad meshes
         # self.loader.cleanup(self.scene)

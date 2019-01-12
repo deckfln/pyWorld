@@ -1,10 +1,8 @@
-#version 330
-
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 
-uniform sampler2D datamap;
+uniform sampler2DArray datamaps;
 uniform vec2 centerVuv;
 uniform float level;
 
@@ -31,11 +29,11 @@ void main() {
     vec3 vPosition = position;
     vColor = color;
 
-    vec4 data = texture2D(datamap, uv);
+    // vec4 data = texture2D(datamap, uv);
+    vec3 textureP = vec3(uv.x, uv.y, float(objectID));
+    vec4 data = texture(datamaps, textureP);
     vPosition.z = data.w;
-    vNormal.x = data.x;
-    vNormal.y = data.y;
-    vNormal.z = data.z;
+    vNormal = data.xyz;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
 

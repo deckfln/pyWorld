@@ -51,7 +51,7 @@ class DataMap(TextureMap):
         return z
 
     def DataTexture(self):
-        dt = DataTexture(self.data, self.size, self.size, RGBAFormat, FloatType)
+        dt = DataTexture(self.data, self.size, self.size)
         #dt.magFilter = LinearFilter
         #dt.minFilter = LinearFilter
         return dt
