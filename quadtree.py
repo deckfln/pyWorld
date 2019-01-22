@@ -89,6 +89,8 @@ class Quadtree:
         self.south = None
         self.west = None
         self.east = None
+        self.stitch_code = 0      # what index should be used to stitch with the neighbour
+
         self.datamap = None
         self.status = NOT_LOADED
 
@@ -165,9 +167,6 @@ class Quadtree:
         plane.castShadow = True
         plane.receiveShadow = True
         plane.name = self.name
-
-        if plane.id == 185:
-            print("quadtree:init_mesh")
 
         return plane
 
@@ -267,6 +266,10 @@ class Quadtree:
 
         self.mesh = mesh
         self.status = LOADED
+
+    def unload_datamap(self):
+        self.status = NOT_LOADED
+        self.datamap = None
 
     def loadChildren(self, p):
         """

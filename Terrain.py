@@ -9,6 +9,7 @@ from DataMaps import *
 
 from THREE.textures.TextureArray import *
 from THREE.textures.DataTextureArray import *
+from Tiles import *
 
 myrandom = Random(5454334)
 
@@ -93,7 +94,7 @@ class Terrain:
         """
         self.quadtree = Quadtree(-1, -1, -1, None)
         self.quadtree_index = {}
-        self.DataMapArray = DataTextureArray([None for i in range(1024)], 9, 9, 1024)
+        self.tiles = Tiles()
 
         # cache player position and direction
         self.cache_position = THREE.Vector3(-10000, -10000, -10000)
@@ -187,7 +188,7 @@ class Terrain:
 
             floader = THREE.FileLoader()
             uniforms = {
-                'datamaps': {'type': "t", 'value': self.DataMapArray},
+                'datamaps': {'type': "t", 'value': None},
                 'centerVuv': {'type': 'v2', 'value': THREE.Vector2()},
                 'level': {'type': 'f', 'value': 0},
                 'blendmap_texture': {'type': "t", 'value': self.blendmap.texture},
@@ -214,6 +215,8 @@ class Terrain:
                 'fragmentShader': floader.load(_shader["fragment"]),
                 'wireframe': Config['terrain']['debug']['wireframe']
             })
+
+        self.tiles.init_mesh(self)
 
     def load(self, sun):
         """
@@ -592,44 +595,7 @@ class Terrain:
         Build an array of openGL indexes to tbe used be tiles stitching
         :return:
         """
-        self.quadtree_mesh_indexes = [None for i in range(16)]
-
-        # load the root quadtree to have a template
-        self.loader.read(self.quadtree)
-
-        mesh = self.quadtree.mesh
-        geometry = mesh.geometry
-        index = geometry.index
-        row = int(geometry.parameters['widthSegments'] * 2 * 3)
-
-        for i in range(16):
-            self.quadtree_mesh_indexes[i] = index.clone()
-
-            array = self.quadtree_mesh_indexes[i].array
-
-            if i & 1:
-                for k in range(len(array) - row, len(array), 12):
-                    array[k + 4] = array[k + 10]
-                    array[k + 7] = array[k + 10]
-                    array[k + 9] = array[k + 10]
-
-            if i & 2:
-                for k in range(0, row, 12):
-                    array[k + 2] = array[k]
-                    array[k + 5] = array[k]
-                    array[k + 6] = array[k]
-
-            if i & 4:
-                for k in range(0, len(array), row * 2):
-                    array[k + 1] = array[k]
-                    array[k + 3] = array[k]
-                    array[k + row] = array[k]
-
-            if i & 8:
-                for k in range(row - 6, len(array), row * 2):
-                    array[k + 4] = array[k + row + 4]
-                    array[k + row + 2] = array[k + row + 4]
-                    array[k + row + 5] = array[k + row + 4]
+        self.tiles.add2scene(self.scene)
 
     def _add_full_quadrant(self, position: Vector2, tiles_2_display: list, max_depth, tile):
         """
@@ -656,12 +622,7 @@ class Terrain:
             if quad == tile:
                 quadrant = i
             if not quad.traversed:
-                if quad.status < LOADED :
-                    self.loader.read(quad)
-                    self.scene.add(quad.mesh)
-                    self.DataMapArray.updateData(quad.mesh.id, quad._datamap.data)
-                    #if quad.lod_radius != 0:
-                    #    self.scene.add(quad.lod_radius)
+                self.tiles.load(quad)
                 tiles_2_display.append(quad)
 
         # register stitching on borders
@@ -886,7 +847,7 @@ class Terrain:
         self.tiles_onscreen.sort(key=lambda x: x.size)
 
         for tile in self.tiles_onscreen:
-            if not tile.visible or tile.mesh is None:
+            if not tile.visible:
                 continue
 
             if not hasattr(tile, 'debug'):
@@ -917,10 +878,10 @@ class Terrain:
             if tile.east:
                 code |= 8
 
-            tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
-            tile.mesh.geometry.index.needsUpdate = True
+            # tile.mesh.geometry.index = self.quadtree_mesh_indexes[code]
+            # tile.mesh.geometry.index.needsUpdate = True
 
-            tile.debug = code
+            tile.stitch_code = code
 
     def _frustrum_culling(self, player, position, direction):
         """
@@ -971,27 +932,27 @@ class Terrain:
             hm_quad_radius = quad.visibility_radius * self.size/self.onscreen
 
             if isInFront(hm, hm_behind, p):
-                quad.display()
+                self.tiles.display(quad)
             elif distance2(hm, hm_behind, p, hm_quad_radius):
-                quad.display()
+                self.tiles.display(quad)
             else:
-                quad.hide()
+                self.tiles.hide(quad)
 
             if quad.visible:
                 if isInFront(hm, left, p):
-                    quad.display()
+                    self.tiles.display(quad)
                 elif distance2(hm, left, p, hm_quad_radius):
-                    quad.display()
+                    self.tiles.display(quad)
                 else:
-                   quad.hide()
+                   self.tiles.hide(quad)
 
             if quad.visible:
                 if not isInFront(hm, right, p):
-                    quad.display()
+                    self.tiles.display(quad)
                 elif distance2(hm, right, p, hm_quad_radius):
-                    quad.display()
+                    self.tiles.display(quad)
                 else:
-                    quad.hide()
+                    self.tiles.hide(quad)
 
     def _build_tiles_onscreen(self, position):
         """
@@ -1043,6 +1004,8 @@ class Terrain:
             self._build_tiles_onscreen(position)
             self._frustrum_culling(player, position, direction)
             self._stich_neighbours()
+
+            self.tiles.update_instances()
 
             self.cache_position.copy(position)
             self.cache_direction.copy(direction)

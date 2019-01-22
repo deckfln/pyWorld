@@ -19,9 +19,12 @@ class DataMaps:
         self.index = {}
         self.size = None
         self.mode = mode
+        self.width = 0
 
         if mode == 'rb':
             self.load_index()
+            pixels_size = self.size / 4 / 4     # 1 pixel = 4 floats (normal.xyz, height.z)
+            self.width = int(math.sqrt(pixels_size))
 
     def close(self):
         self.file.close()
@@ -34,10 +37,12 @@ class DataMaps:
         if self.size is None:
             self.index["size"] = size
 
-    def load(self, name):
+    def load(self, tile):
+        name = tile.name
         self.file.seek(self.index[name])
         b = self.file.read(self.size)
-        return np.frombuffer(b, dtype=np.float32)
+        tile.datamap = np.frombuffer(b, dtype=np.float32)
+        return tile.datamap
 
     def save_index(self):
         file = Config['folder']+"/bin/datamap.idx"
@@ -50,3 +55,6 @@ class DataMaps:
             self.index = pickle.load(f)
 
         self.size = self.index['size']
+
+    def get_width(self):
+        return self.width
